@@ -1,0 +1,155 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Test rule By Mohamad Al-Shahwan and Ahmad Altrabsheh for Archive Collected Data: Archive via Utility T1560.001",
+    "DisplayName":  "Archive Collected Data: Archive via Utility T1560.001",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "HostName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "ArchiveFileName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "ArchiveCommand",
+                                                       "Identifier":  "CommandLine"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"7d003143-0000-1100-0000-68659e000000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/60d05980-3284-44e3-b6b7-18d5b6251ea1",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751490047131)\/",
+    "Name":  "60d05980-3284-44e3-b6b7-18d5b6251ea1",
+    "Query":  "let ExfilDomains = dynamic([\"dropbox.com\", \"googleapis.com\", \"onedrive.live.com\", \"mega.nz\", \"pastebin.com\", \"anonfiles.com\", \"transfer.sh\", \"cdn.discordapp.com\", \"discord.com\"]);\r\nlet ArchiveSoftwares = dynamic([\"7z.exe\", \"7zG.exe\", \"7za.exe\", \"zip.exe\", \"rar.exe\", \"tar.exe\", \"compact.exe\", \"powerarchiver.exe\", \"winrar.exe\"]);\r\nlet ArchiveExtensions = dynamic([\".zip\", \".rar\", \".7z\", \".tar.gz\", \".cab\", \".gzip\", \".tar\"]);\r\nlet StagingTools = dynamic([\"robocopy.exe\", \"xcopy.exe\", \"copy.exe\", \"move.exe\", \"cmd.exe\", \"bash.exe\", \"wsl.exe\", \"git-bash.exe\"]);\r\nlet ArchiveEvents = DeviceFileEvents\r\n    | where ActionType == \"FileCreated\" or ActionType contains \"Rename\"\r\n    | where InitiatingProcessFileName has_any (ArchiveSoftwares)\r\n    | where FileName has_any (ArchiveExtensions)\r\n    | extend\r\n        ArchiveFileName = FileName,\r\n        ArchiveFilePath = FolderPath,\r\n        FileCreatedTime = TimeGenerated, // Keep TimeGenerated as FileCreatedTime\r\n        FileSizeMB = round(todouble(FileSize) / 1024 / 1024, 2)\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        ArchiveFileName,\r\n        ArchiveFilePath,\r\n        FileCreatedTime,\r\n        FileSizeMB,\r\n        ArchiveProcess = InitiatingProcessFileName,\r\n        ArchiveCommand = InitiatingProcessCommandLine;\r\nlet SuspiciousConnections = DeviceNetworkEvents\r\n    | extend RemoteUrlLower = tolower(RemoteUrl)\r\n    | where RemoteUrlLower has_any (ExfilDomains)\r\n    | extend ConnectionTime = TimeGenerated // Keep TimeGenerated as ConnectionTime\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        RemoteUrl = RemoteUrlLower,\r\n        ConnectionTime,\r\n        ExfilProcess = InitiatingProcessFileName,\r\n        ExfilCommand = InitiatingProcessCommandLine,\r\n        Action = \"Outbound to C2/Storage\";\r\nlet StagingActivityProcess = DeviceProcessEvents\r\n    | where InitiatingProcessFileName has_any (StagingTools)\r\n    | where ProcessCommandLine has_any (\r\n        // Windows staging commands\r\n        \"copy\", \"xcopy\", \"robocopy\", \"move\"\r\n        )\r\n    | extend StagingTime = TimeGenerated // Keep TimeGenerated as StagingTime\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        StagingProcess = InitiatingProcessFileName,\r\n        StagingCommand = ProcessCommandLine,\r\n        StagingTime;\r\nlet StagingActivityPowerShell = DeviceEvents\r\n    | where ActionType == \"PowerShellCommand\"\r\n    | where InitiatingProcessCommandLine has_any (\"Copy-Item\", \"Move-Item\", \"Get-ChildItem\", \"Out-File\", \"Export-CSV\", \"mv\", \"cp\")\r\n    | extend StagingTime = TimeGenerated // Keep TimeGenerated as StagingTime\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        StagingProcess = InitiatingProcessFileName, // This will capture \"powershell.exe\" or similar\r\n        StagingCommand = InitiatingProcessCommandLine,\r\n        StagingTime;\r\nlet StagingActivity = union StagingActivityProcess, StagingActivityPowerShell;\r\nArchiveEvents\r\n| join kind=inner (\r\n    SuspiciousConnections\r\n    )\r\n    on DeviceId\r\n| where ConnectionTime between ((FileCreatedTime - 5m) .. (FileCreatedTime + 5m)) // Direct comparison for 10-minute window around archive creation\r\n| join kind=inner (\r\n    StagingActivity\r\n    )\r\n    on DeviceId\r\n| where (StagingTime between ((FileCreatedTime - 30m) .. (FileCreatedTime))) // Direct comparison for 30-minute window before archive creation\r\n| extend TimeGenerated = FileCreatedTime // Use the primary event time for Sentinel\u0027s rule engine\r\n| project\r\n    TimeGenerated,\r\n    DeviceName,\r\n    FileCreatedTime,\r\n    ArchiveFileName,\r\n    ArchiveFilePath,\r\n    FileSizeMB,\r\n    RemoteUrl,\r\n    ConnectionTime,\r\n    ArchiveProcess,\r\n    ArchiveCommand,\r\n    ExfilProcess,\r\n    ExfilCommand,\r\n    StagingProcess,\r\n    StagingCommand,\r\n    StagingTime,\r\n    Action",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

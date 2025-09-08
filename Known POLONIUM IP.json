@@ -1,0 +1,121 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "95407904-0131-4918-bc49-ebf282ce149a",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a match across various data feeds for IP IOCs related to the POLONIUM activity group.  \n References: BLOGURL\u0027 ",
+    "DisplayName":  "Known POLONIUM IP - [WC-THREAT]",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"9c0488c8-0000-1100-0000-66caec740000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  3000000000,
+                                                  "Days":  0,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  5,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.003472222222222222,
+                                                  "TotalHours":  0.083333333333333329,
+                                                  "TotalMilliseconds":  300000,
+                                                  "TotalMinutes":  5,
+                                                  "TotalSeconds":  300
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/7446f1ff-286b-40ac-bed9-7c3c1e3e605e",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574813967)\/",
+    "Name":  "7446f1ff-286b-40ac-bed9-7c3c1e3e605e",
+    "Query":  "let IPList = dynamic([\"135.125.147.170:80\",\"185.244.129.79:63047\",\"185.244.129.79:80\",\"45.80.149.108:63047\",\"45.80.149.108:80\",\"45.80.149.57:63047\",\"45.80.149.68:63047\",\"45.80.149.71:80\",\"185.244.129.109\",\"172.96.188.51\",\"51.83.246.73\"]); \n(union isfuzzy=true \n(CommonSecurityLog \n| where isnotempty(SourceIP) or isnotempty(DestinationIP) \n| where SourceIP in (IPList) or DestinationIP in (IPList) or Message has_any (IPList) \n| extend IPMatch = case(SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", \"Message\")  \n| summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated) by SourceIP, DestinationIP, DeviceProduct, DeviceAction, Message, Protocol, SourcePort, DestinationPort, DeviceAddress, DeviceName, IPMatch \n| extend timestamp = StartTimeUtc, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, \"IP in Message Field\")  \n), \n(OfficeActivity \n|extend SourceIPAddress = ClientIP, Account = UserId \n| where  SourceIPAddress in (IPList) \n| extend timestamp = TimeGenerated , IPCustomEntity = SourceIPAddress , AccountCustomEntity = Account \n),\n(_Im_Dns (response_has_any_prefix=IPList)\n| extend DestinationIPAddress = ResponseName,  Host = SrcIpAddr \n| extend timestamp = TimeGenerated, IPCustomEntity = DestinationIPAddress, HostCustomEntity = Host \n), \n(_Im_NetworkSession (srcipaddr_has_any_prefix=IPList)\n | extend timestamp = TimeGenerated, IPCustomEntity = SrcIpAddr, HostCustomEntity = Hostname, AccountCustomEntity=User\n), \n(_Im_NetworkSession (dstipaddr_has_any_prefix=IPList)\n| extend timestamp = TimeGenerated, IPCustomEntity = DstIpAddr, HostCustomEntity = Hostname , AccountCustomEntity = User\n), \n(WireData  \n| where isnotempty(RemoteIP) \n| where RemoteIP in (IPList) \n| extend timestamp = TimeGenerated, IPCustomEntity = RemoteIP, HostCustomEntity = Computer \n), \n(SigninLogs \n| where isnotempty(IPAddress) \n| where IPAddress in (IPList) \n| extend timestamp = TimeGenerated, AccountCustomEntity = UserPrincipalName, IPCustomEntity = IPAddress \n),\n(AADNonInteractiveUserSignInLogs \n| where isnotempty(IPAddress) \n| where IPAddress in (IPList) \n| extend timestamp = TimeGenerated, AccountCustomEntity = UserPrincipalName, IPCustomEntity = IPAddress \n), \n(W3CIISLog  \n| where isnotempty(cIP) \n| where cIP in (IPList) \n| extend timestamp = TimeGenerated, IPCustomEntity = cIP, HostCustomEntity = Computer, AccountCustomEntity = csUserName \n), \n(AzureActivity  \n| where isnotempty(CallerIpAddress) \n| where CallerIpAddress in (IPList) \n| extend timestamp = TimeGenerated, IPCustomEntity = CallerIpAddress, AccountCustomEntity = Caller \n), \n( \nAWSCloudTrail \n| where isnotempty(SourceIpAddress) \n| where SourceIpAddress in (IPList) \n| extend timestamp = TimeGenerated, IPCustomEntity = SourceIpAddress, AccountCustomEntity = UserIdentityUserName \n), \n( \nDeviceNetworkEvents \n| where isnotempty(RemoteIP)  \n| where RemoteIP in (IPList)  \n| extend timestamp = TimeGenerated, IPCustomEntity = RemoteIP, HostCustomEntity = DeviceName  \n),\n(\nAzureDiagnostics\n| where ResourceType == \"AZUREFIREWALLS\"\n| where Category == \"AzureFirewallApplicationRule\"\n| parse msg_s with Protocol \u0027request from \u0027 SourceHost \u0027:\u0027 SourcePort \u0027to \u0027 DestinationHost \u0027:\u0027 DestinationPort \u0027. Action:\u0027 Action\n| where isnotempty(DestinationHost)\n| where DestinationHost has_any (IPList)  \n| extend DestinationIP = DestinationHost \n| extend IPCustomEntity = SourceHost\n),\n(\nAzureDiagnostics\n| where ResourceType == \"AZUREFIREWALLS\"\n| where Category == \"AzureFirewallNetworkRule\"\n| parse msg_s with Protocol \u0027request from \u0027 SourceHost \u0027:\u0027 SourcePort \u0027to \u0027 DestinationHost \u0027:\u0027 DestinationPort \u0027. Action:\u0027 Action\n| where isnotempty(DestinationHost)\n| where DestinationHost has_any (IPList)  \n| extend DestinationIP = DestinationHost \n| extend IPCustomEntity = SourceHost\n)\n)",
+    "QueryFrequency":  {
+                           "Ticks":  864000000000,
+                           "Days":  1,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  1,
+                           "TotalHours":  24,
+                           "TotalMilliseconds":  86400000,
+                           "TotalMinutes":  1440,
+                           "TotalSeconds":  86400
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  864000000000,
+                        "Days":  1,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  1,
+                        "TotalHours":  24,
+                        "TotalMilliseconds":  86400000,
+                        "TotalMinutes":  1440,
+                        "TotalSeconds":  86400
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

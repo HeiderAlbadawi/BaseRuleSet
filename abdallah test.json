@@ -1,0 +1,41 @@
+﻿{
+    "AlertRuleTemplateName":  null,
+    "Description":  "",
+    "DisplayName":  "abdallah test",
+    "DisplayNamesExcludeFilter":  null,
+    "DisplayNamesFilter":  null,
+    "Enabled":  true,
+    "Etag":  "\"d2045e5d-0000-1100-0000-681865660000\"",
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/a5440e4e-118a-4fef-9058-78e1236b93a5",
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1746429286655)\/",
+    "Name":  "a5440e4e-118a-4fef-9058-78e1236b93a5",
+    "ProductFilter":  {
+
+                      },
+    "SeveritiesFilter":  [
+                             {
+
+                             },
+                             {
+
+                             }
+                         ],
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

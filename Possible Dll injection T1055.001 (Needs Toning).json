@@ -1,0 +1,169 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "DLL injection detection by Mohamad Al-Shahwan And Ahmad Altrabsheh",
+    "DisplayName":  "Possible Dll injection T1055.001 (Needs Toning)",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "HostName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "InjectedDLL",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "InitiatingProcessCommandLine",
+                                                       "Identifier":  "CommandLine"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "InitiatingProcessId",
+                                                       "Identifier":  "ProcessId"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"79007dd7-0000-1100-0000-6864f15c0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/b1d9b275-d95c-4f77-8cc7-685cf2bec736",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751445851423)\/",
+    "Name":  "b1d9b275-d95c-4f77-8cc7-685cf2bec736",
+    "Query":  "let CreateRemoteThreadInjections = DeviceEvents\r\n    | where ActionType == \"CreateRemoteThreadApiCall\"\r\n    | extend Method = \"CreateRemoteThread\";\r\nlet MapViewInjections = DeviceEvents\r\n    | where ActionType in (\"MapViewOfFileApiCall\", \"NtMapViewOfSectionApiCall\")\r\n    | extend Method = \"MapViewOfFile/NtMapViewOfSection\";\r\nlet DirectDLLLoadInjections = DeviceEvents\r\n    | where ActionType in (\"LdrLoadDllApiCall\", \"LoadLibraryWApiCall\", \"LoadLibraryExApiCall\")\r\n    | extend Method = \"DirectDLLLoad\";\r\nlet Regsvr32Rundll32Injections = DeviceProcessEvents\r\n    | where FileName in (\"regsvr32.exe\", \"rundll32.exe\")\r\n    | extend Method = \"Regsvr32/Rundll32 Injection\", TargetDLL = extract(@\"(?i)(\\S+\\.dll)\", 1, ProcessCommandLine);\r\nlet InjectionAPIs = union CreateRemoteThreadInjections, MapViewInjections, DirectDLLLoadInjections, Regsvr32Rundll32Injections;\r\n// Refined InjectorID to extract the ProcessId directly\r\nlet InjectorID = AlertEvidence\r\n| where AttackTechniques contains \"T1055.001\"\r\n| extend InjectorProcessId = tolong(parse_json(AdditionalFields).ProcessId) // Convert to long for matching\r\n| where isnotnull(InjectorProcessId) // Ensure the ProcessId was successfully parsed\r\n| project InjectorProcessId; // Only project the ID for efficient joining\r\nlet FilteredInjections = InjectionAPIs\r\n    | extend InitiatingProcess = coalesce(InitiatingProcessFileName, FileName),\r\n             InitiatingProcessId = coalesce(InitiatingProcessId, ProcessId),\r\n             TargetProcess = iff(isempty(FileName) and isnotempty(TargetDLL), TargetDLL, FileName),\r\n             TargetProcessId = coalesce(ProcessId, 0)\r\n    | where InitiatingProcess != TargetProcess\r\n    // Removed the \u0027in\u0027 filter here, as we\u0027ll do an explicit join\r\n    // | where DeviceName contains \"MOH-WIN11-OBORE\"\r\n    ;\r\nFilteredInjections\r\n// Join FilteredInjections with InjectorID on the respective process IDs\r\n| join kind=inner (InjectorID) on $left.InitiatingProcessId == $right.InjectorProcessId\r\n| join kind=inner (\r\n    DeviceImageLoadEvents\r\n    | where FileName endswith \".dll\"\r\n    | extend TargetProcessId = InitiatingProcessId // Assuming InitiatingProcessId in DeviceImageLoadEvents refers to the process that loaded the DLL\r\n    | project InjectedDLL = FileName, DllPath = FolderPath, TargetProcessId, TimeGenerated\r\n    | where DllPath !has \"C:\\\\Windows\\\\System32\\\\\"\r\n) on TargetProcessId\r\n| project TimeGenerated,DeviceId, DeviceName, Method, InitiatingProcess, InitiatingProcessId, InitiatingProcessCommandLine,\r\n          TargetProcess, TargetProcessId, ProcessCommandLine, InjectedDLL, DllPath",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  3000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  5,
+                        "Seconds":  0,
+                        "TotalDays":  0.003472222222222222,
+                        "TotalHours":  0.083333333333333329,
+                        "TotalMilliseconds":  300000,
+                        "TotalMinutes":  5,
+                        "TotalSeconds":  300
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}
