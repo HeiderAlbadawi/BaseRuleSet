@@ -1,0 +1,63 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/43b3f545-ce72-43ed-a9df-86f6e544e3fc\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/43b3f545-ce72-43ed-a9df-86f6e544e3fc\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "NRT",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Possible SSH Brute Force",
+                                             "description":  "This detection identifies potential brute force SSH login attempts by monitoring for more than 10 failed inbound SSH connections from a single IP address within a 5-minute window. Repeated failed login attempts may indicate unauthorized access attempts or credential stuffing.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "DeviceNetworkEvents\r\n| where ActionType == \"SshConnectionInspected\" and RemotePort == 22\r\n| extend fields = parse_json(AdditionalFields)\r\n| extend \r\n    direction = tostring(fields.direction),\r\n    auth_attempts = toint(fields.auth_attempts),\r\n    auth_success = tostring(fields.auth_success)\r\n| where direction == \"In\"\r\n| extend TimeWindow = bin(TimeGenerated, 5m)\r\n| summarize\r\n    FailedAttempts = countif(auth_success == \"false\"),\r\n    SuccessfulAttempts = countif(auth_success == \"true\"),\r\n    FirstSeen = min(TimeGenerated),\r\n    LastSeen = max(TimeGenerated),\r\n    TimeGenerated = arg_max(TimeGenerated, DeviceId, ReportId)\r\n    by TimeWindow, RemoteIP, LocalIP, DeviceName\r\n| where FailedAttempts \u003e 10\r\n| extend AttackOutcome = case(SuccessfulAttempts \u003e 0, \"Success\", \"Failure\")\r\n| project TimeGenerated, RemoteIP, LocalIP, DeviceName, FailedAttempts, SuccessfulAttempts, AttackOutcome, FirstSeen, LastSeen, DeviceId, ReportId",
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "tactics":  [
+                                                             "LateralMovement"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1021"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1021.004"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "AlertPerResult"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

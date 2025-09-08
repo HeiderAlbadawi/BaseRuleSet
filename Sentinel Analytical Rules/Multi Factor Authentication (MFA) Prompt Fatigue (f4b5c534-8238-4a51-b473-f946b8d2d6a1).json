@@ -1,0 +1,78 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/f4b5c534-8238-4a51-b473-f946b8d2d6a1\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/f4b5c534-8238-4a51-b473-f946b8d2d6a1\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Multi Factor Authentication (MFA) Prompt Fatigue",
+                                             "description":  "A user(s) have had multiple MFA requests fail within a 15 minute time period due to the user not completing the MFA prompt. This activity is a known tactic by threat actors to encourage the user to accept the MFA prompts due to repeated attempts made in quick succession.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let threshold = 5;\r\nlet FailedMFASignins = SigninLogs\r\n    | where TimeGenerated \u003e ago(15m)\r\n    | where ResultType == 500121\r\n    | extend isManaged = tostring(parse_json(DeviceDetail).isManaged)\r\n    | extend isJoined = tostring(parse_json(DeviceDetail).trustType)\r\n    | extend isRegistered = tostring(parse_json(DeviceDetail).trustType)\r\n    | project\r\n        TimeGenerated,\r\n        ResultType,\r\n        ResultDescription,\r\n        Identity,\r\n        IPAddress,\r\n        AppDisplayName,\r\n        isManaged,\r\n        isJoined,\r\n        isRegistered\r\n    | summarize \r\n        MFAFailedCount=count() / 2,\r\n        FailedAppsList = make_set(AppDisplayName)\r\n        by bin(TimeGenerated, 60m), Identity, IPAddress, isManaged, isJoined, isRegistered\r\n    | where MFAFailedCount \u003e= threshold;\r\nlet OldestSuccessfulSignin = SigninLogs\r\n    | where ResultType == 0\r\n    | join kind= inner (FailedMFASignins) on IPAddress\r\n    | summarize OldestIPSigninfrom2days = min(TimeGenerated) by IPAddress;\r\nlet SuccessfulMFASignins = SigninLogs\r\n    | where TimeGenerated \u003e ago(15m)\r\n    | where ResultType != 500121 // Assuming non-500121 result type is a successful MFA\r\n    | extend isJoined = tostring(parse_json(DeviceDetail).trustType)\r\n    | extend isRegistered = tostring(parse_json(DeviceDetail).trustType)\r\n    | project TimeGenerated, ResultType, Identity, IPAddress, isJoined, isRegistered\r\n    | summarize SuccessfulMFACount=count() by Identity, IPAddress, isJoined, isRegistered;\r\nlet SameIPUsersSignins = SigninLogs\r\n    | join kind=inner (FailedMFASignins) on IPAddress\r\n    | where not( Identity contains \"-\")\r\n    | distinct Identity,IPAddress\r\n    | summarize SameIPUsers2DaysCount = count() by IPAddress\r\n    | project IPAddress,SameIPUsers2DaysCount;\r\nlet SameIPSuccessfulSignins2Days = SigninLogs\r\n    | where ResultType == 0\r\n    | summarize IPSuccessfulSignins2DaysCount = count() by IPAddress;\r\nlet JoinedAttempt = SigninLogs\r\n| union AADNonInteractiveUserSignInLogs\r\n| where (tostring( parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring( parse_json(DeviceDetail_string).trustType) != \"\") or (DeviceDetail_dynamic or DeviceDetail_string contains \"PII Removed\")\r\n| summarize IPJoinedAttempts2DaysCount = count() by IPAddress;\r\nlet RegistereddAttempt = SigninLogs\r\n| union AADNonInteractiveUserSignInLogs\r\n| where (tostring( parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring( parse_json(DeviceDetail_string).trustType) != \"\") or (DeviceDetail_dynamic or DeviceDetail_string contains \"PII Removed\")\r\n| summarize IPRegisteredAttempts2DaysCount = count() by IPAddress;    \r\nFailedMFASignins\r\n| join kind=inner (SuccessfulMFASignins) on Identity, IPAddress, isJoined, isRegistered\r\n| extend ManagedDevice = iif(isManaged == \"true\", \"Managed\", \"Unmanaged\")\r\n| extend JoinedDevice = iif(isJoined contains \"Azure AD joined\", \"Joined\", \"Not Joined\")\r\n| extend RegisteredDevice = iif(isRegistered contains \"Registered\", \"Registered\", \"Not Registered\")\r\n| project\r\n    TimeGenerated,\r\n    Identity,\r\n    IPAddress,\r\n    MFAFailedCount,\r\n    FailedAppsList,\r\n    SuccessfulMFACount,\r\n    ManagedDevice,\r\n    JoinedDevice,\r\n    RegisteredDevice\r\n| join kind=leftouter (SameIPUsersSignins) on IPAddress\r\n| extend SameIPUsers2DaysCount = coalesce(SameIPUsers2DaysCount, 0)\r\n| join kind= leftouter (SameIPSuccessfulSignins2Days) on $left.IPAddress == $right.IPAddress\r\n| extend IPSuccessfulSignins2DaysCount = coalesce(IPSuccessfulSignins2DaysCount, 0)\r\n| join kind=leftouter (RegistereddAttempt) on $left.IPAddress == $right.IPAddress\r\n| extend IPRegisteredAttempts2DaysCount = coalesce(IPRegisteredAttempts2DaysCount, 0)\r\n| join kind=leftouter  (JoinedAttempt) on $left.IPAddress == $right.IPAddress\r\n| extend IPJoinedAttempts2DaysCount= coalesce(IPJoinedAttempts2DaysCount, 0)\r\n| join kind=leftouter   OldestSuccessfulSignin on IPAddress\r\n| project \r\n    TimeGenerated,\r\n    Identity,\r\n    IPAddress,\r\n    MFAFailedCount,\r\n    FailedAppsList,\r\n    SuccessfulMFACount,\r\n    SameIPUsers2DaysCount,\r\n    IPSuccessfulSignins2DaysCount,\r\n    OldestIPSigninfrom2days,\r\n    IPJoinedAttempts2DaysCount,\r\n    IPRegisteredAttempts2DaysCount,\r\n    ManagedDevice,\r\n    JoinedDevice,\r\n    RegisteredDevice\r\n| where (IPJoinedAttempts2DaysCount == 0 and IPRegisteredAttempts2DaysCount == 0)\r\n",
+                                             "queryFrequency":  "PT15M",
+                                             "queryPeriod":  "PT47H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "InitialAccess"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "Identity"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

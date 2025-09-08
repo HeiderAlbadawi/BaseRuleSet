@@ -1,0 +1,69 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/2da2f3c1-1406-4a44-b94a-ceee25ab1a53\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/2da2f3c1-1406-4a44-b94a-ceee25ab1a53\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Sabbath Ransomware Detection for command and control server - [WC-THREAT]",
+                                             "description":  "Detection for command and control server for the ransom ware gang Sabbath",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "DeviceNetworkEvents \n| where ((RemoteIP =~ \"45.79.55.129\" or RemoteIP =~ \"45.146.166.24\" or RemoteIP =~ \"45.147.230.221\" or RemoteIP =~ \"45.141.84.182\" or RemoteIP =~ \"45.147.230.137\") \nor (RemoteUrl =~ \"aequuira1aedeezais5i.probes.space\" or RemoteUrl =~ \"jeithe7eijeefohch3qu.probes.site\" or RemoteUrl =~ \"datatransferdc.com\" \nor RemoteUrl =~ \"farhadl.com\" or RemoteUrl =~ \"markettc.biz\" or RemoteUrl =~ \"probes.space\" or RemoteUrl =~ \"tinysidney.com\" or RemoteUrl =~ \"helpgoldr.com\" \nor RemoteUrl =~ \"frankir.com\" or RemoteUrl =~ \"greentuks.com\" or RemoteUrl =~ \"aimee0febai5phoht2ti.probes.website\" or RemoteUrl =~ \"cofeeloveers.com\" \nor RemoteUrl =~ \"doratir.com\" or RemoteUrl =~ \"gordonzon.com\" or RemoteUrl =~ \"probes.site\" or RemoteUrl =~ \"probes.website\"))\n",
+                                             "queryFrequency":  "PT15M",
+                                             "queryPeriod":  "PT15M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Collection",
+                                                             "CommandAndControl"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

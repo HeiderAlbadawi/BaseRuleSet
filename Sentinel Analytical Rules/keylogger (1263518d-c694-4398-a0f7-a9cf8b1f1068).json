@@ -1,0 +1,69 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/1263518d-c694-4398-a0f7-a9cf8b1f1068\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/1263518d-c694-4398-a0f7-a9cf8b1f1068\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "keylogger",
+                                             "description":  "This detection identifies suspicious modifications to Windows autorun registry keys such as:\nHKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run or\nHKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run.\n\nThese keys are often abused by malwareâ€”including keyloggersâ€”to gain persistence on the system by configuring executables to launch at user logon. The rule correlates registry changes with known behavior such as input capture (T1056) and native API usage (T1106) to flag potential threats.",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "let test = DeviceRegistryEvents\r\n| where ActionType contains \"set\"\r\n| where RegistryKey contains @\"\\Microsoft\\Windows\\CurrentVersion\\RunOnce\" or RegistryKey contains @\"HKEY_CURRENT_USER\\S-1-5-21-2398930179-339269171-1694419795-1001\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\"\r\n| project DeviceName;\r\nAlertEvidence\r\n| where AccountDomain in~ (test)\r\n| where AttackTechniques contains \"input capture\"\r\n| project Categories, AttackTechniques, AccountDomain, TimeGenerated, Title, AccountName",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Collection",
+                                                             "CredentialAccess"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1056"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1056.001"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

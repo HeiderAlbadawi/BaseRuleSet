@@ -1,0 +1,105 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/cc9ad577-faba-483d-8491-b9a5024f9ae1\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/cc9ad577-faba-483d-8491-b9a5024f9ae1\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[sameer] Trying to Sign-in using Suspicious User Agents",
+                                             "description":  "A User-Agent string is a line of text that a browser or application sends to a web server to identify itself. It typically includes the name and version of the browser/application, the operating system, and the language\n\nThreat actors frequently alter or fabricate User-Agent strings, sometimes aiming to camouflage their traffic within legitimate web requests.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "SigninLogs\r\n| where UserAgent contains \"http_user_agent\"\r\n   or UserAgent contains \"nanodep-godep/0\"\r\n   or UserAgent contains \"kmdjdheyytgebfghehhenegsdfsdf\"\r\n   or UserAgent contains \"User-Agent:Mozilla/\"\r\n   or UserAgent contains \"Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 10.0; WOW64; Trident/7.0; Specula; Microsoft Outlook\"\r\n   or UserAgent contains \"PologiyKolokol\"\r\n   or UserAgent contains \"Windows Explorer\"\r\n   or UserAgent contains \"VisaoAPP\"\r\n   or UserAgent contains \"QQDownload\"\r\n   or UserAgent contains \"dvadcat\"\r\n   or UserAgent contains \"Mozilla/5.0 (compatible; ngrok)\"\r\n   or UserAgent contains \"nimplant\"\r\n   or UserAgent contains \"NimPlant C2 Client\"\r\n   or UserAgent contains \"linux:feeds:v2 (by /u/pico-sh)\"\r\n   or UserAgent contains \"pivotnacci/\"\r\n   or UserAgent contains \"remoteit/\"\r\n   or UserAgent contains \"C2FunctionAgent\"\r\n   or UserAgent contains \"SmartLoader\"\r\n   or UserAgent contains \"Cat\"\r\n   or UserAgent contains \"*.insufficient/*\"\r\n   or UserAgent contains \"*.josephine/*\"\r\n   or UserAgent contains \"*.justice/*\"\r\n   or UserAgent contains \"*.snventor/*\"\r\n   or UserAgent contains \"Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0; rv:11.0) like TsunamiWave\"\r\n   or UserAgent contains \"tunnelto-client\"\r\n   or UserAgent contains \"Yakit/1.0.0\"\r\n   or UserAgent contains \"python-requests/\"\r\n   or UserAgent contains \"WinHTTP\"\r\n   or UserAgent contains \"Microsoft BITS/\"\r\n   or UserAgent contains \"curl/\"\r\n   or UserAgent contains \"*HeadlessChrome*\"\r\n   or UserAgent contains \"*HeadlessEdg*\"\r\n   or UserAgent contains \"Windows_Installer\"\r\n   or UserAgent contains \"PcapXray\"\r\n   or UserAgent contains \"PowerShell/\"\r\n   or UserAgent contains \"WindowsPowerShell/\"\r\n   or UserAgent contains \"PycURL/\"\r\n   or UserAgent contains \"CPython/\"\r\n   or UserAgent contains \"GNU Wget\"\r\n   or UserAgent contains \"wget(\"\r\n   or UserAgent contains \"wget/\"\r\n   or UserAgent contains \"Microsoft-WebDAV-MiniRedir/\"\r\n   or UserAgent contains \"Wireshark/\"\r\n   or UserAgent contains \"Wyzo/\"\r\n   or UserAgent contains \"BitTorrent/\"\r\n   or UserAgent contains \"qBittorrent/\"\r\n   or UserAgent contains \"libtorrent/\"\r\n   or UserAgent contains \"uTorrent/\"\r\n   or UserAgent contains \"Arch Linux\"\r\n   or UserAgent contains \"Docker-Desktop/\"\r\n   or UserAgent contains \"GitHubCopilotChat/\"\r\n   or UserAgent contains \"Hackintosh\"\r\n   or UserAgent contains \"Valve/Steam HTTP Client\"\r\n   or UserAgent contains \"Toolbar\"\r\n   or UserAgent contains \"VirtualBox\"\r\n   or UserAgent contains \"SearchToolbar\"\r\n   or UserAgent contains \"Cr3dOv3r-Framework\"\r\n   or UserAgent contains \"DirBuster-*\"\r\n   or UserAgent contains \"UCCAPI/16.0.13328.20130 OC/16.0.13426.20234\"\r\n   or UserAgent contains \"Rubeus/1.0\"\r\n   or UserAgent contains \"Mozilla/4.0 (Hydra)\"\r\n   or UserAgent contains \"Your Moms Smart Vibrator\"\r\n   or UserAgent contains \"ccminer*\"\r\n   or UserAgent contains \"FUCKUSA\"\r\n   or UserAgent contains \"Lemon-Duck-*\"\r\n   or UserAgent contains \"XMRig\"\r\n   or UserAgent contains \"aws-cli/\"\r\n   or UserAgent contains \"TeslaBrowser/5.5\"\r\n   or UserAgent contains \"rclone/v\"\r\n   or UserAgent contains \"AAAAAAAAAA\"\r\n   or UserAgent contains \"=\"\r\n   or UserAgent contains \"Q2hyb21l*\"\r\n   or UserAgent contains \"QXBwbGVXZWJLaX*\"\r\n   or UserAgent contains \"RGFsdmlr*\"\r\n   or UserAgent contains \"TW96aWxsY*\"\r\n   or UserAgent contains \"EICAR-STANDARD-ANTIVIRUS-TEST-FILE\"\r\n   or UserAgent contains \"; googleweblight)\"\r\n   or UserAgent contains \"pproxy-*\"\r\n   or UserAgent contains \"X11; TAILS;\"\r\n   or UserAgent contains \"yahoomailproxy\"\r\n   or UserAgent contains \"dirhunt\"\r\n   or UserAgent contains \"masscan/*\"\r\n   or UserAgent contains \"ivre-masscan\"\r\n   or UserAgent contains \"python-requests/\"\r\n   or UserAgent contains \"SharpBuster\"\r\n   or UserAgent contains \"bin/bash*\"\r\n   or UserAgent contains \"Python/\"\r\n   or UserAgent contains \"aiohttp/\"\r\n   or UserAgent contains \"etc/passwd*\"\r\n   or UserAgent contains \"127.0.0.1*\"\r\n   or UserAgent contains \"; echo $*\"\r\n   or UserAgent contains \"C:\\\\Users\\\\*\"\r\n   or UserAgent contains \"HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\*\"\r\n   or UserAgent contains \"SELECT*FROM*WHERE*\"\r\n   or UserAgent contains \"SELECT*FROM*Win32_*\"\r\n   or UserAgent contains \"Schtasks /create*\"\r\n   or UserAgent contains \"\\\\Microsoft Windows *\\\\Windows Defender\\\\*\"\r\n   or UserAgent contains \"cmd.exe*\"\r\n   or UserAgent contains \"powershell.exe*\"\r\n   or UserAgent contains \"wget http*\"\r\n   or UserAgent contains \"Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko\"\r\n   or UserAgent contains \"Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0\"\r\n   or UserAgent contains \"Mozilla/6.0 (X11; Linux x86_64; rv:24.0) Gecko/20140205 Firefox/27.0 Iceweasel/25.3.0\"\r\n   or UserAgent contains \"Report Runner\"\r\n   or UserAgent contains \"Kali linux\"\r\n   or UserAgent contains \"kali1-686\"\r\n   or UserAgent contains \"kali1-amd64\"\r\n   or UserAgent contains \"abcd\"\r\n   or UserAgent contains \"${jndi:ldap://*\"\r\n   or UserAgent contains \"nmap icap-client/*\"\r\n   or UserAgent contains \"Microsoft WinRM Client\"\r\n   or UserAgent contains \"xmlset_roodkcableoj28840ybtide\"\r\n   or UserAgent contains \"OWASP\"\r\n   or UserAgent contains \"ModSecurity CRS 3 test*\"\r\n   or UserAgent contains \"-parrot-686*\"\r\n   or UserAgent contains \"-parrot-amd64*\"\r\n   or UserAgent contains \"Dsreg/10.0 (Windows 10.0.19044.1826)\"\r\n   or UserAgent contains \"ruler\"\r\n   or UserAgent contains \"zerodium*\"\r\n   or UserAgent contains \"Microsoft-CryptoAPI/*\"\r\n   or UserAgent contains \"NDES client\"\r\n   or UserAgent contains \"WinHttpRequest\"\r\n   or UserAgent contains \"ace4956e-736e-11e6-9584-d7165ca591df\"\r\n   or UserAgent contains \"ClickAdsByIE\"\r\n   or UserAgent contains \"Intrenet Explorer\"\r\n   or UserAgent contains \"fucking\"\r\n   or UserAgent contains \"JustKidding\"\r\n   or UserAgent contains \"Avast\"\r\n   or UserAgent contains \"ESET NOD32\"\r\n   or UserAgent contains \"AVG\"\r\n   or UserAgent contains \"ESET SECURITY\"\r\n   or UserAgent contains \"Windows Defender\"\r\n   or UserAgent contains \"McAffee\"\r\n   or UserAgent contains \"Google Chrome\"\r\n   or UserAgent contains \"BunnyLoader\"\r\n   or UserAgent contains \"BunnyLoader_Dropper\"\r\n   or UserAgent contains \"BunnyRequester\"\r\n   or UserAgent contains \"BunnyShell\"\r\n   or UserAgent contains \"BunnyStealer\"\r\n   or UserAgent contains \"BunnyTasks\"\r\n   or UserAgent contains \"HeartBeat_Sender\"\r\n   or UserAgent contains \"mfo4engo2m\"\r\n   or UserAgent contains \"WinHTTP Example/1.0\"\r\n   or UserAgent contains \"da58bdb765904300581fe8a818c28cca7c0b62eabd7ce29f181924177c8f13c7\"\r\n   or UserAgent contains \"AE632AE3-FACB-4C1B-8906-FB65A13B01B4\"\r\n   or UserAgent contains \"OnionWClient /\"",
+                                             "queryFrequency":  "P1D",
+                                             "queryPeriod":  "P1D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  2,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Reconnaissance",
+                                                             "InitialAccess",
+                                                             "CommandAndControl"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDisplayNameFormat":  "Trying to Sign-in using Suspicious User Agents",
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "UserDisplayName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPAddress"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "URL",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Url",
+                                                                                                  "columnName":  "UserAgent"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

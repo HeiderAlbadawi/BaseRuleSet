@@ -1,0 +1,77 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/bd23a04f-50ea-445c-b832-78ec3de890a1\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/bd23a04f-50ea-445c-b832-78ec3de890a1\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[Malek] Abusing Cloud Flare Tunnels To Deliver RATS",
+                                             "description":  "This query identifies and analyzes URL click events involving the \".trycloudflare.com\" domain over the past 30 days. It filters relevant URL click events and joins them with corresponding email event details. The output includes the timestamp, URL, recipient email address, sender email addresses, email subject, attachment count, and URL count, providing a comprehensive view of potential phishing activities related to this domain.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let CloudflareDomain = \".trycloudflare.com\";\r\nlet ClickEvents = UrlClickEvents\r\n | where TimeGenerated \u003e ago(5h)\r\n | extend Domain = tostring(parse_url(Url).Host)\r\n | where Domain endswith CloudflareDomain;\r\nlet EmailDetails = EmailEvents;\r\nClickEvents\r\n | join kind=inner (EmailDetails) on NetworkMessageId\r\n | project TimeGenerated, Url, RecipientEmailAddress, SenderMailFromAddress, SenderFromAddress, Subject, AttachmentCount, UrlCount",
+                                             "queryFrequency":  "PT5H",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Execution",
+                                                             "InitialAccess",
+                                                             "Persistence"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDisplayNameFormat":  "Abusing Cloud Flare Tunnels To Deliver RATS",
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

@@ -1,0 +1,105 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/f327a225-a09a-4c54-bd1b-d3051b68f94c\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/f327a225-a09a-4c54-bd1b-d3051b68f94c\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Solorigate Network Beacon",
+                                             "description":  "Identifies a match across various data feeds for domains IOCs related to the Solorigate incident.\n References: https://blogs.microsoft.com/on-the-issues/2020/12/13/customers-protect-nation-state-cyberattacks/, \n https://www.fireeye.com/blog/threat-research/2020/12/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor.html?1",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "let domains = dynamic([\"incomeupdate.com\",\"zupertech.com\",\"databasegalore.com\",\"panhardware.com\",\"avsvmcloud.com\",\"digitalcollege.org\",\"freescanonline.com\",\"deftsecurity.com\",\"thedoccloud.com\",\"virtualdataserver.com\",\"lcomputers.com\",\"webcodez.com\",\"globalnetworkissues.com\",\"kubecloud.com\",\"seobundlekit.com\",\"solartrackingsystem.net\",\"virtualwebdata.com\"]);\n(union isfuzzy=true\n(CommonSecurityLog \n  | parse Message with * \u0027(\u0027 DNSName \u0027)\u0027 * \n  | where DNSName in~ (domains) or DestinationHostName has_any (domains) or RequestURL has_any(domains)\n  | extend AccountCustomEntity = SourceUserID, HostCustomEntity = DeviceName, IPCustomEntity = SourceIP\n  ),\n(DnsEvents \n  | extend DNSName = Name\n  | where isnotempty(DNSName)\n  | where DNSName in~ (domains)\n  | extend IPCustomEntity = ClientIP\n  ),\n(imDns \n  | where isnotempty(Query)\n  | where Query in~ (domains)\n  | extend DNSName = Query\n  | extend IPCustomEntity = SrcIpAddr\n  ),\n(VMConnection \n  | parse RemoteDnsCanonicalNames with * \u0027[\"\u0027 DNSName \u0027\"]\u0027 *\n  | where isnotempty(DNSName)\n  | where DNSName in~ (domains)\n  | extend IPCustomEntity = RemoteIp\n  ),\n(DeviceNetworkEvents \n  | where isnotempty(RemoteUrl) \n  | where RemoteUrl  has_any (domains)  \n  | extend DNSName = RemoteUrl\n  | extend IPCustomEntity = RemoteIP \n  | extend HostCustomEntity = DeviceName \n  ),\n(AzureDiagnostics\n  | where ResourceType == \"AZUREFIREWALLS\"\n  | where Category == \"AzureFirewallDnsProxy\"\n  | parse msg_s with \"DNS Request: \" ClientIP \":\" ClientPort \" - \" QueryID \" \" Request_Type \" \" Request_Class \" \" Request_Name \". \" Request_Protocol \" \" Request_Size \" \" EDNSO_DO \" \" EDNS0_Buffersize \" \" Responce_Code \" \" Responce_Flags \" \" Responce_Size \" \" Response_Duration\n  | where Request_Name has_any (domains)  \n  | extend DNSName = Request_Name\n  | extend IPCustomEntity = ClientIP \n  ),\n(AzureDiagnostics \n  | where ResourceType == \"AZUREFIREWALLS\"\n  | where Category == \"AzureFirewallApplicationRule\"\n  | parse msg_s with Protocol \u0027request from \u0027 SourceHost \u0027:\u0027 SourcePort \u0027to \u0027 DestinationHost \u0027:\u0027 DestinationPort \u0027. Action:\u0027 Action\n  | where isnotempty(DestinationHost)\n  | where DestinationHost has_any (domains)  \n  | extend DNSName = DestinationHost \n  | extend IPCustomEntity = SourceHost\n  ) \n  )",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT30M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "CommandAndControl"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "cecdbd4c-4902-403c-8d4b-32eb1efe460b",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AnyAlert",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "AccountCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "HostCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "DNS",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "DomainName",
+                                                                                                  "columnName":  "DNSName"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

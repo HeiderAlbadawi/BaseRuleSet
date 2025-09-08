@@ -1,0 +1,92 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/d8d22704-21db-44c7-8e19-4f3a86f90209\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/d8d22704-21db-44c7-8e19-4f3a86f90209\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[Elfawair] Detect SharpHound \u0026 AD Explorer Usage",
+                                             "description":  "This query collects LDAP queries executed on systems monitored by Defender for Endpoint. The filter attributes of these queries are extracted and matched against a list of IOCs obtained from popular reconnaissance tools.\n\nDuring the reconnaissance phase attackers attempt to enumerate information on the Active Directory structure by using various LDAP-based discovery queries to identify targets for attack. Popular tools that perform this type of LDAP-based discovery are Sharphound (part of Bloodhound) and AD Explorer.",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "let timeframe = 5h;\r\nlet suspect_search_filter=dynamic([\r\n    \"objectGUID=*\", // AD Explorer IOC\r\n    \"(schemaIDGUID=*)\", // Sharphound IOC\r\n    \"(\u0026(objectclass=computer)(userAccountControl:1.2.840.113556.1.4.803:=8192))\" // Sharphound IOC\r\n    \"(|(samAccountType=805306368)(samAccountType=805306369)(objectclass=organizationalUnit))\", // Sharphound IOC\r\n    \"(|(samaccounttype=268435456)(samaccounttype=268435457)(samaccounttype=536870912)(samaccounttype=536870913))\", // Sharphound IOC\r\n    \"(samAccountType=805306368)(samAccountType=805306369)\" // Sharphound IOC\r\n]);\r\nDeviceEvents\r\n| where ingestion_time() \u003e= ago(timeframe)\r\n| where ActionType =~ \"LdapSearch\"\r\n| where not(InitiatingProcessFolderPath startswith @\"c:\\program files\\azure advanced threat protection sensor\\\" and InitiatingProcessVersionInfoOriginalFileName == @\"Microsoft.Tri.Sensor.exe\")\r\n| extend AdditionalFields=parse_json(AdditionalFields)\r\n| extend SearchFilter=tostring(AdditionalFields.SearchFilter)\r\n| where SearchFilter has_any(suspect_search_filter)\r\n| project-reorder DeviceName, InitiatingProcessFolderPath, SearchFilter, InitiatingProcessCommandLine",
+                                             "queryFrequency":  "PT5H",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Discovery"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1018",
+                                                                "T1482"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Sid",
+                                                                                                  "columnName":  "AccountName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "DeviceId"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

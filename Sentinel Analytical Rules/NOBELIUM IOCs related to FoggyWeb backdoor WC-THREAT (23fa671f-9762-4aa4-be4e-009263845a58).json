@@ -1,0 +1,118 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/23fa671f-9762-4aa4-be4e-009263845a58\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/23fa671f-9762-4aa4-be4e-009263845a58\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "NOBELIUM IOCs related to FoggyWeb backdoor [WC-THREAT]",
+                                             "description":  "Identifies a match across various data feeds for IOCs related to FoggyWeb backdoor by the threat actor NOBELIUM.\n FoggyWeb is a passive and highly targeted backdoor capable of remotely exfiltrating sensitive information from a compromised AD FS server.\n It can also receive additional malicious components from a command-and-control (C2) server and execute them on the compromised server.\n Reference: https://aka.ms/nobelium-foggy-web",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "let iocs = externaldata(DateAdded:string,IoC:string,Type:string,TLP:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Feeds/FoggyWebIOC.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\nlet sha256Hashes = (iocs | where Type == \"sha256\" | project IoC);\nlet FilePaths = (iocs | where Type =~ \"FilePath\" | project IoC);\nlet POST_URI = (iocs | where Type =~ \"URI1\" | project IoC);\nlet GET_URI = (iocs | where Type =~ \"URI2\" | project IoC);\n//Include in the list below, the ADFS servers you know about in your environment.  In the next part of the query, we will try to identify them for you if you have the telemetry.\nlet ADFS_Servers1 = datatable(Computer:string)\n[ \"\u003cADFS01\u003e.\u003cDOMAIN\u003e.\u003cCOM\u003e\",\n\"\u003cADFS02\u003e.\u003cDOMAIN\u003e.\u003cCOM\u003e\"\n];\n// Automatically identify potential ADFS services in your environment by searching process event telemetry for \"Microsoft.IdentityServer.ServiceHost.exe\".\nlet ADFS_Servers2 = \n(union isfuzzy=true\n(SecurityEvent\n| where EventID == 4688 and SubjectLogonId != \"0x3e4\"\n| where ProcessName has \"Microsoft.IdentityServer.ServiceHost.exe\"\n| distinct Computer\n),\n( WindowsEvent\n| where EventID == 4688 and EventData has \"Microsoft.IdentityServer.ServiceHost.exe\" and EventData has \"0x3e4\"\n| extend ProcessName = tostring(EventData.ProcessName)\n| where ProcessName == \"Microsoft.IdentityServer.ServiceHost.exe\"\n| extend SubjectLogonId = tostring(EventData.SubjectLogonId)\n| where SubjectLogonId != \"0x3e4\"\n| distinct Computer\n),\n(DeviceProcessEvents\n| where InitiatingProcessFileName == \u0027Microsoft.IdentityServer.ServiceHost.exe\u0027\n| extend Computer = DeviceName\n| distinct Computer\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\"\n| where EventID == 1\n| extend EventData = parse_xml(EventData).DataItem.EventData.Data\n| mv-expand bagexpansion=array EventData\n| evaluate bag_unpack(EventData)\n| extend Key=tostring([\u0027@Name\u0027]), Value=[\u0027#text\u0027]\n| evaluate pivot(Key, any(Value), TimeGenerated, Source, EventLog, Computer, EventLevel, EventLevelName, UserName, RenderedDescription, MG, ManagementGroupName, Type, _ResourceId)\n| extend process = split(Image, \u0027\\\\\u0027, -1)[-1]\n| where process =~ \"Microsoft.IdentityServer.ServiceHost.exe\"\n| distinct Computer\n)\n);\nlet ADFS_Servers =\nADFS_Servers1\n| union  (ADFS_Servers2 | distinct Computer);\n(union isfuzzy=true\n(DeviceNetworkEvents\n| where DeviceName in (ADFS_Servers)\n| where isnotempty(InitiatingProcessSHA256) or isnotempty(InitiatingProcessFolderPath)\n| where  InitiatingProcessSHA256 has_any (sha256Hashes) or InitiatingProcessFolderPath has_any (FilePaths)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId,  InitiatingProcessParentFileName, InitiatingProcessFileName, RemoteIP, RemoteUrl, RemotePort, LocalIP, Type\n| extend timestamp = TimeGenerated, IPCustomEntity = RemoteIP, HostCustomEntity = DeviceName\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\" and EventID == \u00277\u0027\n| where Computer in (ADFS_Servers)\n| extend EvData = parse_xml(EventData)\n| extend EventDetail = EvData.DataItem.EventData.Data\n| extend ImageLoaded = EventDetail.[5].[\"#text\"], Hashes = EventDetail.[11].[\"#text\"]\n| parse Hashes with * \u0027SHA256=\u0027 SHA256 \u0027\",\u0027 *\n| where ImageLoaded has_any (FilePaths) or SHA256 has_any (sha256Hashes) \n| project TimeGenerated, EventDetail, UserName, Computer, Type, Source, SHA256, ImageLoaded, EventID\n| extend Type = strcat(Type,\":\",EventID, \": \", Source), Account = UserName, FileHash = SHA256, Image = EventDetail.[4].[\"#text\"] \n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = tostring(split(Image, \u0027\\\\\u0027, -1)[-1]), AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(CommonSecurityLog\n| where FileHash in (sha256Hashes)\n| project TimeGenerated,  Message, SourceUserID, FileHash, Type\n| extend timestamp = TimeGenerated, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceEvents\n| where DeviceName in (ADFS_Servers)\n| extend FilePath = strcat(FolderPath, \u0027\\\\\u0027, FileName)\n| where InitiatingProcessSHA256 has_any (sha256Hashes) or FilePath has_any (FilePaths)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceFileEvents\n| where DeviceName in (ADFS_Servers)\n| where FolderPath has_any (FilePaths) or SHA256 has_any (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceImageLoadEvents\n| where DeviceName in (ADFS_Servers)\n| where FolderPath has_any (FilePaths) or SHA256 has_any (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\"\n| where Computer in (ADFS_Servers)\n| extend EvData = parse_xml(EventData)\n| extend EventDetail = EvData.DataItem.EventData.Data\n| parse EventDetail with * \u0027SHA256=\u0027 SHA256 \u0027\",\u0027 *\n| where EventDetail has_any (sha256Hashes) \n| project TimeGenerated, EventDetail, UserName, Computer, Type, Source, SHA256\n| extend Type = strcat(Type, \": \", Source), Account = UserName, FileHash = SHA256, Image = EventDetail.[4].[\"#text\"] \n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = tostring(split(Image, \u0027\\\\\u0027, -1)[-1]), AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(W3CIISLog \n| where ( csMethod == \u0027GET\u0027 and csUriStem has_any (GET_URI)) or (csMethod == \u0027POST\u0027 and csUriStem has_any (POST_URI))\n| summarize StartTime = max(TimeGenerated), EndTime = min(TimeGenerated), cIP_MethodCount = count() \nby cIP, cIP_MethodCountType = \"Count of repeated entries, this is to reduce rowsets returned\", csMethod, \ncsHost, scStatus, sIP, csUriStem, csUriQuery, csUserName, csUserAgent, csCookie, csReferer\n| extend timestamp = StartTime, IPCustomEntity = cIP, HostCustomEntity = csHost, AccountCustomEntity = csUserName\n),\n(imFileEvent\n| where DvcHostname in (ADFS_Servers)\n| where TargetFileSHA256 has_any (sha256Hashes) or FilePath has_any (FilePaths)\n| extend Account = ActorUsername, Computer = DvcHostname, IPAddress = SrcIpAddr, CommandLine = ActingProcessCommandLine, FileHash = TargetFileSHA256\n| project Type, TimeGenerated, Computer, Account, IPAddress, CommandLine, FileHash\n)\n)",
+                                             "queryFrequency":  "PT15M",
+                                             "queryPeriod":  "PT15M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Collection"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1005"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "c37711a4-5f44-4472-8afc-0679bc0ef966",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "AccountCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "HostCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "FileHash",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Algorithm",
+                                                                                                  "columnName":  "AlgorithmCustomEntity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "Value",
+                                                                                                  "columnName":  "FileHashCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Process",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "ProcessId",
+                                                                                                  "columnName":  "ProcessCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  "2.1.1"
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

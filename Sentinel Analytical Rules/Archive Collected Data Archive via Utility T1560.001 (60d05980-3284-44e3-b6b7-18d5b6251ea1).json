@@ -1,0 +1,100 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/60d05980-3284-44e3-b6b7-18d5b6251ea1\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/60d05980-3284-44e3-b6b7-18d5b6251ea1\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Archive Collected Data: Archive via Utility T1560.001",
+                                             "description":  "Test rule By Mohamad Al-Shahwan and Ahmad Altrabsheh for Archive Collected Data: Archive via Utility T1560.001",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let ExfilDomains = dynamic([\"dropbox.com\", \"googleapis.com\", \"onedrive.live.com\", \"mega.nz\", \"pastebin.com\", \"anonfiles.com\", \"transfer.sh\", \"cdn.discordapp.com\", \"discord.com\"]);\r\nlet ArchiveSoftwares = dynamic([\"7z.exe\", \"7zG.exe\", \"7za.exe\", \"zip.exe\", \"rar.exe\", \"tar.exe\", \"compact.exe\", \"powerarchiver.exe\", \"winrar.exe\"]);\r\nlet ArchiveExtensions = dynamic([\".zip\", \".rar\", \".7z\", \".tar.gz\", \".cab\", \".gzip\", \".tar\"]);\r\nlet StagingTools = dynamic([\"robocopy.exe\", \"xcopy.exe\", \"copy.exe\", \"move.exe\", \"cmd.exe\", \"bash.exe\", \"wsl.exe\", \"git-bash.exe\"]);\r\nlet ArchiveEvents = DeviceFileEvents\r\n    | where ActionType == \"FileCreated\" or ActionType contains \"Rename\"\r\n    | where InitiatingProcessFileName has_any (ArchiveSoftwares)\r\n    | where FileName has_any (ArchiveExtensions)\r\n    | extend\r\n        ArchiveFileName = FileName,\r\n        ArchiveFilePath = FolderPath,\r\n        FileCreatedTime = TimeGenerated, // Keep TimeGenerated as FileCreatedTime\r\n        FileSizeMB = round(todouble(FileSize) / 1024 / 1024, 2)\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        ArchiveFileName,\r\n        ArchiveFilePath,\r\n        FileCreatedTime,\r\n        FileSizeMB,\r\n        ArchiveProcess = InitiatingProcessFileName,\r\n        ArchiveCommand = InitiatingProcessCommandLine;\r\nlet SuspiciousConnections = DeviceNetworkEvents\r\n    | extend RemoteUrlLower = tolower(RemoteUrl)\r\n    | where RemoteUrlLower has_any (ExfilDomains)\r\n    | extend ConnectionTime = TimeGenerated // Keep TimeGenerated as ConnectionTime\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        RemoteUrl = RemoteUrlLower,\r\n        ConnectionTime,\r\n        ExfilProcess = InitiatingProcessFileName,\r\n        ExfilCommand = InitiatingProcessCommandLine,\r\n        Action = \"Outbound to C2/Storage\";\r\nlet StagingActivityProcess = DeviceProcessEvents\r\n    | where InitiatingProcessFileName has_any (StagingTools)\r\n    | where ProcessCommandLine has_any (\r\n        // Windows staging commands\r\n        \"copy\", \"xcopy\", \"robocopy\", \"move\"\r\n        )\r\n    | extend StagingTime = TimeGenerated // Keep TimeGenerated as StagingTime\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        StagingProcess = InitiatingProcessFileName,\r\n        StagingCommand = ProcessCommandLine,\r\n        StagingTime;\r\nlet StagingActivityPowerShell = DeviceEvents\r\n    | where ActionType == \"PowerShellCommand\"\r\n    | where InitiatingProcessCommandLine has_any (\"Copy-Item\", \"Move-Item\", \"Get-ChildItem\", \"Out-File\", \"Export-CSV\", \"mv\", \"cp\")\r\n    | extend StagingTime = TimeGenerated // Keep TimeGenerated as StagingTime\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        StagingProcess = InitiatingProcessFileName, // This will capture \"powershell.exe\" or similar\r\n        StagingCommand = InitiatingProcessCommandLine,\r\n        StagingTime;\r\nlet StagingActivity = union StagingActivityProcess, StagingActivityPowerShell;\r\nArchiveEvents\r\n| join kind=inner (\r\n    SuspiciousConnections\r\n    )\r\n    on DeviceId\r\n| where ConnectionTime between ((FileCreatedTime - 5m) .. (FileCreatedTime + 5m)) // Direct comparison for 10-minute window around archive creation\r\n| join kind=inner (\r\n    StagingActivity\r\n    )\r\n    on DeviceId\r\n| where (StagingTime between ((FileCreatedTime - 30m) .. (FileCreatedTime))) // Direct comparison for 30-minute window before archive creation\r\n| extend TimeGenerated = FileCreatedTime // Use the primary event time for Sentinel\u0027s rule engine\r\n| project\r\n    TimeGenerated,\r\n    DeviceName,\r\n    FileCreatedTime,\r\n    ArchiveFileName,\r\n    ArchiveFilePath,\r\n    FileSizeMB,\r\n    RemoteUrl,\r\n    ConnectionTime,\r\n    ArchiveProcess,\r\n    ArchiveCommand,\r\n    ExfilProcess,\r\n    ExfilCommand,\r\n    StagingProcess,\r\n    StagingCommand,\r\n    StagingTime,\r\n    Action",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Collection"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  {
+                                                                   "DeviceName":  "DeviceName",
+                                                                   "Archive_File":  "ArchiveFileName",
+                                                                   "RemoteURL":  "RemoteUrl"
+                                                               },
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "DeviceName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "File",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "ArchiveFileName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Process",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "CommandLine",
+                                                                                                  "columnName":  "ArchiveCommand"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

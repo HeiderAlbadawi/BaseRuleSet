@@ -1,0 +1,28 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/3638a919-5430-4da7-8e04-6083c4956c91\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/3638a919-5430-4da7-8e04-6083c4956c91\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "MicrosoftSecurityIncidentCreation",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Create incidents based on Microsoft Defender for Office 365 alerts  - [WC-O365]",
+                                             "description":  "Create incidents based on all alerts generated in Microsoft Defender for Office 365",
+                                             "enabled":  true,
+                                             "productFilter":  "Office 365 Advanced Threat Protection",
+                                             "severitiesFilter":  null,
+                                             "displayNamesFilter":  null,
+                                             "displayNamesExcludeFilter":  null,
+                                             "alertRuleTemplateName":  "ee1d718b-9ed9-4a71-90cd-a483a4f008df"
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

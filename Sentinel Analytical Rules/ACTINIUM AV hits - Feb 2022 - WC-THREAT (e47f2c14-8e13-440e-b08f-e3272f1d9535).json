@@ -1,0 +1,100 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/e47f2c14-8e13-440e-b08f-e3272f1d9535\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/e47f2c14-8e13-440e-b08f-e3272f1d9535\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "ACTINIUM AV hits - Feb 2022 - [WC-THREAT]",
+                                             "description":  "Identifies a match in the Security Alert table for MDATP hits related to the ACTINIUM actor",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "let iocs = externaldata(DateAdded:string,IoC:string,Type:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Feeds/ActiniumIOC.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\nlet AVHits = (iocs | where Type =~ \"AVDetection\"| project IoC);\nSecurityAlert\n| where ProviderName == \u0027MDATP\u0027\n| extend ThreatName_ = tostring(parse_json(ExtendedProperties).ThreatName)\n| where ThreatName_ has_any (AVHits)\n| extend Directory = tostring(parse_json(Entities)[0].Directory), SHA256 = tostring(parse_json(tostring(parse_json(Entities)[0].FileHashes))[2].Value), FileName = tostring(parse_json(Entities)[0].Name), Hostname = tostring(parse_json(Entities)[6].FQDN)| extend AccountName = tostring(parse_json(tostring(parse_json(Entities)[6].LoggedOnUsers))[0].AccountName)\n| project TimeGenerated, AlertName, ThreatName_, ProviderName, AlertSeverity, Description, RemediationSteps, ExtendedProperties, Entities, FileName,SHA256, Directory, Hostname, AccountName\n| extend timestamp = TimeGenerated, HostCustomEntity = Hostname , AccountCustomEntity = AccountName,  FileHashCustomEntity = SHA256",
+                                             "queryFrequency":  "PT15M",
+                                             "queryPeriod":  "PT15M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Persistence"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "18dbdc22-b69f-4109-9e39-723d9465f45f",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "AccountCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "HostCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "FileHash",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Algorithm",
+                                                                                                  "columnName":  "FileHashCustomEntity"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "Value",
+                                                                                                  "columnName":  "FileHashCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  "1.0.0"
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

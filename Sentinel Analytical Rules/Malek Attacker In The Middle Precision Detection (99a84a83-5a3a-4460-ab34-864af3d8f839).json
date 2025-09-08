@@ -1,0 +1,66 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/99a84a83-5a3a-4460-ab34-864af3d8f839\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/99a84a83-5a3a-4460-ab34-864af3d8f839\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "NRT",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[Malek] Attacker In The Middle Precision Detection",
+                                             "description":  "This rule is designed to identify potential \"attacker-in-the-middle\" scenarios by correlating security alerts for anomalous token usage with Azure Active Directory (AAD) user risk events. This rule assists in detecting instances where an attacker might be attempting to intercept or manipulate authentication tokens.",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "let AnomalousTokenRequestId = \r\nSecurityAlert\r\n| where AlertName == \"Anomalous Token\" and TimeGenerated \u003e ago(1h) \r\n| mv-expand todynamic(Entities) \r\n| project RequestId = tostring(Entities.RequestId) \r\n| distinct RequestId;\r\nAADUserRiskEvents\r\n| where TimeGenerated \u003e ago(1h) \r\n| where RequestId has_any(AnomalousTokenRequestId) \r\n| where RiskEventType == \"attackerinTheMiddle\"",
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "tactics":  [
+                                                             "InitialAccess",
+                                                             "Persistence",
+                                                             "CredentialAccess",
+                                                             "Discovery"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

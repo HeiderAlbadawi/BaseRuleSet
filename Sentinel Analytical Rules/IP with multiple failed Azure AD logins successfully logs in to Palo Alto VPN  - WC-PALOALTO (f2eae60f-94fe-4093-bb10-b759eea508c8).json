@@ -1,0 +1,97 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/f2eae60f-94fe-4093-bb10-b759eea508c8\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/f2eae60f-94fe-4093-bb10-b759eea508c8\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "IP with multiple failed Azure AD logins successfully logs in to Palo Alto VPN  - [WC-PALOALTO]]",
+                                             "description":  "This query creates a list of IP addresses with a number failed login attempts to AAD \nabove a set threshold.  It then looks for any successful Palo Alto VPN logins from any\nof these IPs within the same timeframe.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "//Set a threshold of failed AAD signins from an IP address within 1 day above which we want to deem those logins suspicious.\nlet signin_threshold = 5; \n//Make a list of IPs with AAD signin failures above our threshold.\nlet aadFunc = (tableName:string){\nlet suspicious_signins = \n    table(tableName)\n    //Looking for logon failure results\n    | where ResultType !in (\"0\", \"50125\", \"50140\")\n    //Exclude localhost addresses to reduce the chance of FPs\n    | where IPAddress !in (\"127.0.0.1\", \"::1\")\n    | summarize count() by IPAddress\n    | where count_ \u003e  signin_threshold\n    | summarize make_set(IPAddress);\n    suspicious_signins\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nlet suspicious_signins = \nunion isfuzzy=true aadSignin, aadNonInt\n| summarize make_set(set_IPAddress);\n//See if any of those IPs have sucessfully logged into PA VPNs during the same timeperiod\nCommonSecurityLog\n    //Select only PA VPN sucessful logons\n    | where DeviceVendor == \"Palo Alto Networks\" and DeviceEventClassID == \"globalprotect\"\n    | where Message has \"GlobalProtect gateway user authentication succeeded\"\n    //Parse out the logon source IP from the Message field to match on\n    | extend SourceIP = extract(\"Login from: ([^,]+)\", 1, Message) \n    | where SourceIP in (suspicious_signins)\n    | extend Reason = \"Multiple failed AAD logins from SourceIP\"\n    //Parse out other useful information from Message field\n    | extend User = extract(\u0027User name: ([^,]+)\u0027, 1, Message) \n    | extend ClientOS = extract(\u0027Client OS version: ([^,\\\"]+)\u0027, 1, Message)\n    | extend Location = extract(\u0027Source region: ([^,]{2})\u0027,1, Message)\n    | project TimeGenerated, Reason, SourceIP, User, ClientOS, Location, Message, DeviceName, ReceiptTime, DeviceVendor, DeviceEventClassID, Computer, FileName\n    | extend AccountCustomEntity = User, IPCustomEntity = SourceIP, timestamp = TimeGenerated, HostCustomEntity = DeviceName",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "PT1H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "InitialAccess",
+                                                             "CredentialAccess"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "ba144bf8-75b8-406f-9420-ed74397f9479",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5M",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "AccountCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "HostCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

@@ -1,0 +1,68 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/620d0e0d-52db-486b-9b19-4ce88e026a84\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/620d0e0d-52db-486b-9b19-4ce88e026a84\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Hidden Files",
+                                             "description":  "This attack simulates the use of attrib.exe to mark an executable file as hidden (+h), as part of a defense evasion technique. The adversary hides a payload to avoid casual inspection by users or administrators and may subsequently execute the hidden file to perform malicious actions without drawing attention.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let hidden_files = \r\nDeviceProcessEvents\r\n| where FileName =~ \"attrib.exe\"\r\n| where ProcessCommandLine has \"+h\"\r\n| extend HiddenTarget = extract(@\"\\.\\\\([^\\s]+\\.exe)\", 1, ProcessCommandLine)\r\n| where isnotempty(HiddenTarget)\r\n| project DeviceName, HiddenTarget, HiddenTimestamp = Timestamp, ProcessCommandLine;\r\nDeviceProcessEvents\r\n| where FileName endswith \".exe\"\r\n| join kind=inner (\r\n    hidden_files\r\n) on DeviceName\r\n| where FolderPath startswith HiddenTarget or ProcessCommandLine contains HiddenTarget\r\n| project \r\n    Timestamp,\r\n    DeviceName,\r\n    AccountName,\r\n    FileName,\r\n    FolderPath,\r\n    InitiatingProcessFileName,\r\n    ProcessCommandLine,\r\n    HiddenTarget,\r\n    HiddenTimestamp\r\n| order by Timestamp desc",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "DefenseEvasion"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1564"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1564.001"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

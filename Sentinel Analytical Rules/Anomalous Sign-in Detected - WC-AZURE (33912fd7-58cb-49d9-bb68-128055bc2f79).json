@@ -1,0 +1,97 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/33912fd7-58cb-49d9-bb68-128055bc2f79\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/33912fd7-58cb-49d9-bb68-128055bc2f79\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Anomalous Sign-in Detected - [WC-AZURE]",
+                                             "description":  "Detects successful sign-ins using single/multi factor authentication where the device, location, and ASN are abnormal.\nMulti factor authentications pose an opportunity to access compromised accounts, investigate these for anomalous occurrencess.\nRef: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-devices#non-compliant-device-sign-in",
+                                             "severity":  "Low",
+                                             "enabled":  true,
+                                             "query":  "let known_locations = (SigninLogs\r\n    | where TimeGenerated between(ago(14d) .. ago(1h))\r\n    | where ResultType == 0\r\n    | extend LocationDetail = strcat(Location, \"-\", LocationDetails.state)\r\n    | summarize by LocationDetail);\r\nlet AnomalousSignIn = SigninLogs\r\n| where TimeGenerated \u003e ago(1h) // CHANGE IT DEPENDING ON RULE FREQUENCY\r\n| where ResultType != 50126 and ResultType != 50053\r\n| where isnotempty(Location) and isnotempty(LocationDetails.state)\r\n| extend AnomalousLocationDetail = strcat(Location, \"-\", LocationDetails.state)\r\n| where AnomalousLocationDetail !in (known_locations);\r\nlet ManagedAttempts = SigninLogs\r\n| union AADNonInteractiveUserSignInLogs\r\n| where TimeGenerated \u003e ago(14d)\r\n| where (tostring( parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring( parse_json(DeviceDetail_string).trustType) != \"\") or (DeviceDetail_dynamic or DeviceDetail_string contains \"PII Removed\")\r\n| distinct IPAddress;\r\nlet UserKnownLocations = SigninLogs\r\n| where TimeGenerated between(ago(14d) .. ago(1h))\r\n| where ResultType == 0\r\n| extend LocationState = strcat(Location, \"-\", LocationDetails.state)\r\n| summarize UserKnownStates = make_set(LocationState), UserKnownCountries = make_set(Location) by UserPrincipalName;\r\nAnomalousSignIn\r\n| join kind=leftouter UserKnownLocations on UserPrincipalName\r\n| summarize Device = make_set(DeviceDetail),ClientApp =make_set(ClientAppUsed),Set_Result = make_set(ResultType),Set_Status = make_set(Status),Applications = make_set(AppDisplayName),RiskType = make_set(RiskEventTypes),RiskTypeV2 = make_set(RiskEventTypes_V2),UserAgent = make_set(UserAgent),TimeGenerated = min(TimeGenerated),NormalStatesfrom2weeks = make_set(UserKnownStates),NormalCountriesfrom2weeks = make_set(UserKnownCountries) ,AuthDetails = make_set(AuthenticationDetails) by UserPrincipalName,IPAddress,AnomalousLocationDetail,Location\r\n| join kind=leftanti ManagedAttempts on IPAddress\r\n| project-reorder\r\n    TimeGenerated,\r\n    UserPrincipalName,\r\n    IPAddress,\r\n    AnomalousLocationDetail,\r\n    Location,\r\n    NormalStatesfrom2weeks,\r\n    NormalCountriesfrom2weeks,\r\n    Set_Result,\r\n    Set_Status,\r\n    AuthDetails,\r\n    Applications,\r\n    Device,\r\n    ClientApp,\r\n    UserAgent,\r\n    RiskType,\r\n    RiskTypeV2\r\n| where NormalCountriesfrom2weeks has Location",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "P14D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "InitialAccess",
+                                                             "CredentialAccess"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "UserPrincipalName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPAddress"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "AnomalousLocationDetail"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

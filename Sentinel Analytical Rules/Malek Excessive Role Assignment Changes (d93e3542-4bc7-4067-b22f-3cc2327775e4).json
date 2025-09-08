@@ -1,0 +1,70 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/d93e3542-4bc7-4067-b22f-3cc2327775e4\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/d93e3542-4bc7-4067-b22f-3cc2327775e4\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[Malek] Excessive Role Assignment Changes",
+                                             "description":  "This query retrieves and analyzes Azure activity logs for role assignments over the past 48 hours. It focuses on identifying operations where role assignments were modified (\"MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE\"). The query filters these activities within the specified time range and summarizes the data by counting the number of operations performed by each caller within each resource group. It then selects only those entries where more than three such operations occurred, orders the results by the count in descending order, and projects the caller, resource group, start time, end time, and count of operations.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let startTime = ago(48h);\r\nlet endTime = now();\r\nlet roleChanges = AzureActivity\r\n| where TimeGenerated between (startTime .. endTime)\r\n| where OperationNameValue == \"MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE\"\r\n| summarize Count = count(), StartTime = min(TimeGenerated),\r\nEndTime = max(TimeGenerated) by Caller, ResourceGroup\r\n| where Count \u003e 3\r\n| order by Count desc;\r\nroleChanges\r\n| project Caller, ResourceGroup, StartTime, EndTime, Count",
+                                             "queryFrequency":  "PT3H",
+                                             "queryPeriod":  "PT3H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "CredentialAccess",
+                                                             "Evasion",
+                                                             "Persistence"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

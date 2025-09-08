@@ -1,0 +1,68 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/1b829ac8-6bb3-470d-9ab8-a2bfc38716d4\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/1b829ac8-6bb3-470d-9ab8-a2bfc38716d4\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  " Chinese APT Uses WMIC to Execute Commands to list System  - [WC-THREAT]",
+                                             "description":  " This rule detects suspicious Chinese APT activity by using WMIC to run commands to list computers and collect information about the system. ",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "SecurityEvent |  where EventID == 1 | where (NewProcessName endswith \u0027wmic\u0027 and CommandLine contains \u0027process get\u0027 and CommandLine contains \u0027CSName\u0027 and CommandLine contains \u0027Description\u0027 and CommandLine contains \u0027ExecutablePath\u0027 and CommandLine contains \u0027ProcessId\u0027 and CommandLine contains \u0027/format\u0027 and CommandLine matches regex \u0027(?i).*CSIDL_SYSTEM\\\\wbem\\\\zh-tw\\\\.*.xsl.*\u0027 and CommandLine contains \u0027os get\u0027 and CommandLine contains \u0027name\u0027 and CommandLine contains \u0027version\u0027 and CommandLine contains \u0027InstallDate\u0027 and CommandLine contains \u0027LastBootUpTime\u0027 and CommandLine contains \u0027LocalDateTime\u0027 and CommandLine contains \u0027Manufacturer\u0027 and CommandLine contains \u0027RegisteredUser\u0027 and CommandLine contains \u0027ServicePackMajorVersion\u0027 and CommandLine contains \u0027SystemDirectory\u0027)\n",
+                                             "queryFrequency":  "PT15M",
+                                             "queryPeriod":  "PT15M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "InitialAccess"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1190"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

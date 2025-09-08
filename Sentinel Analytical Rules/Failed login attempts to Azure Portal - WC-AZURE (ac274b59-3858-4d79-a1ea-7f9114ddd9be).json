@@ -1,0 +1,87 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/ac274b59-3858-4d79-a1ea-7f9114ddd9be\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/ac274b59-3858-4d79-a1ea-7f9114ddd9be\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Failed login attempts to Azure Portal - [WC-AZURE]",
+                                             "description":  "Identifies failed login attempts in the Azure Active Directory SigninLogs to the Azure Portal.  Many failed logon \nattempts or some failed logon attempts from multiple IPs could indicate a potential brute force attack.  \nThe following are excluded due to success and non-failure results:\nReferences: https://docs.microsoft.com/azure/active-directory/reports-monitoring/reference-sign-ins-error-codes\n0 - successful logon\n50125 - Sign-in was interrupted due to a password reset or password registration entry.\n50140 - This error occurred due to \u0027Keep me signed in\u0027 interrupt when the user was signing-in.",
+                                             "severity":  "Low",
+                                             "enabled":  true,
+                                             "query":  "let timeRange = 1d;\nlet lookBack = 7d;\nlet threshold_Failed = 5;\nlet threshold_FailedwithSingleIP = 20;\nlet threshold_IPAddressCount = 2;\nlet isGUID = \"[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}\";\nlet aadFunc = (tableName: string) {\n    let azPortalSignins = materialize(table(tableName)\n        | where TimeGenerated \u003e= ago(lookBack)\n        // Azure Portal only\n        | where AppDisplayName =~ \"Azure Portal\")\n    ;\n    let successPortalSignins = azPortalSignins\n        | where TimeGenerated \u003e= ago(timeRange)\n        // Azure Portal only and exclude non-failure Result Types\n        | where ResultType in (\"0\", \"50125\", \"50140\")\n        // Tagging identities not resolved to friendly names\n        //| extend Unresolved = iff(Identity matches regex isGUID, true, false)\n        | distinct TimeGenerated, UserPrincipalName\n    ;\n    let failPortalSignins = azPortalSignins\n        | where TimeGenerated \u003e= ago(timeRange)\n        // Azure Portal only and exclude non-failure Result Types\n        | where ResultType !in (\"0\", \"50125\", \"50140\", \"70044\", \"70043\")\n        // Tagging identities not resolved to friendly names\n        | extend Unresolved = iff(Identity matches regex isGUID, true, false)\n    ;\n    // Verify there is no success for the same connection attempt after the fail\n    let failnoSuccess = failPortalSignins\n        | join kind= leftouter (\n            successPortalSignins \n            )\n            on UserPrincipalName\n        | where TimeGenerated \u003e TimeGenerated1 or isempty(TimeGenerated1)\n        | project-away TimeGenerated1, UserPrincipalName1\n    ;\n    // Lookup up resolved identities from last 7 days\n    let identityLookup = azPortalSignins\n        | where TimeGenerated \u003e= ago(lookBack)\n        | where not(Identity matches regex isGUID)\n        | summarize\n            by\n            UserId,\n            lu_UserDisplayName = UserDisplayName,\n            lu_UserPrincipalName = UserPrincipalName;\n    // Join resolved names to unresolved list from portal signins\n    let unresolvedNames = failnoSuccess\n        | where Unresolved == true\n        | join kind= inner (\n            identityLookup \n            )\n            on UserId\n        | extend UserDisplayName = lu_UserDisplayName, UserPrincipalName = lu_UserPrincipalName\n        | project-away lu_UserDisplayName, lu_UserPrincipalName;\n    // Join Signins that had resolved names with list of unresolved that now have a resolved name\n    let u_azPortalSignins = failnoSuccess\n        | where Unresolved == false\n        | union unresolvedNames;\n    u_azPortalSignins\n    | extend\n        DeviceDetail = todynamic(DeviceDetail),\n        Status = todynamic(DeviceDetail),\n        LocationDetails = todynamic(LocationDetails)\n    | extend\n        Status = strcat(ResultType, \": \", ResultDescription),\n        OS = tostring(DeviceDetail.operatingSystem),\n        Browser = tostring(DeviceDetail.browser)\n    | extend\n        State = tostring(LocationDetails.state),\n        City = tostring(LocationDetails.city),\n        Region = tostring(LocationDetails.countryOrRegion)\n    | extend FullLocation = strcat(Region, \u0027|\u0027, State, \u0027|\u0027, City)\n    | summarize\n        TimeGenerated = makelist(TimeGenerated),\n        Status = makelist(Status),\n        IPAddresses = makelist(IPAddress),\n        IPAddressCount = dcount(IPAddress),\n        FailedLogonCount = count()\n        by\n        UserPrincipalName,\n        UserId,\n        UserDisplayName,\n        AppDisplayName,\n        Browser,\n        OS,\n        FullLocation,\n        Type\n    | mvexpand TimeGenerated, IPAddresses, Status\n    | extend\n        TimeGenerated = todatetime(tostring(TimeGenerated)),\n        IPAddress = tostring(IPAddresses),\n        Status = tostring(Status)\n    | project-away IPAddresses\n    | summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated)\n        by\n        UserPrincipalName,\n        UserId,\n        UserDisplayName,\n        Status,\n        FailedLogonCount,\n        IPAddress,\n        IPAddressCount,\n        AppDisplayName,\n        Browser,\n        OS,\n        FullLocation,\n        Type\n    | where (IPAddressCount \u003e= threshold_IPAddressCount and FailedLogonCount \u003e= threshold_Failed) or FailedLogonCount \u003e= threshold_FailedwithSingleIP\n    | extend\n        timestamp = StartTime,\n        AccountCustomEntity = UserPrincipalName,\n        IPCustomEntity = IPAddress\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nlet alerttable = union isfuzzy=true aadSignin, aadNonInt;\nlet IPManagedAttempts = SigninLogs\n| union AADNonInteractiveUserSignInLogs\n| where tostring(parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring(parse_json(DeviceDetail_string).trustType) != \"\"\n| summarize IPManagedAttemptsCount = count() by IPAddress;\nalerttable\n| join kind=leftouter IPManagedAttempts on IPAddress\n| extend IPManagedAttemptsCount = coalesce(IPManagedAttemptsCount,0)\n| project-away IPAddress1\n| where IPManagedAttemptsCount == 0\n",
+                                             "queryFrequency":  "P1D",
+                                             "queryPeriod":  "P7D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "CredentialAccess"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "223db5c1-1bf8-47d8-8806-bed401b356a4",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "P1D",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "AccountCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPCustomEntity"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

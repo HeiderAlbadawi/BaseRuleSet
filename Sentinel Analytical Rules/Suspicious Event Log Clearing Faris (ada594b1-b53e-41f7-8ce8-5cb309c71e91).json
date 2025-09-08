@@ -1,0 +1,63 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/ada594b1-b53e-41f7-8ce8-5cb309c71e91\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/ada594b1-b53e-41f7-8ce8-5cb309c71e91\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "NRT",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Suspicious Event Log Clearing [Faris]",
+                                             "description":  "This detection identifies potential tampering of the Windows event logs using tools such as wevtutil, Clear-EventLog, PowerShell, or VBScript. Clearing logs is a common technique used by attackers to erase evidence of malicious activity and evade detection.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let WevtutilEvents = DeviceProcessEvents\r\n| where InitiatingProcessAccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\")\r\n| where FileName in~ (\"wevtutil.exe\", \"powershell.exe\", \"cmd.exe\", \"wscript.exe\", \"cscript.exe\")\r\n| where (\r\n    ProcessCommandLine has_any (\"wevtutil cl\", \"Remove-Item\", \".evtx\", \"clear-log\", \"cl System\", \"cl Security\", \"cl Application\")\r\n    or ProcessCommandLine matches regex @\"(?i)(wevtutil|clear\\-log|Clear\\-EventLog|cl)\\s+(Security|System|Application)\"\r\n)\r\n| where ProcessCommandLine !contains \"cl /?\"\r\n| project TimeGenerated, DeviceName, InitiatingProcessAccountName, InitiatingProcessParentFileName, ProcessCommandLine,InitiatingProcessCommandLine, Source = \"DeviceProcessEvents\", ReportId, DeviceId;\r\nlet ClearEventLogEvents = DeviceEvents\r\n| where ActionType == \"PowerShellCommand\"\r\n| where InitiatingProcessAccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\")\r\n| where tostring(parse_json(AdditionalFields).Command) has \"Clear-EventLog\"\r\n| project TimeGenerated, DeviceName, InitiatingProcessAccountName, InitiatingProcessParentFileName,ProcessCommandLine = tostring(parse_json(AdditionalFields).Command),InitiatingProcessCommandLine, Source = \"DeviceEvents\", ReportId, DeviceId;\r\nWevtutilEvents\r\n| union ClearEventLogEvents\r\n| order by TimeGenerated desc\r\n",
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "tactics":  [
+                                                             "DefenseEvasion"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1070"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1070.001"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "AlertPerResult"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

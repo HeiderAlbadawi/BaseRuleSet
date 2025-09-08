@@ -1,0 +1,68 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/b6ecd3aa-119a-42b9-a121-032f3fef8c2c\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/b6ecd3aa-119a-42b9-a121-032f3fef8c2c\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[DEV] [Ayham Assaf] Process Dumping Using Silent Process Exit",
+                                             "description":  "",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "DeviceEvents\n| where ActionType == \u0027OpenProcessApiCall\u0027\n| join (DeviceFileEvents\n    | where FileName endswith \"dmp\")\n    on DeviceId, InitiatingProcessCreationTime, InitiatingProcessId\n| join (DeviceRegistryEvents\n    | where RegistryKey has_any (@\"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\\", @\"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SilentProcessExit\\\")\n    | where RegistryValueName in (\"LocalDumpFolder\", \"DumpType\", \"GlobalFlag\", \"ReportingMode\"))\n    on DeviceId\n//Ayham_Assaf\n| distinct \n    DeviceName,\n    TargetProcess=FileName,\n    DumpSize=FileSize1,\n    DumpName=FileName1,\n    InitiatingProcessFileName2,\n    InitiatingProcessCommandLine2,\n    InitiatingProcessParentFileName2\n//https://www.deepinstinct.com/blog/lsass-memory-dumps-are-stealthier-than-ever-before-part-2\n\n",
+                                             "queryFrequency":  "PT5H",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "CredentialAccess"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1003"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1003.001"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

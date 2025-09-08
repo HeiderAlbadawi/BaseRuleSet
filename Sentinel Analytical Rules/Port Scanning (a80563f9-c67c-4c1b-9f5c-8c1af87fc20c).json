@@ -1,0 +1,65 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/a80563f9-c67c-4c1b-9f5c-8c1af87fc20c\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/a80563f9-c67c-4c1b-9f5c-8c1af87fc20c\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "NRT",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Port Scanning",
+                                             "description":  "Detects potential port scanning activity from a host.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "DeviceNetworkEvents\r\n| where ActionType == \"ConnectionAttempt\"\r\n| where isnotempty(RemoteIP) \r\n| summarize \r\n    DistinctPorts = dcount(LocalPort), \r\n    StartTime = min(TimeGenerated), \r\n    EndTime = max(TimeGenerated), \r\n    AttemptCount = count(),\r\n    arg_max(TimeGenerated, DeviceId, DeviceName)\r\n    by RemoteIP, bin(TimeGenerated, 5m)\r\n| where DistinctPorts \u003e= 5\r\n| extend ReportId = strcat(\"PortScan_\", DeviceId, \"_\", RemoteIP, \"_\", format_datetime(StartTime, \"yyyyMMddHHmm\"))\r\n| project \r\n    TimeGenerated,DeviceName,RemoteIP,DistinctPorts,StartTime,EndTime,AttemptCount, DeviceId,ReportId\r\n| sort by DistinctPorts desc",
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "tactics":  [
+                                                             "Discovery"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1046"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "AlertPerResult"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

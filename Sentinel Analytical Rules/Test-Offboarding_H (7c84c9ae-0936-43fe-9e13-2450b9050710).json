@@ -1,0 +1,80 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/7c84c9ae-0936-43fe-9e13-2450b9050710\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/7c84c9ae-0936-43fe-9e13-2450b9050710\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Test-Offboarding_H",
+                                             "description":  "",
+                                             "severity":  "Medium",
+                                             "enabled":  false,
+                                             "query":  "let terminated_users = _GetWatchlist(\"HalaWatchlist\") \r\n| project User = SearchKey;\r\nlet file_downloads = OfficeActivity \r\n| where (RecordType == \"SharePointFileOperation\" or RecordType == \"OneDriveFileOperation\") \r\n| where Operation == \"FileDownloaded\" \r\n| where UserId in (terminated_users) \r\n| summarize DownloadedFiles = make_set(SourceFileName) by UserId \r\n| extend Action = \"Downloaded files from SharePoint/OneDrive\";\r\nlet secure_link_creation = OfficeActivity \r\n| where UserId in (terminated_users) \r\n| where Operation == \"SecureLinkCreated\" \r\n| summarize LinksCreated = make_set(SourceFileName) by UserId \r\n| extend Action = \"Created secure links\";\r\nlet added_users_to_links = OfficeActivity \r\n| where UserId in (terminated_users) \r\n| where Operation == \"AddedToSecureLink\" \r\n| summarize AddedUsers = make_set(TargetUserOrGroupName) by UserId \r\n| extend Action = \"Added users to secure links\";\r\nlet guest_added = OfficeActivity \r\n| where Operation == \"AddedToSecureLink\" \r\n| where TargetUserOrGroupType == \"Guest\" \r\n| where UserId in (terminated_users) \r\n| summarize GuestsAdded = make_set(TargetUserOrGroupName) by UserId \r\n| extend Action = \"Added guest user to secure link\";\r\nlet cloud_file_sharing_sites = dynamic([\r\n    \"box.com\", \"drive.google.com\", \"dropbox.com\", \"mega.io\", \"mediafire.com\", \r\n    \"pCloud.com\", \"sync.com\", \"zoho.com\", \"Tresorit.com\", \"nextcloud.com\", \r\n    \"spideroak.com\", \"onedrive.com\", \"we.tl\", \"sendspace.com\", \"hightail.com\", \r\n    \"icloud.com\", \"4shared.com\", \"rapidshare.com\", \"zippyshare.com\", \r\n    \"filefactory.com\", \"sugarsync.com\", \"transfernow.net\", \"sendgb.com\", \r\n    \"files.fm\", \"smash.com\", \"sharefile.com\", \"gofile.io\", \"uploadfiles.io\", \r\n    \"filemail.com\", \"transfer.pcloud.com\"\r\n]);\r\nlet cloud_access = DeviceNetworkEvents \r\n| where RemoteUrl in (cloud_file_sharing_sites) \r\n| where InitiatingProcessAccountUpn in (terminated_users) \r\n| summarize AccessedSites = make_set(RemoteUrl) by InitiatingProcessAccountUpn \r\n| extend Action = \"Accessed cloud file-sharing sites\";\r\nlet external_emails = EmailEvents \r\n| where SenderFromAddress  in (terminated_users) \r\n| where RecipientEmailAddress !contains \"synergyhousing.com\" and RecipientEmailAddress !contains \"synergyglobalhousing\" \r\n| summarize RecipientEmails = make_set(RecipientEmailAddress), EmailSubjects = make_set(Subject), EmailCount = count() by SenderFromAddress \r\n| extend Action = \"Sent emails to external recipients\";\r\nlet specific_apps = dynamic([\"notion.so\", \"wetransfer.com\", \"discord.com\"]);\r\nlet app_usage = DeviceNetworkEvents \r\n| where RemoteUrl in (specific_apps) \r\n| where InitiatingProcessAccountUpn in (terminated_users) \r\n| summarize AccessedApps = make_set(RemoteUrl) by InitiatingProcessAccountUpn \r\n| extend Action = \"Accessed Notion, WeTransfer, or Discord\";\r\nlet recent_signins = SigninLogs \r\n| where UserPrincipalName in (terminated_users) \r\n| summarize RecentSignins = make_list(pack(\"TimeGenerated\", TimeGenerated, \"IPAddress\", IPAddress, \"AppDisplayName\", AppDisplayName, \"Status\", Status), 3) by UserPrincipalName \r\n| extend Action = \"Recent sign-ins\";\r\nlet actions_summary = file_downloads \r\n| union secure_link_creation \r\n| union added_users_to_links \r\n| union guest_added \r\n| union cloud_access \r\n| union external_emails \r\n| union app_usage \r\n| union recent_signins \r\n| summarize Actions = make_set(Action), DownloadedFiles = make_set(DownloadedFiles), LinksCreated = make_set(LinksCreated), AddedUsers = make_set(AddedUsers), GuestsAdded = make_set(GuestsAdded), AccessedSites = make_set(AccessedSites), RecipientEmails = make_set(RecipientEmails), EmailSubjects = make_set(EmailSubjects), AccessedApps = make_set(AccessedApps), RecentSignins = make_set(RecentSignins) by UserId = coalesce(UserId, InitiatingProcessAccountUpn, SenderFromAddress, UserPrincipalName);\r\nactions_summary \r\n| extend Summary = strcat(\"User: \", UserId, \"\\nActions: \\n - \", Actions, \"\\nDetails:\\n - Downloaded Files: \", tostring(DownloadedFiles), \"\\n - Links Created: \", tostring(LinksCreated), \"\\n - Added Users to Links: \", tostring(AddedUsers), \"\\n - Guests Added: \", tostring(GuestsAdded), \"\\n - Accessed Cloud Sites: \", tostring(AccessedSites), \"\\n - Sent Emails: \", tostring(RecipientEmails), \"\\n - Email Subjects: \", tostring(EmailSubjects), \"\\n - Accessed Apps: \", tostring(AccessedApps), \"\\n - Recent Sign-ins: \", tostring(RecentSignins)) \r\n| project UserId, Summary",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "P1D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Exfiltration"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  {
+                                                                   "Summary":  "Summary"
+                                                               },
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "UserId"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

@@ -1,0 +1,70 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/f4923fff-3d9f-4bf7-b599-b30cb603fe4a\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/f4923fff-3d9f-4bf7-b599-b30cb603fe4a\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Conti Ransomware Detection - [WC-THREAT]",
+                                             "description":  "Detects the IOC and processes used by the Conti Ransomware gang ",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "DeviceProcessEvents \n| where (ProcessCommandLine contains \"Get-DataInfo.ps1\" and (FolderPath endswith \"\\\\powershell.exe\") and (InitiatingProcessFolderPath endswith \"\\\\cmd.exe\"))\nand ProcessCommandLine contains \"Delete Shadows /all /quiet\"\nor ProcessCommandLine contains \"net stop \\\"SQLsafe Backup Service\\\" /y\"\nor ProcessCommandLine contains \"net stop \\\"Acronis VSS Provider\\\" /\"\nor ProcessCommandLine contains \"net stop \\\"Veeam Backup Catalog Data Service\\\" /y\"\nor ProcessCommandLine contains \"net stop BackupExecAgentAccelerator /y\"\nor ProcessCommandLine contains \"net stop BackupExecAgentBrowser /y\"\nor ProcessCommandLine contains \"net stop BackupExecDeviceMediaService /y\"\nor ProcessCommandLine contains \"net stop mozyprobackup /y\"\nor ProcessCommandLine contains \"net stop SQLAgent$SQLEXPRESS /y\"\nor ProcessCommandLine contains \"net stop BackupExecJobEngine /y\"\nor ProcessCommandLine contains \"cmd.exe /c vssadmin Delete Shadows /all /quiet\"\nor ProcessCommandLine contains \"cmd.exe /c vssadmin resize shadowstorage \\\\*\"\n",
+                                             "queryFrequency":  "PT15M",
+                                             "queryPeriod":  "PT15M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Execution",
+                                                             "Persistence",
+                                                             "CommandAndControl"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

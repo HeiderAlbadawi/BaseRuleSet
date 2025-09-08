@@ -1,0 +1,124 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/9a6b1dbb-0f5b-4cac-a59e-94092813dd56\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/9a6b1dbb-0f5b-4cac-a59e-94092813dd56\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Potential Ransomware activity related to Cobalt Strike",
+                                             "description":  "This query searches for alerts related to suspected ransomware and Cobalt Strike activity, a tool used in numerous ransomware campaigns. It looks for alerts that indicate potential ransomware activity, such as attempts to clear security event logs, delete backup files, and execute Cobalt Strike malware.",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "// Look for sc.exe disabling services\nAlertInfo \n// Attempts to clear security event logs. \n| where Title in(\"Event log was cleared\", \n// List alerts flagging attempts to delete backup files. \n\"File backups were deleted\", \n// Potential Cobalt Strike activity - Note that other threat activity can also \n// trigger alerts for suspicious decoded content \n\"Suspicious decoded content\", \n// Cobalt Strike activity \n\"\\\u0027Atosev\\\u0027 malware was detected\", \n\"\\\u0027Ploty\\\u0027 malware was detected\", \n\"\\\u0027Bynoco\\\u0027 malware was detected\",\n\"\\\u0027Cobaltstrike\\\u0027 malware was detected\",\n\"Echo command over pipe on localhost\",\n\"Known attack framework activity was observed\",\n\"An active \\\u0027Cobaltstrike\\\u0027 malware was detected\",\n\"Suspicious \\\u0027CobaltStrike\\\u0027 behavior was prevented\",\n\"Suspicious process launch by Rundll32.exe\") \n| extend AlertTime = TimeGenerated | distinct AlertTime, AlertId, Title \n| join AlertEvidence on $left.AlertId == $right.AlertId\n| summarize by DeviceId, AlertTime, Title, AlertId\n// Get device IDs\n| join DeviceLogonEvents on $left.DeviceId == $right.DeviceId \n// Creating 10 day Window surrounding alert activity \n| where TimeGenerated \u003c AlertTime + 12h and TimeGenerated \u003e AlertTime - 12h // Projecting specific columns \n| project Title, DeviceName, DeviceId, TimeGenerated, LogonType, AccountDomain, AccountName, AccountSid, AlertTime, AlertId, RemoteIP, RemoteDeviceName\n| extend AccountFullName = tostring(strcat(AccountDomain, \"\\\\\", AccountName))\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+                                             "queryFrequency":  "P1D",
+                                             "queryPeriod":  "P1D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT1H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Execution",
+                                                             "Persistence",
+                                                             "DefenseEvasion",
+                                                             "Impact"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1059",
+                                                                "T1078",
+                                                                "T1070",
+                                                                "T1490"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "4bd9ce9d-8586-4beb-8fdb-bd018cacbe7d",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "DeviceName"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "HostName"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "DnsDomain",
+                                                                                                  "columnName":  "DnsDomain"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "AccountFullName"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "AccountName"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "DnsDomain",
+                                                                                                  "columnName":  "AccountDomain"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "RemoteIP"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  "1.0.1"
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

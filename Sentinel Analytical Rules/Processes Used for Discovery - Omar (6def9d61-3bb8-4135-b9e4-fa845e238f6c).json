@@ -1,0 +1,68 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/6def9d61-3bb8-4135-b9e4-fa845e238f6c\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/6def9d61-3bb8-4135-b9e4-fa845e238f6c\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Processes Used for Discovery - Omar",
+                                             "description":  "",
+                                             "severity":  "Informational",
+                                             "enabled":  true,
+                                             "query":  "DeviceProcessEvents\r\n| where ActionType == \"ProcessCreated\"\r\n| where ProcessCommandLine has_any (\r\n    \"tasklist\", \"Get-Process\", \"wmic process list\", \"gwmi win32_process\",\r\n    \"Get-WmiObject\", \"sc query\", \"sc queryex\", \"sc qc\", \"systeminfo\",\r\n    \"hostname\", \"ipconfig\", \"net\", \"dsquery\", \"quser\", \"qwinsta\", \"whoami\"\r\n)\r\n| where InitiatingProcessFileName !in~ (\r\n    \"explorer.exe\", \"cmd.exe\", \"powershell.exe\", \"powershell_ise.exe\", \r\n    \"wmiprvse.exe\", \"services.exe\", \"msedge.exe\", \"chrome.exe\"\r\n)\r\n| where AccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\", \"svc_backup\", \"domain\\\\itadmin\")\r\n| where not(ProcessCommandLine has_any (\r\n    \"Get-Process | Where-Object\", \r\n    \"tasklist /v\", \r\n    \"sc query type=\", \r\n    \"wmic process list brief\"\r\n))\r\n| project \r\n    TimeGenerated,\r\n    DeviceName,\r\n    AccountName,\r\n    AccountDomain,\r\n    FileName,\r\n    ProcessCommandLine,\r\n    InitiatingProcessFileName,\r\n    InitiatingProcessCommandLine,\r\n    Technique = \"T1057 - Process Discovery\",\r\n    SourceTable = \"DeviceProcessEvents\"\r\n| sort by TimeGenerated desc\r\n",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "P2D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Discovery"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1057"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

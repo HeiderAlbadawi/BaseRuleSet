@@ -1,0 +1,31 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/6caf3202-3b8e-457a-8e10-74bebc347cf9\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/6caf3202-3b8e-457a-8e10-74bebc347cf9\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "MicrosoftSecurityIncidentCreation",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Azure Defender only medium and high alerts",
+                                             "description":  "Azure Defender only medium and high alerts",
+                                             "enabled":  true,
+                                             "productFilter":  "Azure Security Center",
+                                             "severitiesFilter":  [
+                                                                      "High",
+                                                                      "Medium"
+                                                                  ],
+                                             "displayNamesFilter":  null,
+                                             "displayNamesExcludeFilter":  null,
+                                             "alertRuleTemplateName":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

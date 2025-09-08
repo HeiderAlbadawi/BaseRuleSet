@@ -1,0 +1,75 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/a4767908-4f55-438e-a017-9eeb128ac4a4\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/a4767908-4f55-438e-a017-9eeb128ac4a4\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Kylene Naiomi Bondoc Brute Force Attack",
+                                             "description":  "Brute Force Attempt for failed logins",
+                                             "severity":  "Informational",
+                                             "enabled":  true,
+                                             "query":  "SigninLogs\r\n| where ResultType == \"50053\"\r\n| summarize MinTime = min(TimeGenerated), MaxTime = max(TimeGenerated), IPAddresses = make_set(IPAddress),\r\n        Locations = make_set(Location), Results = make_set(ResultDescription) by UserPrincipalName\r\n| union SigninLogs\r\n| join kind=inner (SigninLogs\r\n| where ResultType == \"50126\"\r\n| summarize UserCount = count() by UserPrincipalName\r\n| where UserCount \u003e= 2) on UserPrincipalName\r\n| where ResultType == \"50126\"\r\n| summarize MinTime = min(TimeGenerated), MaxTime = max(TimeGenerated), IPAddresses = make_set(IPAddress),\r\n        Locations = make_set(Location), Results = make_set(ResultDescription) by UserPrincipalName",
+                                             "queryFrequency":  "PT5H",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "CredentialAccess"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1110"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDisplayNameFormat":  "Failed Brute Force Attacks from {{{UserPrincipalName}} ",
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

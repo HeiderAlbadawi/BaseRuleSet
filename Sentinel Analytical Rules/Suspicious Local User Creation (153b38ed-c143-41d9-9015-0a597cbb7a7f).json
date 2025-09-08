@@ -1,0 +1,63 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/153b38ed-c143-41d9-9015-0a597cbb7a7f\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/153b38ed-c143-41d9-9015-0a597cbb7a7f\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "NRT",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Suspicious Local User Creation",
+                                             "description":  "Detects creation of new local user accounts followed by immediate addition to privileged groups (especially Administrators) within 5 minutes. Attackers use this technique to establish persistence by creating backdoor accounts.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let userCreations = \r\n    DeviceEvents\r\n    | where ActionType == \"UserAccountCreated\"\r\n    | extend NewUserSid = AccountSid\r\n    | project TimeGenerated, DeviceName, NewUser = AccountName, NewUserSid, DeviceId, ReportId;\r\nlet adminAdditions = \r\n    DeviceEvents\r\n    | where ActionType == \"UserAccountAddedToLocalGroup\"\r\n    | extend GroupSid = tostring(parse_json(AdditionalFields).GroupSid),\r\n             GroupName = tostring(parse_json(AdditionalFields).GroupName),\r\n             AddedUserSid = AccountSid\r\n    | where GroupSid == \"S-1-5-32-544\"  \r\n    | project AdminAddTime = TimeGenerated, DeviceName, AddedUserSid, GroupName, GroupSid, ReportId, DeviceId;\r\nuserCreations\r\n| join kind=leftouter (\r\n    adminAdditions\r\n) on $left.NewUserSid == $right.AddedUserSid, $left.DeviceName == $right.DeviceName\r\n| extend TimeDelta = AdminAddTime - TimeGenerated\r\n| where isnull(AdminAddTime) or (AdminAddTime between (TimeGenerated .. (TimeGenerated + 5min)))\r\n| project TimeGenerated, DeviceName,NewUser, NewUserSid, AdminAddTime, GroupName, GroupSid, TimeDelta, WasAddedToAdmins = iif(isnull(AdminAddTime), \"No\", \"Yes\"), DeviceId, ReportId\r\n",
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "tactics":  [
+                                                             "Persistence"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1136"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1136.001"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "AlertPerResult"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

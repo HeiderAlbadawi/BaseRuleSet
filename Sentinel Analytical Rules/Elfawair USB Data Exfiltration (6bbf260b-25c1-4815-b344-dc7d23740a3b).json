@@ -1,0 +1,93 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/6bbf260b-25c1-4815-b344-dc7d23740a3b\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/6bbf260b-25c1-4815-b344-dc7d23740a3b\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "[Elfawair] USB Data Exfiltration",
+                                             "description":  "Detects created files on an external mounted device.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let TestData = DeviceFileEvents\r\n| where ActionType in (\"FileRenamed\", \"FileModified\", \"FileDeleted\", \"FileCreated\")\r\n| where FileName startswith \"ElfawairTest\"\r\n| summarize\r\n    Files = make_set(FolderPath),\r\n    FilesCount = dcount(FolderPath),\r\n    Starttime = min(TimeGenerated),\r\n    EndTime = max(TimeGenerated),\r\n    Actions = make_set(ActionType)\r\n    by\r\n    InitiatingProcessAccountName,\r\n    DeviceName,\r\n    DeviceId,\r\n    InitiatingProcessAccountUpn\r\n| mv-expand Files;\r\nlet DeviceNameToSearch = \u0027\u0027; // DeviceName to search for. Leave blank to search all devices.\r\nlet TimespanInSeconds = 3600; // Period of time between device insertion and file copy\r\nlet DriveLetter = DeviceEvents\r\n    | where ActionType has \"UsbDriveMounted\"\r\n    | extend USBDriveLetter = tostring(AdditionalFields.DriveLetter)\r\n    | project DeviceId, DeviceName, USBDriveLetter\r\n    | where isnotempty( USBDriveLetter);\r\nlet Connections =\r\n    DeviceEvents\r\n    | where (isempty(DeviceNameToSearch) or DeviceName =~ DeviceNameToSearch) and ActionType == \"PnpDeviceConnected\"\r\n    | extend parsed = parse_json(AdditionalFields)\r\n    | project\r\n        DeviceId,\r\n        DeviceName,\r\n        ConnectionTime = Timestamp,\r\n        DriveClass = tostring(parsed.ClassName),\r\n        UsbDeviceId = tostring(parsed.DeviceId),\r\n        ClassId = tostring(parsed.DeviceId),\r\n        DeviceDescription = tostring(parsed.DeviceDescription),\r\n        VendorIds = tostring(parsed.VendorIds)\r\n    | where DriveClass == \u0027USB\u0027 and DeviceDescription == \u0027USB Mass Storage Device\u0027\r\n    | join kind=inner DriveLetter on DeviceId, DeviceName\r\n    | project-away DeviceId1, DeviceName1;\r\nDeviceFileEvents\r\n| where ActionType in (\"FileRenamed\", \"FileModified\", \"FileDeleted\", \"FileCreated\")\r\n| where (isempty(DeviceNameToSearch) or DeviceName =~ DeviceNameToSearch)\r\n| join kind=inner Connections on DeviceId, DeviceName\r\n| project-away DeviceId1, DeviceName1\r\n| where FolderPath startswith USBDriveLetter\r\n| summarize\r\n    Files = make_set(FolderPath),\r\n    FilesCount = dcount(FolderPath),\r\n    Starttime = min(TimeGenerated),\r\n    EndTime = max(TimeGenerated),\r\n    Actions = make_set(ActionType),\r\n    USBIDs = make_set(UsbDeviceId)\r\n    by\r\n    InitiatingProcessAccountName,\r\n    USBDriveLetter,\r\n    DriveClass,\r\n    DeviceName,\r\n    DeviceId,\r\n    InitiatingProcessAccountUpn\r\n| mv-expand Files\r\n| union TestData;",
+                                             "queryFrequency":  "PT5H",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "DeviceName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "AadUserId",
+                                                                                                  "columnName":  "InitiatingProcessAccountName"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

@@ -1,0 +1,106 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/ff626796-de6e-40a6-b868-c1c7fd05dd9b\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/ff626796-de6e-40a6-b868-c1c7fd05dd9b\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Suspicious Process Discovery Activity (T1057 - General Detection) - Test",
+                                             "description":  "Detects the use of common system utilities and commands associated with process enumeration. This behavior may indicate reconnaissance activity consistent with MITRE ATT\u0026CK Technique T1057 â€“ Process Discovery.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| where FileName in~ (\"tasklist.exe\", \"wmic.exe\", \"powershell.exe\", \"cmd.exe\", \"ps.exe\", \"sh.exe\", \"bash.exe\")\r\n   and ProcessCommandLine has_any (\r\n        \"tasklist\",\r\n        \"wmic process\",\r\n        \"Get-Process\",\r\n        \"gwmi win32_process\",\r\n        \"ps -aux\",\r\n        \"ps -ef\",\r\n        \"pgrep\",\r\n        \"pidof\",\r\n        \"top\",\r\n        \"htop\"\r\n     )\r\n| where InitiatingProcessFileName !in~ (\r\n    \"services.exe\", \"explorer.exe\", \"svchost.exe\", \"lsass.exe\", \"csrss.exe\", \r\n    \"dwm.exe\", \"wininit.exe\", \"winlogon.exe\", \"senseir.exe\"\r\n)\r\n| where AccountName !in~ (\r\n    \"NT AUTHORITY\\\\SYSTEM\",\r\n    \"NT AUTHORITY\\\\LOCAL SERVICE\",\r\n    \"NT AUTHORITY\\\\NETWORK SERVICE\",\r\n    \"system\"\r\n)\r\n| where not(ProcessCommandLine has_any (\r\n    \"NinjaRMM\", \"Kaseya\", \"SCCM\", \"SolarWinds\", \"Qualys\", \"McAfee\", \"CrowdStrike\"\r\n))\r\n| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, FolderPath, ReportId\r\n",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Reconnaissance",
+                                                             "Discovery"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1057"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "DeviceName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "File",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "FileName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "AccountName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Process",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "CommandLine",
+                                                                                                  "columnName":  "ProcessCommandLine"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

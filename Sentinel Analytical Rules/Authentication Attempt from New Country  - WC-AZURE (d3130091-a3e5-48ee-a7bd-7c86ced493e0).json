@@ -1,0 +1,98 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/d3130091-a3e5-48ee-a7bd-7c86ced493e0\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/d3130091-a3e5-48ee-a7bd-7c86ced493e0\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Authentication Attempt from New Country  - [WC-AZURE]",
+                                             "description":  "Detects when there is an INTERACTIVE log in attempt from a country that has not seen a successful login in the previous 14 days. Also identifies NON-INTERACTIVE log in attempts from blacklisted countries.\n  Threat actors may attempt to authenticate with credentials from compromised accounts - monitoring attempts from anomalous locations may help identify these attempts.\n  Authentication attempts should be investigated to ensure the activity was legitimate and if there is other similar activity.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-user-accounts#monitoring-for-failed-unusual-sign-ins",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let KnownLocations = SigninLogs\n    | where TimeGenerated between(ago(14d) .. ago(1h))\n    | where ResultType == 0\n    | summarize UserKnownLocation = make_set(Location) by UserPrincipalName;\nlet AnomalousSignIn = SigninLogs\n    | where TimeGenerated \u003e ago(1h) // CHANGE IT DEPENDING ON RULE FREQUENCY\n    | where ResultType in (0,500121)\n    | where isnotempty(Location)\n    | join kind=leftouter KnownLocations on UserPrincipalName\n    | where tostring(parse_json(DeviceDetail).trustType) == \"\"\n    | extend AnomalousLocationDetail = Location\n    | where not(UserKnownLocation has AnomalousLocationDetail);\nlet ManagedAttempts = SigninLogs\n    | union AADNonInteractiveUserSignInLogs\n    | where TimeGenerated \u003e ago(14d)\n    | where (tostring(parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring(parse_json(DeviceDetail_string).trustType) != \"\") or (DeviceDetail_dynamic or DeviceDetail_string contains \"PII Removed\")\n    | summarize IPManagedAttempts = count() by IPAddress;\nlet NonInterKnownLocation = AADNonInteractiveUserSignInLogs\n    | where TimeGenerated between (ago(14d) .. ago(1h))\n    | where ResultType == 0\n    | summarize NonInterKnownLocations = make_set(Location) by UserPrincipalName;\nlet AnomalousNonInterSignin = AADNonInteractiveUserSignInLogs\n    | where TimeGenerated \u003e ago(1h)\n    | join kind=leftouter NonInterKnownLocation on UserPrincipalName\n    | where ResultType != 50126 and ResultType != 50053\n    | where isnotempty(Location)\n    | where not(NonInterKnownLocations has Location)\n    | where Location in (\"RU\", \"UA\", \"DZ\", \"AO\", \"BJ\", \"BW\", \"BF\", \"BI\", \"CM\", \"CV\", \"CF\", \"TD\", \"KM\", \"CD\", \"CI\", \"DJ\", \"EG\", \"GQ\", \"ER\", \"SZ\", \"ET\", \"GA\", \"GM\", \"GH\", \"GW\", \"KE\", \"LS\", \"LR\", \"MG\", \"MW\", \"ML\", \"MR\", \"MU\", \"YT\", \"MA\", \"MZ\", \"NA\", \"NE\", \"NG\", \"RE\", \"RW\", \"SH\", \"ST\", \"SN\", \"SC\", \"SL\", \"SO\", \"ZA\", \"SS\", \"SD\", \"TZ\", \"TG\", \"TN\", \"UG\", \"EG\")\n    | summarize\n        Device = make_set(DeviceDetail),\n        ClientApp =make_set(ClientAppUsed),\n        Set_Result = make_set(ResultType),\n        Set_Status = make_set(Status),\n        Applications = make_set(AppDisplayName),\n        RiskType = make_set(RiskEventTypes),\n        RiskTypeV2 = make_set(RiskEventTypes_V2),\n        UserAgent = make_set(UserAgent),\n        Time = make_set(TimeGenerated, 1),\n        NormalLocationsfrom2weeks = make_set(NonInterKnownLocations),\n        AuthDetails = make_set(AuthenticationDetails)\n        by UserPrincipalName, IPAddress, Location, Type\n    | join kind=leftouter ManagedAttempts on IPAddress\n    | extend IPManagedAttempts = coalesce(IPManagedAttempts, 0)\n    | project-away IPAddress1\n    | project-reorder\n        Time,\n        UserPrincipalName,\n        IPAddress,\n        Location,\n        NormalLocationsfrom2weeks,\n        Type,\n        Set_Result,\n        Set_Status,\n        AuthDetails,\n        Applications,\n        Device,\n        ClientApp,\n        UserAgent,\n        RiskType,\n        RiskTypeV2,\n        IPManagedAttempts\n    | where IPManagedAttempts == 0;\nlet GetEmailDetails = SigninLogs\n| where TimeGenerated \u003e ago(14d)\n| where isnotempty(DeviceDetail.operatingSystem ) or isnotempty(parse_json(DeviceDetail).browser )\n| extend Device = iff(isempty( DeviceDetail.operatingSystem),(tostring(parse_json(DeviceDetail).browser)),(tostring(parse_json(DeviceDetail).operatingSystem)))\n| extend Device = iff(Device contains \"Safari\",\"Ios \",Device)\n| summarize Devices = make_set(Device), ResultType = make_set(ResultType), AuthenticationRequirement = make_set(AuthenticationRequirement) by UserPrincipalName,IPAddress,Location,LocationDetail = strcat(Location, \"-\", LocationDetails.state)\n| extend SuccessorFailed = iff(array_index_of(ResultType, \"0\") != -1, \"successful\", \"failed\");\nAnomalousSignIn\n| summarize\n    Device = make_set(DeviceDetail),\n    ClientApp =make_set(ClientAppUsed),\n    Set_Result = make_set(ResultType),\n    Set_Status = make_set(Status),\n    Applications = make_set(AppDisplayName),\n    RiskType = make_set(RiskEventTypes),\n    RiskTypeV2 = make_set(RiskEventTypes_V2),\n    UserAgent = make_set(UserAgent),\n    Time = min(TimeGenerated),\n    NormalLocationsfrom2weeks = make_set(UserKnownLocation),\n    AuthDetails = make_set(AuthenticationDetails)\n    by UserPrincipalName, IPAddress, AnomalousLocationDetail\n| join kind=leftouter ManagedAttempts on IPAddress\n| extend IPManagedAttempts = coalesce(IPManagedAttempts, 0)\n| project-away IPAddress1\n| join kind=leftouter GetEmailDetails on UserPrincipalName,IPAddress,$left.AnomalousLocationDetail == $right.Location\n| extend formatted_time = format_datetime(todatetime(Time), \u0027yyyy-MM-dd HH:mm\u0027)\n| extend AuthRequirement = iff(AuthenticationRequirement contains \"multifactor\", \u0027multifactor authentication\u0027, \u0027singlefactor authentication\u0027)\n| extend EmailTemplate = strcat(\"Hi,\\n\\nKindly note that an alert was raised on \", formatted_time, \" [UTC] due to the user \", UserPrincipalName, \" having unfamiliar sign-in properties. Upon our investigations, we found that the user had \", SuccessorFailed,\" \", AuthRequirement, \" attempts accessing the applications \", Applications, \" from the IP address \", IPAddress, \" which classified as (CLEAN OR VPN) and is located in \", LocationDetail, \". The attempt was through non-managed and non-compliant \", Devices, \" device.\\n\\nKindly note that the user\u0027s previous login locations is from \", NormalLocationsfrom2weeks, \".\\n\\nCan you please confirm if this is an expected activity?\\n\\nRegards,\\n\\nSOC\")\n| project-reorder\n    Time,\n    UserPrincipalName,\n    IPAddress,\n    AnomalousLocationDetail,\n    NormalLocationsfrom2weeks,\n    Set_Result,\n    Set_Status,\n    AuthDetails,\n    Applications,\n    Device,\n    ClientApp,\n    UserAgent,\n    RiskType,\n    RiskTypeV2,\n    EmailTemplate,\n    IPManagedAttempts\n| project-away UserPrincipalName1,IPAddress1,Location,formatted_time,AuthRequirement\n| where IPManagedAttempts == 0\n| union AnomalousNonInterSignin\n",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "P14D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "InitialAccess"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "ef895ada-e8e8-4cf0-9313-b1ab67fab69f",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  true,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5M",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "FullName",
+                                                                                                  "columnName":  "UserPrincipalName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPAddress"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "AnomalousLocationDetail"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

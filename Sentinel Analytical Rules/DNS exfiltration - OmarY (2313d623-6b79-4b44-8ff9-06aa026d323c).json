@@ -1,0 +1,74 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/2313d623-6b79-4b44-8ff9-06aa026d323c\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/2313d623-6b79-4b44-8ff9-06aa026d323c\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "DNS exfiltration - OmarY",
+                                             "description":  "",
+                                             "severity":  "High",
+                                             "enabled":  false,
+                                             "query":  "let suspiciousDomains = DeviceNetworkEvents\r\n| where ActionType contains \"dns\"\r\n| extend QueryName = tostring(parse_json(AdditionalFields).query)\r\n| extend QueryType = tostring(parse_json(AdditionalFields).qtype_name)\r\n| where QueryType has_any (\"TXT\", \"A\")\r\n| extend Subdomains = split(QueryName, \".\")\r\n| where array_length(Subdomains) \u003e 3\r\n| extend ChildDomain = Subdomains[0]\r\n| extend ParentDomain = extract(@\"([^.]+\\.[^.]+)$\", 1, QueryName)\r\n| where strlen(ChildDomain) \u003e 25  \r\n| where ChildDomain matches regex @\"^[0-9a-fA-F]+$\" or ChildDomain matches regex @\"^[A-Za-z0-9+/=]+$\"\r\n| extend Decoded = base64_decode_tostring(tostring(ChildDomain))\r\n| project DeviceName, QueryName, ParentDomain, Subdomains, AdditionalFields, TimeGenerated, QueryType, ChildDomain, Decoded;\r\n\r\nlet parentSeenBefore = DeviceNetworkEvents\r\n| where TimeGenerated \u003e ago(30d) and TimeGenerated \u003c= ago(1d)\r\n| extend QueryName = tostring(parse_json(AdditionalFields).query)\r\n| extend ParentDomain = extract(@\"([^.]+\\.[^.]+)$\", 1, QueryName)\r\n| summarize LastSeen = max(TimeGenerated) by ParentDomain;\r\n\r\nlet fullDomainSeenLast1Day = DeviceNetworkEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| extend QueryName = tostring(parse_json(AdditionalFields).query)\r\n| summarize LastSeen = max(TimeGenerated) by QueryName;\r\n\r\nsuspiciousDomains\r\n| join kind=inner fullDomainSeenLast1Day on QueryName\r\n| join kind=leftanti parentSeenBefore on ParentDomain    // exclude parent domains seen before\r\n| project DeviceName, QueryName, ParentDomain, Subdomains, AdditionalFields, TimeGenerated, QueryType, ChildDomain, Decoded\r\n| order by TimeGenerated desc",
+                                             "queryFrequency":  "PT30M",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Exfiltration"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  {
+                                                                          "alertDynamicProperties":  [
+
+                                                                                                     ]
+                                                                      },
+                                             "customDetails":  {
+
+                                                               },
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

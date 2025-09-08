@@ -1,0 +1,68 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/7039f53f-0e96-476e-bdbd-d8d97c619386\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/7039f53f-0e96-476e-bdbd-d8d97c619386\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Process Injection Detection",
+                                             "description":  "Detects suspicious process injection attempts where an executable injects code into another process, indicating potential malicious activity.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let CreateRemoteThreadInjections = DeviceEvents\r\n    | where ActionType == \"CreateRemoteThreadApiCall\"\r\n    | extend Method = \"CreateRemoteThread\";\r\nlet MapViewInjections = DeviceEvents\r\n    | where ActionType in (\"MapViewOfFileApiCall\", \"NtMapViewOfSectionApiCall\")\r\n    | extend Method = \"MapViewOfFile/NtMapViewOfSection\";\r\nlet DirectDLLLoadInjections = DeviceEvents\r\n    | where ActionType in (\"LdrLoadDllApiCall\", \"LoadLibraryWApiCall\", \"LoadLibraryExApiCall\", \"CreateRemoteThreadApiCall\")\r\n    | extend Method = ActionType;\r\nlet Regsvr32Rundll32Injections = DeviceProcessEvents\r\n    | where FileName in (\"regsvr32.exe\", \"rundll32.exe\")\r\n    | extend Method = \"Regsvr32/Rundll32 Execution\",\r\n             InjectedPayload = extract(@\"(?i)(\\S+\\.dll)\", 1, ProcessCommandLine);\r\nlet AllInjectionIndicators = union\r\n    CreateRemoteThreadInjections,\r\n    MapViewInjections,\r\n    DirectDLLLoadInjections,\r\n    Regsvr32Rundll32Injections;\r\nlet InjectorID = AlertEvidence\r\n    | where AttackTechniques contains \"T1055.002\"\r\n    | extend InjectorProcessId = tolong(parse_json(AdditionalFields).ProcessId)\r\n    | where isnotnull(InjectorProcessId)\r\n    | project InjectorProcessId;\r\nlet FilteredInjections = AllInjectionIndicators\r\n    | extend InitiatingProcess = coalesce(InitiatingProcessFileName, FileName),\r\n             TargetProcess = coalesce(FileName, InjectedPayload),\r\n             TargetProcessId = coalesce(ProcessId, 0)\r\n    | where InitiatingProcess != TargetProcess;\r\nFilteredInjections\r\n| join kind=inner (InjectorID) on $left.InitiatingProcessId == $right.InjectorProcessId\r\n| distinct InitiatingProcessId, Method,\r\n         TimeGenerated,\r\n         DeviceId,\r\n         DeviceName,\r\n         InitiatingProcess,\r\n         InitiatingProcessCommandLine,\r\n         TargetProcess,\r\n         TargetProcessId,\r\n         ProcessCommandLine,\r\n         InjectedPayload\r\n| project\r\n    TimeGenerated,\r\n    DeviceId,\r\n    DeviceName,\r\n    Method,\r\n    InitiatingProcess,\r\n    InitiatingProcessId,\r\n    InitiatingProcessCommandLine,\r\n    TargetProcess,\r\n    TargetProcessId,\r\n    ProcessCommandLine,\r\n    InjectedPayload = iff(isnotempty(InjectedPayload), InjectedPayload, \"\")",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT5M",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  1,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "DefenseEvasion"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1055"
+                                                            ],
+                                             "subTechniques":  [
+                                                                   "T1055.002"
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

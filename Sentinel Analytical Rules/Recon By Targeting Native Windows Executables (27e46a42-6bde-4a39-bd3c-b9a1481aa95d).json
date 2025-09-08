@@ -1,0 +1,69 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/27e46a42-6bde-4a39-bd3c-b9a1481aa95d\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/27e46a42-6bde-4a39-bd3c-b9a1481aa95d\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Recon By Targeting Native Windows Executables",
+                                             "description":  "",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "DeviceProcessEvents\r\n| where ((InitiatingProcessFileName in (\"arp.exe\",\"chcp.com\",\"ipconfig.exe\",\"net.exe\",\"net1.exe\",\"nltest.exe\",\"ping.exe\",\"systeminfo.exe\",\"whoami.exe\")) or ProcessVersionInfoOriginalFileName in (\"arp.exe\",\"chcp.com\",\"ipconfig.exe\",\"net.exe\",\"net1.exe\",\"nltest.exe\",\"ping.exe\",\"systeminfo.exe\",\"whoami.exe\")) or (InitiatingProcessFileName in (\"cmd.exe\",\"powershell.exe\") and ProcessCommandLine in (\"*arp*\",\"*chcp*\",\"*ipconfig*\",\"*net*\",\"*net1*\",\"*nltest*\",\"*ping*\",\"*systeminfo*\",\"*whoami*\"))\r\n|summarize ProcessCommandLine=make_set(ProcessCommandLine),_time=min(TimeGenerated) by InitiatingProcessParentFileName,InitiatingProcessParentId,DeviceName,AccountName\r\n|where array_length(ProcessCommandLine) \u003e 5\r\n|where not((InitiatingProcessParentFileName contains (\"cybercns\")))\r\n",
+                                             "queryFrequency":  "P1D",
+                                             "queryPeriod":  "P1D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Discovery",
+                                                             "Reconnaissance"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "AlertPerResult"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  null,
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}
