@@ -1,0 +1,152 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "532f62c1-fba6-4baa-bbb6-4a32a4ef32fa",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a match in Syslog table from any Domain IOC from TI",
+    "DisplayName":  "TI map Domain entity to Syslog - [WC-BASE]",
+    "Enabled":  false,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Computer",
+                                                       "Identifier":  "FullName"
+                                                   },
+                                                   {
+                                                       "ColumnName":  "HostName",
+                                                       "Identifier":  "HostName"
+                                                   },
+                                                   {
+                                                       "ColumnName":  "DnsDomain",
+                                                       "Identifier":  "DnsDomain"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "HostIP",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"170072ba-0000-1100-0000-682da2f60000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  864000000000,
+                                                  "Days":  1,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  1,
+                                                  "TotalHours":  24,
+                                                  "TotalMilliseconds":  86400000,
+                                                  "TotalMinutes":  1440,
+                                                  "TotalSeconds":  86400
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/AcmeSentinel/providers/Microsoft.SecurityInsights/alertRules/c00e1146-bd07-498b-a9a6-0b14255eeabc",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1747821302010)\/",
+    "Name":  "c00e1146-bd07-498b-a9a6-0b14255eeabc",
+    "Query":  "let dt_lookBack = 1h;  // Define the time range to look back for syslog data (1 hour)\nlet ioc_lookBack = 14d;  // Define the time range to look back for threat intelligence indicators (14 days)\n// Create a list of top-level domains (TLDs) from the threat feed for later validation\nlet list_tlds = ThreatIntelIndicators\n| where TimeGenerated \u003e ago(ioc_lookBack)\n| where isnotempty(ObservableValue)\n| where ObservableKey == \"domain-name:value\"\n| extend parts = split(ObservableValue, \u0027.\u0027)\n| extend tld = parts[(array_length(parts)-1)]\n| summarize count() by tostring(tld)\n| summarize make_list(tld);\n// Fetch the latest active domain indicators from the threat intelligence data within the specified time range\nlet Domain_Indicators = ThreatIntelIndicators\n| where TimeGenerated \u003e ago(14d)\n| distinct TIEntity = ObservableValue\n| where isnotempty( TIEntity);\n// Join the threat intelligence indicators with syslog data on matching domain entities\nDomain_Indicators\n| join kind=innerunique (\n    Syslog\n    | where TimeGenerated \u003e ago(dt_lookBack)\n    // Extract domain patterns from syslog messages\n    | extend domain = extract(\"(([a-z0-9]+(-[a-z0-9]+)*\\\\.)+[a-z]{2,})\", 1, tolower(SyslogMessage))\n    | where isnotempty(domain)\n    | extend parts = split(domain, \u0027.\u0027)\n    // Split out the top-level domain (TLD)\n    | extend tld = parts[(array_length(parts) - 1)]\n    // Validate parsed domain by checking if the TLD is in the list of TLDs in our threat feed\n    | where tld in~ (list_tlds)\n    | extend Syslog_TimeGenerated = TimeGenerated\n    )\n    on $left.TIEntity == $right.domain\n// Retrieve the latest syslog timestamp for each indicator and domain combination\n| summarize Syslog_TimeGenerated = arg_max(Syslog_TimeGenerated, *) by domain\n// Select the desired columns for the final result set\n| project\n    Syslog_TimeGenerated,\n    SyslogMessage,\n    Computer,\n    ProcessName,\n    domain,\n    HostIP,\n    Type,\n    TIEntity\n// Extract the hostname from the Computer field\n| extend HostName = tostring(split(Computer, \u0027.\u0027, 0)[0])\n// Extract the DNS domain from the Computer field\n| extend DnsDomain = tostring(strcat_array(array_slice(split(Computer, \u0027.\u0027), 1, -1), \u0027.\u0027))\n// Assign the Syslog_TimeGenerated value to the timestamp field\n| extend timestamp = Syslog_TimeGenerated\n",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  "1.4.3",
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

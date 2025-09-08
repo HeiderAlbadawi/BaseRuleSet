@@ -1,0 +1,130 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Avos Locker is one among the many such cartels that have not only witnessed a surge in attacks but have also adopted new tactics to pursue their financially motivated schemes, chief among them being the ability to disable endpoint security products on the targeted systems and boot them into Windows Safe Mode to execute the ransomware. Also installed is the AnyDesk remote administration tool to maintain access to the machine while running in Safe Mode.",
+    "DisplayName":  "Avos Locker (via registry_event) - [WC-THREAT]",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"9d04360d-0000-1100-0000-66caed5e0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/3682a24f-18d7-4fd0-b829-61c240c2ee2c",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724575069874)\/",
+    "Name":  "3682a24f-18d7-4fd0-b829-61c240c2ee2c",
+    "Query":  "DeviceRegistryEvents | where ((RegistryKey contains @\"\\SYSTEM\\CurrentControlSet\\Control\\SafeBoot\\\\\") and (RegistryKey contains \"DisableAntiSpyware\" or RegistryKey contains @\"\\Network\\SepMasterService\" or RegistryKey contains @\"\\Network\\CbDefense\" or RegistryKey contains @\"\\Network\\CbDefenseWSC\" or RegistryKey contains @\"\\Network\\EPProtectedService\" or RegistryKey contains @\"\\Network\\epredline\" or RegistryKey contains @\"\\Network\\CylanceSvc\" or RegistryKey contains @\"\\Network\\SAVService\" or RegistryKey contains @\"\\Network\\klnagent\" or RegistryKey contains @\"\\Network\\Sophos File Scanner Service\" or RegistryKey contains @\"\\Network\\SntpService\" or RegistryKey contains @\"\\Network\\EPSecurityService\" or RegistryKey contains @\"\\Network\\EPUpdateService\" or RegistryKey contains @\"\\Network\\EPIntegrationService\" or RegistryKey contains @\"\\Network\\TmCCSF\" or RegistryKey contains @\"\\Network\\TmWSCSvc\" or RegistryKey contains @\"\\Network\\AnyDeskMSI\" or RegistryKey contains \"DefaultDomainName\" or RegistryKey contains \"DefaultUserName\" or RegistryKey contains \"DefaultPassword\" or RegistryKey contains \"AutoAdminLogon\" or RegistryKey contains \"LegalNoticeCaption\" or RegistryKey contains \"LegalNoticeText\" or RegistryKey contains \"LegalNoticeCaption\"))\n",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   },
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}
