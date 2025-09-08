@@ -1,0 +1,121 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "",
+    "DisplayName":  "BruteForce - Johanne Sanchez",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"3c00b65e-0000-1100-0000-67a0225a0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/781c50ff-4b21-4fe5-b453-d887e6ceac13",
+    "IncidentConfigurationCreateIncident":  false,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1738547801823)\/",
+    "Name":  "781c50ff-4b21-4fe5-b453-d887e6ceac13",
+    "Query":  "SigninLogs\r\n| where TimeGenerated \u003e ago(1d)\r\n| where ResultType == 50126 \r\n| summarize FailedLogins = count() by IPAddress, UserPrincipalName, Location\r\n| where FailedLogins \u003e 5 \r\n| summarize ConsecutiveFailures = sum(FailedLogins) by UserPrincipalName, Location, IPAddress\r\n| where ConsecutiveFailures \u003e= 5 \r\n| where not (IPAddress in (\"202.175.250.2\"))\r\n| distinct UserPrincipalName,IPAddress , Location, ConsecutiveFailures",
+    "QueryFrequency":  {
+                           "Ticks":  864000000000,
+                           "Days":  1,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  1,
+                           "TotalHours":  24,
+                           "TotalMilliseconds":  86400000,
+                           "TotalMinutes":  1440,
+                           "TotalSeconds":  86400
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  864000000000,
+                        "Days":  1,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  1,
+                        "TotalHours":  24,
+                        "TotalMilliseconds":  86400000,
+                        "TotalMinutes":  1440,
+                        "TotalSeconds":  86400
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

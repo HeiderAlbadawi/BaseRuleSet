@@ -1,0 +1,88 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "",
+    "DisplayName":  "Possible DNS exfiltration",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"7a00f106-0000-1100-0000-6864f8d60000\"",
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/66173751-7f56-4ccf-9bd0-9d4e3d236a3c",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751447765608)\/",
+    "Name":  "66173751-7f56-4ccf-9bd0-9d4e3d236a3c",
+    "Query":  "let suspiciousDomains = DeviceNetworkEvents\r\n| where ActionType contains \"dns\"\r\n| extend QueryName = tostring(parse_json(AdditionalFields).query)\r\n| extend QueryType = tostring(parse_json(AdditionalFields).qtype_name)\r\n| where QueryType has_any (\"TXT\", \"A\")\r\n| extend Subdomains = split(QueryName, \".\")\r\n| where array_length(Subdomains) \u003e 3 //we may change it to 2\r\n| extend ChildDomain = Subdomains[0]\r\n| extend ParentDomain = extract(@\"([^.]+\\.[^.]+)$\", 1, QueryName)\r\n| where strlen(ChildDomain) \u003e 25  // we may change it to lesser but felt that 25 is good for noq\r\n| where ChildDomain matches regex @\"^[0-9a-fA-F]+$\" or ChildDomain matches regex @\"^[A-Za-z0-9+/=]+$\" // looking for encoded or hexa strings, cna eb changed for a better regex\r\n| extend Decoded = base64_decode_tostring(tostring(ChildDomain))\r\n| project DeviceName, QueryName, ParentDomain, Subdomains, AdditionalFields, TimeGenerated, QueryType, ChildDomain, Decoded;\r\nlet parentSeenBefore = DeviceNetworkEvents\r\n| where TimeGenerated \u003e ago(30d) and TimeGenerated \u003c= ago(1d)\r\n| extend QueryName = tostring(parse_json(AdditionalFields).query)\r\n| extend ParentDomain = extract(@\"([^.]+\\.[^.]+)$\", 1, QueryName)\r\n| summarize LastSeen = max(TimeGenerated) by ParentDomain;\r\nlet fullDomainSeenLast1Day = DeviceNetworkEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| extend QueryName = tostring(parse_json(AdditionalFields).query)\r\n| summarize LastSeen = max(TimeGenerated) by QueryName;\r\nsuspiciousDomains\r\n| join kind=inner fullDomainSeenLast1Day on QueryName\r\n| join kind=leftanti parentSeenBefore on ParentDomain    \r\n| project DeviceName, QueryName, ParentDomain, Subdomains, AdditionalFields, TimeGenerated, QueryType, ChildDomain, Decoded\r\n| order by TimeGenerated desc",
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

@@ -1,0 +1,119 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "qqqqqq",
+    "DisplayName":  "User Account Inactive for More Than 90 Days by huda",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"5a03643e-0000-1100-0000-66c72e150000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/51a2a776-d609-4a16-b6bb-9419737d0944",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724329492625)\/",
+    "Name":  "51a2a776-d609-4a16-b6bb-9419737d0944",
+    "Query":  "SigninLogs\n| where TimeGenerated \u003c ago(90d) \n| summarize LastSignIn = max(TimeGenerated) by UserPrincipalName\n| where LastSignIn \u003c ago(90d) \n| project UserPrincipalName, LastSignIn\n",
+    "QueryFrequency":  {
+                           "Ticks":  180000000000,
+                           "Days":  0,
+                           "Hours":  5,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.20833333333333331,
+                           "TotalHours":  5,
+                           "TotalMilliseconds":  18000000,
+                           "TotalMinutes":  300,
+                           "TotalSeconds":  18000
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

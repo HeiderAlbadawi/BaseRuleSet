@@ -1,0 +1,34 @@
+﻿{
+    "AlertRuleTemplateName":  null,
+    "Description":  "Create incidents based on all alerts generated in Microsoft 365 Insider Risk Management",
+    "DisplayName":  "Create incidents based on Microsoft 365 Insider Risk Management - [WC-O365]",
+    "DisplayNamesExcludeFilter":  null,
+    "DisplayNamesFilter":  null,
+    "Enabled":  true,
+    "Etag":  "\"9c04f7c0-0000-1100-0000-66caec5d0000\"",
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/4ec26de0-7985-4f9f-b2a7-495cf54cc04e",
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574813961)\/",
+    "Name":  "4ec26de0-7985-4f9f-b2a7-495cf54cc04e",
+    "ProductFilter":  {
+
+                      },
+    "SeveritiesFilter":  null,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

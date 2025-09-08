@@ -1,0 +1,155 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "69a45b05-71f5-45ca-8944-2e038747fb39",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies when an RDP connection is made to a first system and then an RDP connection is made from the first system\nto another system with the same account within the 60 minutes. Additionally, if historically daily\nRDP connections are indicated by the logged EventID 4624 with LogonType = 10",
+    "DisplayName":  "RDP Nesting - [WC-AGENT]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "HostCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"22012cb7-0000-1100-0000-66bb1fad0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/Training_Jordan/providers/Microsoft.OperationalInsights/workspaces/AcmeSentinel/providers/Microsoft.SecurityInsights/alertRules/5266b6a3-eb75-4c88-b06d-015773acb90e",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1723539373049)\/",
+    "Name":  "5266b6a3-eb75-4c88-b06d-015773acb90e",
+    "Query":  "let endtime = 1d;\nlet starttime = 8d;\n// The threshold below excludes matching on RDP connection computer counts of 5 or more by a given account and IP in a given day.  Change the threshold as needed.\nlet threshold = 5;\n(union isfuzzy=true\n(SecurityEvent\n| where TimeGenerated \u003e= ago(endtime)\n| where EventID == 4624 and LogonType == 10\n// Labeling the first RDP connection time, computer and ip\n| extend FirstHop = TimeGenerated, FirstComputer = toupper(Computer), FirstIPAddress = IpAddress, Account = tolower(Account)\n),\n( WindowsEvent\n| where TimeGenerated \u003e= ago(endtime)\n| where EventID == 4624 and EventData has (\"10\")\n| extend LogonType = tostring(EventData.LogonType)\n| where  LogonType == 10  // Labeling the first RDP connection time, computer and ip\n| extend Account = strcat(tostring(EventData.TargetDomainName),\"\\\\\", tostring(EventData.TargetUserName))\n| extend IpAddress = tostring(EventData.IpAddress)\n| extend FirstHop = TimeGenerated, FirstComputer = toupper(Computer), FirstIPAddress = IpAddress, Account = tolower(Account)\n))\n| join kind=inner (\n(union isfuzzy=true\n(SecurityEvent\n| where TimeGenerated \u003e= ago(endtime)\n| where EventID == 4624 and LogonType == 10\n// Labeling the second RDP connection time, computer and ip\n| extend SecondHop = TimeGenerated, SecondComputer = toupper(Computer), SecondIPAddress = IpAddress, Account = tolower(Account)\n),\n(WindowsEvent\n| where TimeGenerated \u003e= ago(endtime)\n| where EventID == 4624 and EventData has (\"10\")\n| extend LogonType = toint(EventData.LogonType)\n| where  LogonType == 10   // Labeling the second RDP connection time, computer and ip\n| extend Account = strcat(tostring(EventData.TargetDomainName),\"\\\\\", tostring(EventData.TargetUserName))\n| extend IpAddress = tostring(EventData.IpAddress)\n| extend SecondHop = TimeGenerated, SecondComputer = toupper(Computer), SecondIPAddress = IpAddress, Account = tolower(Account)\n))\n) on Account\n// Make sure that the first connection is after the second connection --\u003e SecondHop \u003e FirstHop\n// Then identify only RDP to another computer from within the first RDP connection by only choosing matches where the Computer names do not match --\u003e FirstComputer != SecondComputer\n// Then make sure the IPAddresses do not match by excluding connections from the same computers with first hop RDP connections to multiple computers --\u003e FirstIPAddress != SecondIPAddress\n| where FirstComputer != SecondComputer and FirstIPAddress != SecondIPAddress and SecondHop \u003e FirstHop\n// where the second hop occurs within 30 minutes of the first hop\n| where SecondHop \u003c= FirstHop+30m\n| distinct Account, FirstHop, FirstComputer, FirstIPAddress, SecondHop, SecondComputer, SecondIPAddress, AccountType, Activity, LogonTypeName, ProcessName\n// use left anti to exclude anything from the previous 7 days where the Account and IP has connected 5 or more computers.\n| join kind=leftanti (\n(union isfuzzy=true\n(SecurityEvent\n| where TimeGenerated \u003e= ago(starttime) and TimeGenerated \u003c ago(endtime)\n| where EventID == 4624 and LogonType == 10\n| summarize makeset(Computer), ComputerCount = dcount(Computer) by bin(TimeGenerated, 1d), Account = tolower(Account), IpAddress\n// Connection count to computer by same account and IP to exclude counts of 5 or more on a given day\n| where ComputerCount \u003e= threshold\n| mvexpand set_Computer\n| extend Computer = toupper(set_Computer)\n),\n(WindowsEvent\n| where TimeGenerated \u003e= ago(starttime) and TimeGenerated \u003c ago(endtime)\n| where EventID == 4624 and EventData has (\"10\")\n| extend LogonType = tostring(EventData.LogonType)\n| where  LogonType == 10 \n| extend Account = strcat(tostring(EventData.TargetDomainName),\"\\\\\", tostring(EventData.TargetUserName))\n| extend IpAddress = tostring(EventData.IpAddress)\n| summarize makeset(Computer), ComputerCount = dcount(Computer) by bin(TimeGenerated, 1d), Account = tolower(Account), IpAddress\n// Connection count to computer by same account and IP to exclude counts of 5 or more on a given day\n| where ComputerCount \u003e= threshold\n| mvexpand set_Computer\n| extend Computer = toupper(set_Computer)\n))\n) on Account, $left.SecondComputer == $right.Computer, $left.SecondIPAddress == $right.IpAddress\n| summarize FirstHopFirstSeen = min(FirstHop), FirstHopLastSeen = max(FirstHop) by Account, FirstComputer, FirstIPAddress, SecondHop, SecondComputer, \nSecondIPAddress, AccountType, Activity, LogonTypeName, ProcessName\n| extend timestamp = FirstHopFirstSeen, AccountCustomEntity = Account, HostCustomEntity = FirstComputer, IPCustomEntity = FirstIPAddress",
+    "QueryFrequency":  {
+                           "Ticks":  864000000000,
+                           "Days":  1,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  1,
+                           "TotalHours":  24,
+                           "TotalMilliseconds":  86400000,
+                           "TotalMinutes":  1440,
+                           "TotalSeconds":  86400
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  6912000000000,
+                        "Days":  8,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  8,
+                        "TotalHours":  192,
+                        "TotalMilliseconds":  691200000,
+                        "TotalMinutes":  11520,
+                        "TotalSeconds":  691200
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  "1.2.1",
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

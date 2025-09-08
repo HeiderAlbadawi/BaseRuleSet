@@ -1,0 +1,124 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This detection identifies suspicious modifications to Windows autorun registry keys such as:\nHKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run or\nHKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run.\n\nThese keys are often abused by malware—including keyloggers—to gain persistence on the system by configuring executables to launch at user logon. The rule correlates registry changes with known behavior such as input capture (T1056) and native API usage (T1106) to flag potential threats.",
+    "DisplayName":  "keylogger",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"7b002496-0000-1100-0000-68653b920000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/1263518d-c694-4398-a0f7-a9cf8b1f1068",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751464849818)\/",
+    "Name":  "1263518d-c694-4398-a0f7-a9cf8b1f1068",
+    "Query":  "let test = DeviceRegistryEvents\r\n| where ActionType contains \"set\"\r\n| where RegistryKey contains @\"\\Microsoft\\Windows\\CurrentVersion\\RunOnce\" or RegistryKey contains @\"HKEY_CURRENT_USER\\S-1-5-21-2398930179-339269171-1694419795-1001\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\"\r\n| project DeviceName;\r\nAlertEvidence\r\n| where AccountDomain in~ (test)\r\n| where AttackTechniques contains \"input capture\"\r\n| project Categories, AttackTechniques, AccountDomain, TimeGenerated, Title, AccountName",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

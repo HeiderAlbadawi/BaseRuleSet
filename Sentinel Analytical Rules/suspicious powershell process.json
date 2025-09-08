@@ -1,0 +1,121 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This analytic rule detects potentially malicious use of PowerShell (T1059.001 - Command and Scripting Interpreter: PowerShell) where suspicious commands are executed from PowerShell and the process is launched by an unusual parent process.",
+    "DisplayName":  "suspicious powershell process",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"1e02929a-0000-1100-0000-689ef9810000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/581dab35-8527-4612-a2ac-26ea940bc0c8",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1755249024664)\/",
+    "Name":  "581dab35-8527-4612-a2ac-26ea940bc0c8",
+    "Query":  "let suspicious_commands = _GetWatchlist(\u0027sus_commands\u0027)\r\n| project SuspiciousCommand\r\n| summarize make_list(SuspiciousCommand);\r\nDeviceProcessEvents\r\n| where FileName =~ \"powershell.exe\"\r\n| where not (\r\n    InitiatingProcessFileName in~ ( \r\n        \"services.exe\", \r\n        \"wmiprvse.exe\", \r\n        \"winlogon.exe\", \r\n        \"windowsterminal.exe\", \r\n        \"taskhostw.exe\", \r\n        \"msiexec.exe\", \r\n        \"svchost.exe\", \r\n        \"vmtoolsd.exe\", \r\n        \"collectguestlogs.exe\"\r\n    )\r\n)\r\n| where ProcessCommandLine has_any (suspicious_commands)\r\n| project \r\n    Timestamp,\r\n    DeviceName,\r\n    AccountName,\r\n    FileName,\r\n    InitiatingProcessFileName,\r\n    ProcessCommandLine\r\n| order by Timestamp desc",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  36000000000,
+                        "Days":  0,
+                        "Hours":  1,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.041666666666666664,
+                        "TotalHours":  1,
+                        "TotalMilliseconds":  3600000,
+                        "TotalMinutes":  60,
+                        "TotalSeconds":  3600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

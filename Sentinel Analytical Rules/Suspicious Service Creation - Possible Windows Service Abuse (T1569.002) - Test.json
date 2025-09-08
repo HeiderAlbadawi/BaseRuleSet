@@ -1,0 +1,161 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Detects potentially malicious attempts to create or modify Windows services using tools such as sc.exe or PowerShell. \nThis technique is often used by attackers for persistence or privilege escalation, as seen in Snake malware or other APT activity.",
+    "DisplayName":  "Suspicious Service Creation - Possible Windows Service Abuse (T1569.002) - Test",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "HostName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "ProcessCommandLine",
+                                                       "Identifier":  "CommandLine"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "FileName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"7900dcd5-0000-1100-0000-6864f0dd0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/9e2c7cf3-db78-462a-99f0-cd85b7db7daf",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751445724933)\/",
+    "Name":  "9e2c7cf3-db78-462a-99f0-cd85b7db7daf",
+    "Query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1h)\r\n| where FileName in~ (\"sc.exe\", \"powershell.exe\", \"cmd.exe\")\r\n| where ProcessCommandLine has_any (\"create\", \"New-Service\", \"Set-Service\")\r\n| where ProcessCommandLine has_any (\"binPath=\", \"DisplayName=\", \"start=\", \"ServiceName\", \"WinSxS\", \"Temp\", \"AppData\", \"ProgramData\")\r\n| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine\r\n| order by TimeGenerated desc",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  36000000000,
+                        "Days":  0,
+                        "Hours":  1,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.041666666666666664,
+                        "TotalHours":  1,
+                        "TotalMilliseconds":  3600000,
+                        "TotalMinutes":  60,
+                        "TotalSeconds":  3600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

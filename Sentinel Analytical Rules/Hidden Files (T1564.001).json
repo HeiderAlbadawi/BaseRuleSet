@@ -1,0 +1,121 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This detection monitors for the use of attrib.exe to apply hidden (+h) and system (+s) attributes to files, followed by the execution of those files within a short time window. This activity may indicate an attempt to hide malicious executables and later run them stealthily — a common tactic used by adversaries to stage tools while evading detection.",
+    "DisplayName":  "Hidden Files (T1564.001)",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"64023f75-0000-1100-0000-685019630000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/8d1f3c4b-7a13-40b2-96f3-a719ed5f1b9a",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1750079843146)\/",
+    "Name":  "8d1f3c4b-7a13-40b2-96f3-a719ed5f1b9a",
+    "Query":  "DeviceProcessEvents\r\n| where FileName =~ \"attrib.exe\"\r\n| where ProcessCommandLine has_any(\"+h\", \"+s\")  // looking for hidden or system flag usage\r\n| extend TargetFile = extract(@\u0027\"?([A-Z]:\\\\[^\"]+)\"?\u0027, 1, ProcessCommandLine)\r\n| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine, TargetFile\r\n| order by Timestamp desc\r\n",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

@@ -1,0 +1,138 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "500c103a-0319-4d56-8e99-3cec8d860757",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies IPs with failed attempts to sign in to one or more disabled accounts signed in successfully to another account.\nReferences: https://docs.microsoft.com/azure/active-directory/reports-monitoring/reference-sign-ins-error-codes\n50057 - User account is disabled. The account has been disabled by an administrator.",
+    "DisplayName":  "Sign-ins from IPs that attempt sign-ins to disabled accounts",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"08019f82-0000-1100-0000-6704b4d70000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+                                               {
+
+                                               }
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/Training_Jordan/providers/Microsoft.OperationalInsights/workspaces/AcmeSentinel/providers/Microsoft.SecurityInsights/alertRules/a9c6ef4a-483c-414d-a8ea-9a92ac610077",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1728361684167)\/",
+    "Name":  "a9c6ef4a-483c-414d-a8ea-9a92ac610077",
+    "Query":  "SigninLogs_CL\n    | where ResultType == \"50057\" \n    | where ResultDescription == \"User account is disabled. The account has been disabled by an administrator.\" \n    | summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated), disabledAccountLoginAttempts = count(), \n        disabledAccountsTargeted = dcount(UserPrincipalName_s), applicationsTargeted = dcount(AppDisplayName_s), disabledAccountSet = makeset(UserPrincipalName_s), \n        applicationSet = makeset(AppDisplayName_s)\n        by IPAddress, Type\n            | order by disabledAccountLoginAttempts desc\n    | join kind= leftouter (\n        // Consider these IPs suspicious - and alert any related  successful sign-ins\n        SigninLogs_CL\n        | where ResultType == 0\n        | summarize successfulAccountSigninCount = dcount(UserPrincipalName_s), successfulAccountSigninSet = makeset(UserPrincipalName_s, 15) by IPAddress, Type\n        // Assume IPs associated with sign-ins from 100+ distinct user accounts are safe\n        | where successfulAccountSigninCount \u003c 100\n        )\n        on IPAddress \n            | where successfulAccountSigninCount != 0\n    | project StartTime, EndTime, IPAddress, disabledAccountLoginAttempts, disabledAccountsTargeted, disabledAccountSet, applicationSet, \n        successfulAccountSigninCount, successfulAccountSigninSet, Type\n    | order by disabledAccountLoginAttempts\n    | extend timestamp = StartTime, IPCustomEntity = IPAddress",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  18000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  30,
+                        "Seconds":  0,
+                        "TotalDays":  0.020833333333333332,
+                        "TotalHours":  0.5,
+                        "TotalMilliseconds":  1800000,
+                        "TotalMinutes":  30,
+                        "TotalSeconds":  1800
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

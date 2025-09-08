@@ -1,0 +1,140 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "78422ef2-62bf-48ca-9bab-72c69818a425",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies when an RDP connection is made to multiple systems and above the normal for the previous 7 days.  \nConnections from the same system with the same account within the same day.\nRDP connections are indicated by the EventID 4624 with LogonType = 10",
+    "DisplayName":  "Multiple RDP connections from Single System",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"22017cf8-0000-1100-0000-66bb20600000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  null,
+    "GroupingConfigurationGroupByCustomDetail":  null,
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/Training_Jordan/providers/Microsoft.OperationalInsights/workspaces/AcmeSentinel/providers/Microsoft.SecurityInsights/alertRules/d06337d4-2acc-456c-96f4-385c1b7a0ef1",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1723539550370)\/",
+    "Name":  "d06337d4-2acc-456c-96f4-385c1b7a0ef1",
+    "Query":  "let endtime = 1d;\nlet starttime = 8d;\nlet threshold = 2.0;\nSecurityEvent\n| where TimeGenerated \u003e= ago(endtime) \n| where EventID == 4624 and LogonType == 10\n| summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), ComputerCountToday = dcount(Computer), ComputerSet = makeset(Computer), ProcessSet = makeset(ProcessName)  \nby Account, IpAddress, AccountType, Activity, LogonTypeName\n| join kind=inner (\nSecurityEvent\n| where TimeGenerated \u003e= ago(starttime) and TimeGenerated \u003c ago(endtime) \n| where EventID == 4624 and LogonType == 10\n| summarize ComputerCountPrev7Days = dcount(Computer) by Account, IpAddress\n) on Account, IpAddress\n| extend Ratio = ComputerCountToday/(ComputerCountPrev7Days*1.0)\n// Where the ratio of today to previous 7 days is more than double.\n| where Ratio \u003e threshold\n| project StartTimeUtc, EndTimeUtc, Account, IpAddress, ComputerSet, ComputerCountToday, ComputerCountPrev7Days, Ratio, AccountType, Activity, LogonTypeName, ProcessSet\n| extend timestamp = StartTimeUtc, AccountCustomEntity = Account, IPCustomEntity = IpAddress",
+    "QueryFrequency":  {
+                           "Ticks":  864000000000,
+                           "Days":  1,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  1,
+                           "TotalHours":  24,
+                           "TotalMilliseconds":  86400000,
+                           "TotalMinutes":  1440,
+                           "TotalSeconds":  86400
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  6912000000000,
+                        "Days":  8,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  8,
+                        "TotalHours":  192,
+                        "TotalMilliseconds":  691200000,
+                        "TotalMinutes":  11520,
+                        "TotalSeconds":  691200
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

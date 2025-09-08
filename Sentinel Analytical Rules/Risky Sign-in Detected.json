@@ -1,0 +1,155 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This rule detects sign-ins that have been flagged as risky by Entra ID Protection.",
+    "DisplayName":  "Risky Sign-in Detected",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "UserPrincipalName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPAddress",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Type",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c04e1f6-0000-1100-0000-66caed0e0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/3ecb22ed-fe50-4006-ac55-11b2c5562b33",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574986879)\/",
+    "Name":  "3ecb22ed-fe50-4006-ac55-11b2c5562b33",
+    "Query":  "let IPManagedAttempts = SigninLogs\r\n| union AADNonInteractiveUserSignInLogs\r\n| where TimeGenerated \u003e ago(14d)\r\n| where (tostring( parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring( parse_json(DeviceDetail_string).trustType) != \"\") or (DeviceDetail_dynamic or DeviceDetail_string contains \"PII Removed\")\r\n| distinct IPAddress;\r\nlet IncidentCreated =SecurityIncident\r\n| where TimeGenerated \u003e ago(14d)\r\n| where Owner contains \"@wizardcyber.com\" and Owner !contains \"soc@wizardcyber.com\"\r\n| mv-expand AlertIds\r\n| extend AlertID = tostring(AlertIds)\r\n| distinct AlertID;\r\nlet AuthenticationAttemptFromNewCountryAlert = SecurityAlert\r\n| where TimeGenerated \u003e ago(14d)\r\n| where AlertName contains \"Authentication Attempt from New Country\"\r\n| extend parsed = parse_json(Entities)\r\n| mv-expand parsed\r\n| where parsed.Type == \"ip\"\r\n| extend NewCountryIPAddress = tostring(parsed.Address)\r\n| distinct NewCountryIPAddress,SystemAlertId\r\n| join kind=inner IncidentCreated on $left.SystemAlertId == $right.AlertID;\r\nlet AnomalousSigninAlert = SecurityAlert\r\n| where TimeGenerated \u003e ago(14d)\r\n| where AlertName contains \"Anomalous Sign-in Detected\"\r\n| extend parsed = parse_json(Entities)\r\n| mv-expand parsed\r\n| where parsed.Type == \"ip\"\r\n| extend AnomalousSigninIPAddress = tostring(parsed.Address)\r\n| distinct AnomalousSigninIPAddress,SystemAlertId\r\n| join kind=inner IncidentCreated on $left.SystemAlertId == $right.AlertID;\r\nlet ImpossibleTravelAlert =SecurityAlert\r\n| where TimeGenerated \u003e ago(14d)\r\n| where AlertName contains \"Impossible travel\"\r\n| extend parsed = parse_json(Entities)\r\n| mv-expand parsed\r\n| where parsed.Type == \"ip\"\r\n| extend ImpossibleTravelIPAddress = tostring(parsed.Address)\r\n| distinct ImpossibleTravelIPAddress,SystemAlertId\r\n| join kind=inner IncidentCreated on $left.SystemAlertId == $right.AlertID;\r\nlet IdentityProtectionAlerts = SecurityAlert\r\n| where TimeGenerated \u003e ago(14d)\r\n| where ProviderName == \"IPC\"\r\n| extend parsed = parse_json(Entities)\r\n| mv-expand parsed\r\n| where parsed.Type == \"ip\"\r\n| extend IPCIPAddress = tostring(parsed.Address)\r\n| distinct IPCIPAddress,SystemAlertId\r\n| join kind=inner IncidentCreated on $left.SystemAlertId == $right.AlertID;\r\nlet RiskyUsers = AADUserRiskEvents\r\n| where TimeGenerated \u003e ago(1h)\r\n| summarize min(TimeGenerated),make_set(RiskEventType),make_set(RiskLevel),make_set(RiskState),make_set(RiskDetail),make_set(AdditionalInfo)  by  Type = \"UserRiskEvents\",UserPrincipalName,IpAddress,tostring(Location)\r\n| project-reorder min_TimeGenerated,UserPrincipalName,IpAddress,Location,set_AdditionalInfo,set_RiskEventType,set_RiskLevel,set_RiskDetail,set_RiskState\r\n| join kind=leftanti IPManagedAttempts on $left.IpAddress == $right.IPAddress\r\n| join kind=leftanti AuthenticationAttemptFromNewCountryAlert on $left.IpAddress == $right.NewCountryIPAddress\r\n| join kind=leftanti AnomalousSigninAlert on $left.IpAddress == $right.AnomalousSigninIPAddress\r\n| join kind=leftanti ImpossibleTravelAlert on $left.IpAddress == $right.ImpossibleTravelIPAddress\r\n| join kind=leftanti IdentityProtectionAlerts on $left.IpAddress == $right.IPCIPAddress\r\n| extend IPAddress = IpAddress\r\n| extend LocationDetails = Location\r\n| project-away IpAddress,Location;\r\nlet RiskySignins =SigninLogs\r\n| where TimeGenerated \u003e ago(1h)\r\n| where RiskEventTypes != \"[]\" or RiskEventTypes != \"[]\"\r\n| summarize min(TimeGenerated),make_set(ResultType),make_set(ResultDescription),make_set(Status),make_set(RiskEventTypes),make_set(RiskEventTypes_V2)  by  Type = \"Signinlogs\",UserPrincipalName,IPAddress,tostring(LocationDetails),tostring(DeviceDetail)\r\n| join kind=leftanti IPManagedAttempts on $left.IPAddress == $right.IPAddress\r\n| join kind=leftanti AuthenticationAttemptFromNewCountryAlert on $left.IPAddress == $right.NewCountryIPAddress\r\n| join kind=leftanti AnomalousSigninAlert on $left.IPAddress == $right.AnomalousSigninIPAddress\r\n| join kind=leftanti ImpossibleTravelAlert on $left.IPAddress == $right.ImpossibleTravelIPAddress\r\n| join kind=leftanti IdentityProtectionAlerts on $left.IPAddress == $right.IPCIPAddress;\r\nlet RiskTable = union isfuzzy=true RiskySignins,RiskyUsers;\r\nRiskTable\r\n",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

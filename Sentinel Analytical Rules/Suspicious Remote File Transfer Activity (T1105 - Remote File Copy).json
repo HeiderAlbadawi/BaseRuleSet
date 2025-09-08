@@ -1,0 +1,158 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Detects potential data exfiltration or file transfer activity using common tools (e.g., PowerShell, certutil, curl, FTP) over network protocols such as HTTP, HTTPS, FTP, and SMB. Mapped to MITRE ATT\u0026CK Technique T1105 – Remote File Copy.",
+    "DisplayName":  "Suspicious Remote File Transfer Activity (T1105 - Remote File Copy)",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "FileName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"6402c28f-0000-1100-0000-68501ac70000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/6d9e173f-d7ad-4b52-8fbb-15ff99feede7",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1750080196626)\/",
+    "Name":  "6d9e173f-d7ad-4b52-8fbb-15ff99feede7",
+    "Query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| where ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"Invoke-Expression\", \"powershell\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\")\r\n| where FileName in~ (\"powershell.exe\", \"cmd.exe\", \"python.exe\", \"ruby.exe\", \"java.exe\", \"mshta.exe\", \"rundll32.exe\", \"wmic.exe\", \"ftp.exe\", \"curl.exe\", \"wget.exe\", \"bitsadmin.exe\")\r\n| where ProcessCommandLine contains_cs \"C:\\\\Users\\\\\" or ProcessCommandLine contains_cs \"Documents\" or ProcessCommandLine contains_cs \"Desktop\" or ProcessCommandLine contains_cs \"Downloads\"\r\n| where InitiatingProcessFileName !in (\"explorer.exe\", \"System\", \"svchost.exe\", \"taskhostw.exe\", \"dllhost.exe\")\r\n| extend SuspiciousActivity = case(\r\n    ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\"), \"Possible Data Exfiltration\",\r\n    \"Other\")\r\n| summarize ActivityCount = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by DeviceName, InitiatingProcessFileName, FileName, SuspiciousActivity, ProcessCommandLine\r\n| where ActivityCount \u003e 3\r\n| order by LastSeen desc",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

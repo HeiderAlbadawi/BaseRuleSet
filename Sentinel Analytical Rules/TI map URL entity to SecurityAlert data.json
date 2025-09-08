@@ -1,0 +1,144 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "f30a47c1-65fb-42b1-a7f4-00941c12550b",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a match in SecurityAlert data from any URL IOC from TI",
+    "DisplayName":  "TI map URL entity to SecurityAlert data - [WC-THREAT]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "HostCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "URLCustomEntity",
+                                                       "Identifier":  "Url"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9d04aa0d-0000-1100-0000-66caed600000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  3000000000,
+                                                  "Days":  0,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  5,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.003472222222222222,
+                                                  "TotalHours":  0.083333333333333329,
+                                                  "TotalMilliseconds":  300000,
+                                                  "TotalMinutes":  5,
+                                                  "TotalSeconds":  300
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/c4fc2450-e2fa-45ae-aae2-033cbe030d20",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724575070009)\/",
+    "Name":  "c4fc2450-e2fa-45ae-aae2-033cbe030d20",
+    "Query":  "let dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nThreatIntelligenceIndicator\n| where TimeGenerated \u003e= ago(ioc_lookBack) and ExpirationDateTime \u003e now()\n| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n| where Active == true\n// Picking up only IOC\u0027s that contain the entities we want\n| where isnotempty(Url)\n// using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n| join kind=innerunique (\n  SecurityAlert\n  | where TimeGenerated \u003e= ago(dt_lookBack)\n  | extend MSTI = case(AlertName has \"TI map\" and VendorName == \"Microsoft\" and ProductName == \u0027Azure Sentinel\u0027, true, false)\n  | where MSTI == false\n  // Extract URL from JSON data\n  | extend Url = extract(\"(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.\u0026+]|[!*\\\\(\\\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)\", 1,Entities)\n  // We only want alerts that actually contain URL data\n  | where isnotempty(Url)\n  // Extract hostname from JSON data for entity mapping\n  | extend Compromised_Host = tostring(parse_json(ExtendedProperties).[\"Compromised Host\"])\n  | extend Alert_TimeGenerated = TimeGenerated\n) on Url\n| where Alert_TimeGenerated \u003c ExpirationDateTime\n| summarize Alert_TimeGenerated = arg_max(Alert_TimeGenerated, *) by IndicatorId, AlertName\n| project Alert_TimeGenerated, ActivityGroupNames, IndicatorId, ThreatType, ExpirationDateTime, ConfidenceScore, AlertName, AlertSeverity, Description, Url, Compromised_Host\n| extend timestamp = Alert_TimeGenerated, HostCustomEntity = Compromised_Host, URLCustomEntity = Url",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

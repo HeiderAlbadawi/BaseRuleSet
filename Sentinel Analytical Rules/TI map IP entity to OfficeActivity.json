@@ -1,0 +1,155 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "f15370f4-c6fa-42c5-9be4-1d308f40284e",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a match in OfficeActivity from any IP IOC from TI",
+    "DisplayName":  "TI map IP entity to OfficeActivity - [WC-O365]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "URLCustomEntity",
+                                                       "Identifier":  "Url"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c04dec1-0000-1100-0000-66caec600000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/c5ea7aed-3985-42cc-b20b-ebe22c45cc0d",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574814095)\/",
+    "Name":  "c5ea7aed-3985-42cc-b20b-ebe22c45cc0d",
+    "Query":  "let dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nThreatIntelligenceIndicator\n| where TimeGenerated \u003e= ago(ioc_lookBack) and ExpirationDateTime \u003e now()\n| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n| where Active == true\n// Picking up only IOC\u0027s that contain the entities we want\n| where isnotempty(NetworkIP) or isnotempty(EmailSourceIpAddress) or isnotempty(NetworkDestinationIP) or isnotempty(NetworkSourceIP)\n// As there is potentially more than 1 indicator type for matching IP, taking NetworkIP first, then others if that is empty.\n// Taking the first non-empty value based on potential IOC match availability\n| extend TI_ipEntity = iff(isnotempty(NetworkIP), NetworkIP, NetworkDestinationIP)\n| extend TI_ipEntity = iff(isempty(TI_ipEntity) and isnotempty(NetworkSourceIP), NetworkSourceIP, TI_ipEntity)\n| extend TI_ipEntity = iff(isempty(TI_ipEntity) and isnotempty(EmailSourceIpAddress), EmailSourceIpAddress, TI_ipEntity)\n// using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n| join kind=innerunique (\n    OfficeActivity\n    | where TimeGenerated \u003e= ago(dt_lookBack)\n    | where isnotempty(ClientIP)\n    | extend ClientIPValues = extract_all(@\u0027\\[?(::ffff:)?(?P\u003cIPAddress\u003e(\\d+\\.\\d+\\.\\d+\\.\\d+)|[^\\]%]+)(%\\d+)?\\]?([-:](?P\u003cPort\u003e\\d+))?\u0027, dynamic([\"IPAddress\", \"Port\"]), ClientIP)[0]\n    | extend IPAddress = tostring(ClientIPValues[0])\n    // renaming time column so it is clear the log this came from\n    | extend OfficeActivity_TimeGenerated = TimeGenerated\n)\non $left.TI_ipEntity == $right.IPAddress\n| where OfficeActivity_TimeGenerated \u003c ExpirationDateTime\n| summarize OfficeActivity_TimeGenerated = arg_max(OfficeActivity_TimeGenerated, *) by IndicatorId\n| project OfficeActivity_TimeGenerated, Description, ActivityGroupNames, IndicatorId, ThreatType, Url, ExpirationDateTime, ConfidenceScore,\nTI_ipEntity, ClientIP, UserId, Operation, ResultStatus, RecordType, OfficeObjectId, NetworkIP, NetworkDestinationIP, NetworkSourceIP, EmailSourceIpAddress\n| extend timestamp = OfficeActivity_TimeGenerated, IPCustomEntity = TI_ipEntity, AccountCustomEntity = UserId, URLCustomEntity = Url",
+    "QueryFrequency":  {
+                           "Ticks":  864000000000,
+                           "Days":  1,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  1,
+                           "TotalHours":  24,
+                           "TotalMilliseconds":  86400000,
+                           "TotalMinutes":  1440,
+                           "TotalSeconds":  86400
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  "1.2.2",
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

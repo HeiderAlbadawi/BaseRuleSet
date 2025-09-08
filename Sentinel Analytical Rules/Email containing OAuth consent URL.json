@@ -1,0 +1,124 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This query detects when a user received an email containing an OAuth consent URL and if they the user has consented to it.",
+    "DisplayName":  "Email containing OAuth consent URL - [WC-O365]",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"9c048dc2-0000-1100-0000-66caec620000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/1206d648-0276-42c2-a818-984bfbce1365",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574814107)\/",
+    "Name":  "1206d648-0276-42c2-a818-984bfbce1365",
+    "Query":  "let maxApps = 100;  \r\nlet maxUsers = 100;  \r\nlet maxNmids = 100;  \r\nlet relevantUrlEvents = materialize(EmailUrlInfo   \r\n| where Url startswith \"https://login.windows.net/common/oauth2\" or Url startswith \"https://login.microsoftonline.com/consumers/oauth2\" or Url startswith \"https://login.microsoftonline.com/common/oauth2\"  \r\n| where Url has \"redirect_uri\"   \r\n| where Url has \"client_id\"  \r\n| extend AppId = tostring(parse_url(Url)[\"Query Parameters\"][\"client_id\"])  \r\n| where isnotempty(AppId)  \r\n| project EmailReceivedTime = Timestamp, ReportId, AppId, NetworkMessageId  \r\n);  \r\n//  \r\nlet affectedNmids = materialize(  \r\nrelevantUrlEvents  \r\n| distinct NetworkMessageId  \r\n| take maxNmids  \r\n);  \r\n//  \r\nlet hasAffectedNmids = isnotempty(toscalar(affectedNmids));  \r\n//  \r\nlet relevantEmailEvents =   \r\nEmailEvents  \r\n| where hasAffectedNmids  \r\n| where NetworkMessageId in (affectedNmids)  \r\n| where isnotempty(RecipientObjectId)  \r\n| where isnotempty(RecipientEmailAddress)  \r\n| distinct RecipientObjectId, NetworkMessageId, RecipientEmailAddress  \r\n| project-rename AccountObjectId = RecipientObjectId;  \r\n//  \r\nlet affectedUsers = materialize(  \r\nrelevantEmailEvents  \r\n| distinct AccountObjectId  \r\n| take maxUsers  \r\n);  \r\n//  \r\nlet hasAffectedUsers = isnotempty(toscalar(affectedUsers));  \r\n//  \r\nlet appIds = materialize(  \r\nrelevantUrlEvents  \r\n| distinct AppId  \r\n| take maxApps  \r\n);  \r\n//  \r\nlet hasAppId = isnotempty(toscalar(appIds));  \r\n//  \r\nlet relevantCloudAppEvents =   \r\nCloudAppEvents  \r\n| where hasAppId  \r\n| where hasAffectedUsers  \r\n| where AccountObjectId in (affectedUsers)  \r\n| where ActionType == \"Consent to application.\"  \r\n| where RawEventData has_any(appIds)  \r\n| extend AppId = tostring(RawEventData.Target[4].ID)  \r\n| where isnotempty(AppId)  \r\n| where AppId in (appIds)  \r\n| project ConsentTime=Timestamp, AppId, AppName = ObjectName, AccountObjectId;  \r\n//  \r\nlet finalEmailEvents = materialize(  \r\nrelevantEmailEvents  \r\n| join kind=inner relevantUrlEvents on NetworkMessageId  \r\n| project EmailReceivedTime, ReportId, AccountObjectId, RecipientEmailAddress, AppId, NetworkMessageId  \r\n);  \r\n//  \r\nrelevantCloudAppEvents  \r\n| join kind=inner finalEmailEvents on AppId, AccountObjectId  \r\n| where EmailReceivedTime \u003c ConsentTime  \r\n| project Timestamp=EmailReceivedTime, ReportId, AccountObjectId, RecipientEmailAddress, AppId, AppName, NetworkMessageId",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

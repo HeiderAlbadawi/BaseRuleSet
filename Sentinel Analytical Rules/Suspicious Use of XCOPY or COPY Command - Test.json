@@ -1,0 +1,155 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Detects file or folder copy operations using xcopy or copy, possibly with wildcard or remote destinations.",
+    "DisplayName":  "Suspicious Use of XCOPY or COPY Command - Test",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "FolderName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "HostName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "ProcessCommandLine",
+                                                       "Identifier":  "CommandLine"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"790082cd-0000-1100-0000-6864ef0e0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/151506db-5e17-49a7-b0c5-0f28f6a13ed4",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751445260321)\/",
+    "Name":  "151506db-5e17-49a7-b0c5-0f28f6a13ed4",
+    "Query":  "// 1) Folder-level xcopy command events\r\nlet FolderCopyCmds = DeviceProcessEvents\r\n| where tolower(ProcessCommandLine) has \"xcopy\"\r\n| extend Tokens = split(ProcessCommandLine, \" \")\r\n| extend FileOrFolderPath = tostring(Tokens[1])\r\n| extend IsWildcardCopy = substring(FileOrFolderPath, strlen(FileOrFolderPath) - 1, 1) == \"\\\\\"\r\n| extend FolderName = extract(@\"\\\\([^\\\\]+)\\\\?$\", 1, FileOrFolderPath)\r\n| extend FileName = iif(IsWildcardCopy, \"\u003cMultiple Files\u003e\", extract(@\"([^\\\\]+)$\", 1, FileOrFolderPath))\r\n| extend FileExtension = extract(@\"\\.([a-zA-Z0-9]+)$\", 1, FileName)\r\n| extend RemotePath = tostring(Tokens[2])\r\n| extend RemoteIP = extract(@\"\\\\\\\\(\\d{1,3}(?:\\.\\d{1,3}){3})\", 1, RemotePath)\r\n| extend Success = \"Likely Yes\"\r\n| extend SourceType = \"CommandLine\"\r\n| project\r\n    TimeGenerated,\r\n    DeviceName,\r\n    InitiatingProcessAccountName,\r\n    FolderName,\r\n    FileName,\r\n    FileExtension,\r\n    FileOrFolderPath,\r\n    RemotePath,\r\n    RemoteIP,\r\n    IsWildcardCopy,\r\n    Success,\r\n    ProcessCommandLine,\r\n    SourceType;\r\n// 2) Per-file accesses (exclude .lnk), include Office types\r\nlet FileAccessEvents = DeviceEvents\r\n| where tolower(InitiatingProcessFileName) endswith \"xcopy.exe\" or tolower(InitiatingProcessCommandLine) has \"xcopy\"\r\n| extend FileName = tostring(FileName)\r\n| extend FileExtension = extract(@\"\\.([a-zA-Z0-9]+)$\", 1, FileName)\r\n| where FileExtension in~ (\"txt\", \"pdf\", \"zip\", \"rar\", \"7z\", \"docx\", \"xlsx\", \"pptx\")  // Add more if needed\r\n| where FileExtension != \"lnk\"  // Exclude shortcuts\r\n| extend FolderName = extract(@\"([^\\\\]+)$\", 1, FolderPath)\r\n| extend RemotePath = tostring(split(InitiatingProcessCommandLine, \" \")[-2])\r\n| extend RemoteIP = extract(@\"\\\\\\\\(\\d{1,3}(?:\\.\\d{1,3}){3})\", 1, RemotePath)\r\n| extend Success = \"Likely Yes\"\r\n| extend SourceType = \"FileAccess\"\r\n| project\r\n    TimeGenerated,\r\n    DeviceName,\r\n    InitiatingProcessAccountName,\r\n    FolderName,\r\n    FileName,\r\n    FileExtension,\r\n    FileOrFolderPath = FolderPath,\r\n    RemotePath,\r\n    RemoteIP,\r\n    IsWildcardCopy = false,\r\n    Success,\r\n    ProcessCommandLine = InitiatingProcessCommandLine,\r\n    SourceType;\r\n// Combine and order\r\nFolderCopyCmds\r\n| union FileAccessEvents\r\n| order by TimeGenerated desc\r\n\r\n",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  36000000000,
+                        "Days":  0,
+                        "Hours":  1,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.041666666666666664,
+                        "TotalHours":  1,
+                        "TotalMilliseconds":  3600000,
+                        "TotalMinutes":  60,
+                        "TotalSeconds":  3600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

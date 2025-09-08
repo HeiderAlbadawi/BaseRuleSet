@@ -1,0 +1,158 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "ba144bf8-75b8-406f-9420-ed74397f9479",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This query creates a list of IP addresses with a number failed login attempts to AAD \nabove a set threshold.  It then looks for any successful Palo Alto VPN logins from any\nof these IPs within the same timeframe.",
+    "DisplayName":  "IP with multiple failed Azure AD logins successfully logs in to Palo Alto VPN  - [WC-PALOALTO]]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "HostCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c04e5c1-0000-1100-0000-66caec600000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  3000000000,
+                                                  "Days":  0,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  5,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.003472222222222222,
+                                                  "TotalHours":  0.083333333333333329,
+                                                  "TotalMilliseconds":  300000,
+                                                  "TotalMinutes":  5,
+                                                  "TotalSeconds":  300
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/f2eae60f-94fe-4093-bb10-b759eea508c8",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574814149)\/",
+    "Name":  "f2eae60f-94fe-4093-bb10-b759eea508c8",
+    "Query":  "//Set a threshold of failed AAD signins from an IP address within 1 day above which we want to deem those logins suspicious.\nlet signin_threshold = 5; \n//Make a list of IPs with AAD signin failures above our threshold.\nlet aadFunc = (tableName:string){\nlet suspicious_signins = \n    table(tableName)\n    //Looking for logon failure results\n    | where ResultType !in (\"0\", \"50125\", \"50140\")\n    //Exclude localhost addresses to reduce the chance of FPs\n    | where IPAddress !in (\"127.0.0.1\", \"::1\")\n    | summarize count() by IPAddress\n    | where count_ \u003e  signin_threshold\n    | summarize make_set(IPAddress);\n    suspicious_signins\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nlet suspicious_signins = \nunion isfuzzy=true aadSignin, aadNonInt\n| summarize make_set(set_IPAddress);\n//See if any of those IPs have sucessfully logged into PA VPNs during the same timeperiod\nCommonSecurityLog\n    //Select only PA VPN sucessful logons\n    | where DeviceVendor == \"Palo Alto Networks\" and DeviceEventClassID == \"globalprotect\"\n    | where Message has \"GlobalProtect gateway user authentication succeeded\"\n    //Parse out the logon source IP from the Message field to match on\n    | extend SourceIP = extract(\"Login from: ([^,]+)\", 1, Message) \n    | where SourceIP in (suspicious_signins)\n    | extend Reason = \"Multiple failed AAD logins from SourceIP\"\n    //Parse out other useful information from Message field\n    | extend User = extract(\u0027User name: ([^,]+)\u0027, 1, Message) \n    | extend ClientOS = extract(\u0027Client OS version: ([^,\\\"]+)\u0027, 1, Message)\n    | extend Location = extract(\u0027Source region: ([^,]{2})\u0027,1, Message)\n    | project TimeGenerated, Reason, SourceIP, User, ClientOS, Location, Message, DeviceName, ReceiptTime, DeviceVendor, DeviceEventClassID, Computer, FileName\n    | extend AccountCustomEntity = User, IPCustomEntity = SourceIP, timestamp = TimeGenerated, HostCustomEntity = DeviceName",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  36000000000,
+                        "Days":  0,
+                        "Hours":  1,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.041666666666666664,
+                        "TotalHours":  1,
+                        "TotalMilliseconds":  3600000,
+                        "TotalMinutes":  60,
+                        "TotalSeconds":  3600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

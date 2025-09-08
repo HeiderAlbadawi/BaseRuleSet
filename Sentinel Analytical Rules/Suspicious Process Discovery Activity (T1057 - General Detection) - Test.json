@@ -1,0 +1,169 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Detects the use of common system utilities and commands associated with process enumeration. This behavior may indicate reconnaissance activity consistent with MITRE ATT\u0026CK Technique T1057 – Process Discovery.",
+    "DisplayName":  "Suspicious Process Discovery Activity (T1057 - General Detection) - Test",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "DeviceName",
+                                                       "Identifier":  "HostName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "FileName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountName",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "ProcessCommandLine",
+                                                       "Identifier":  "CommandLine"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"790028d1-0000-1100-0000-6864efbe0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/ff626796-de6e-40a6-b868-c1c7fd05dd9b",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751445438134)\/",
+    "Name":  "ff626796-de6e-40a6-b868-c1c7fd05dd9b",
+    "Query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| where FileName in~ (\"tasklist.exe\", \"wmic.exe\", \"powershell.exe\", \"cmd.exe\", \"ps.exe\", \"sh.exe\", \"bash.exe\")\r\n   and ProcessCommandLine has_any (\r\n        \"tasklist\",\r\n        \"wmic process\",\r\n        \"Get-Process\",\r\n        \"gwmi win32_process\",\r\n        \"ps -aux\",\r\n        \"ps -ef\",\r\n        \"pgrep\",\r\n        \"pidof\",\r\n        \"top\",\r\n        \"htop\"\r\n     )\r\n| where InitiatingProcessFileName !in~ (\r\n    \"services.exe\", \"explorer.exe\", \"svchost.exe\", \"lsass.exe\", \"csrss.exe\", \r\n    \"dwm.exe\", \"wininit.exe\", \"winlogon.exe\", \"senseir.exe\"\r\n)\r\n| where AccountName !in~ (\r\n    \"NT AUTHORITY\\\\SYSTEM\",\r\n    \"NT AUTHORITY\\\\LOCAL SERVICE\",\r\n    \"NT AUTHORITY\\\\NETWORK SERVICE\",\r\n    \"system\"\r\n)\r\n| where not(ProcessCommandLine has_any (\r\n    \"NinjaRMM\", \"Kaseya\", \"SCCM\", \"SolarWinds\", \"Qualys\", \"McAfee\", \"CrowdStrike\"\r\n))\r\n| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, FolderPath, ReportId\r\n",
+    "QueryFrequency":  {
+                           "Ticks":  3000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  5,
+                           "Seconds":  0,
+                           "TotalDays":  0.003472222222222222,
+                           "TotalHours":  0.083333333333333329,
+                           "TotalMilliseconds":  300000,
+                           "TotalMinutes":  5,
+                           "TotalSeconds":  300
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

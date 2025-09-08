@@ -1,0 +1,133 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This query detects the creation of an inbox rule in O365 used to forward financial emails to an attacker controlled mailbox. It was discovered by Microsoft 365 Defender researchers as part of a large-scale business email compromise (BEC) that affected multiple organizations",
+    "DisplayName":  "Suspicious Inbox Rule to Forward Financial E-Mail to Attacker with BEC Attack - [WC-O365]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "UserId",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c04b3c1-0000-1100-0000-66caec5f0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/e3ae53ef-fdfd-4a76-ae1a-ed10098d59ae",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574814035)\/",
+    "Name":  "e3ae53ef-fdfd-4a76-ae1a-ed10098d59ae",
+    "Query":  "OfficeActivity | where ((Operation contains \u0027New-InboxRule\u0027 and (* contains \u0027invoice\u0027 or * contains \u0027payment\u0027 or * contains \u0027statement\u0027)) and (parse_json(Parameters).Value !contains \u0027@domain.com\u0027))",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

@@ -1,0 +1,124 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Detection for command and control server for the ransom ware gang Sabbath",
+    "DisplayName":  "Sabbath Ransomware Detection for command and control server - [WC-THREAT]",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"9c0428c1-0000-1100-0000-66caec5e0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/2da2f3c1-1406-4a44-b94a-ceee25ab1a53",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574813965)\/",
+    "Name":  "2da2f3c1-1406-4a44-b94a-ceee25ab1a53",
+    "Query":  "DeviceNetworkEvents \n| where ((RemoteIP =~ \"45.79.55.129\" or RemoteIP =~ \"45.146.166.24\" or RemoteIP =~ \"45.147.230.221\" or RemoteIP =~ \"45.141.84.182\" or RemoteIP =~ \"45.147.230.137\") \nor (RemoteUrl =~ \"aequuira1aedeezais5i.probes.space\" or RemoteUrl =~ \"jeithe7eijeefohch3qu.probes.site\" or RemoteUrl =~ \"datatransferdc.com\" \nor RemoteUrl =~ \"farhadl.com\" or RemoteUrl =~ \"markettc.biz\" or RemoteUrl =~ \"probes.space\" or RemoteUrl =~ \"tinysidney.com\" or RemoteUrl =~ \"helpgoldr.com\" \nor RemoteUrl =~ \"frankir.com\" or RemoteUrl =~ \"greentuks.com\" or RemoteUrl =~ \"aimee0febai5phoht2ti.probes.website\" or RemoteUrl =~ \"cofeeloveers.com\" \nor RemoteUrl =~ \"doratir.com\" or RemoteUrl =~ \"gordonzon.com\" or RemoteUrl =~ \"probes.site\" or RemoteUrl =~ \"probes.website\"))\n",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

@@ -1,0 +1,127 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  "Abusing Cloud Flare Tunnels To Deliver RATS",
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This query identifies and analyzes URL click events involving the \".trycloudflare.com\" domain over the past 30 days. It filters relevant URL click events and joins them with corresponding email event details. The output includes the timestamp, URL, recipient email address, sender email addresses, email subject, attachment count, and URL count, providing a comprehensive view of potential phishing activities related to this domain.",
+    "DisplayName":  "[Malek] Abusing Cloud Flare Tunnels To Deliver RATS",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"06006b6a-0000-1100-0000-66b3ec2a0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/bd23a04f-50ea-445c-b832-78ec3de890a1",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1723067433135)\/",
+    "Name":  "bd23a04f-50ea-445c-b832-78ec3de890a1",
+    "Query":  "let CloudflareDomain = \".trycloudflare.com\";\r\nlet ClickEvents = UrlClickEvents\r\n | where TimeGenerated \u003e ago(5h)\r\n | extend Domain = tostring(parse_url(Url).Host)\r\n | where Domain endswith CloudflareDomain;\r\nlet EmailDetails = EmailEvents;\r\nClickEvents\r\n | join kind=inner (EmailDetails) on NetworkMessageId\r\n | project TimeGenerated, Url, RecipientEmailAddress, SenderMailFromAddress, SenderFromAddress, Subject, AttachmentCount, UrlCount",
+    "QueryFrequency":  {
+                           "Ticks":  180000000000,
+                           "Days":  0,
+                           "Hours":  5,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.20833333333333331,
+                           "TotalHours":  5,
+                           "TotalMilliseconds":  18000000,
+                           "TotalMinutes":  300,
+                           "TotalSeconds":  18000
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  180000000000,
+                        "Days":  0,
+                        "Hours":  5,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.20833333333333331,
+                        "TotalHours":  5,
+                        "TotalMilliseconds":  18000000,
+                        "TotalMinutes":  300,
+                        "TotalSeconds":  18000
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

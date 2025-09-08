@@ -1,0 +1,155 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies when a network connection is new or rare related to any logon type by a given account today based on comparison with the previous 14 days.\nNetwork connections are indicated by the EventID 4624 with LogonType = 3",
+    "DisplayName":  "Rare Network Connection",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Account",
+                                                       "Identifier":  "Name"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Computer",
+                                                       "Identifier":  "HostName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IpAddress",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c04d4f5-0000-1100-0000-66caed0b0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  864000000000,
+                                                  "Days":  1,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  1,
+                                                  "TotalHours":  24,
+                                                  "TotalMilliseconds":  86400000,
+                                                  "TotalMinutes":  1440,
+                                                  "TotalSeconds":  86400
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/c47574eb-bc3a-4b49-a278-ada07e917c4f",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574986804)\/",
+    "Name":  "c47574eb-bc3a-4b49-a278-ada07e917c4f",
+    "Query":  "let starttime = 14d;\r\nlet endtime = 1h;\r\nlet rpd_table=\r\n    (union isfuzzy=true\r\n        (SecurityEvent\r\n        | where TimeGenerated \u003e= ago(endtime)\r\n        | where EventID == 4624 and LogonType == 3\r\n        | summarize\r\n            StartTime = min(TimeGenerated),\r\n            EndTime = max(TimeGenerated),\r\n            ConnectionCount = count()\r\n            by\r\n            Account = tolower(Account),\r\n            Computer = toupper(Computer),\r\n            IpAddress,\r\n            AccountType,\r\n            Activity,\r\n            LogonTypeName,\r\n            ProcessName\r\n        // use left anti to exclude anything from the previous 14 days that is not rare\r\n        ),\r\n        (WindowsEvent\r\n        | where TimeGenerated \u003e= ago(endtime)\r\n        | where EventID == 4624 and EventData has (\"3\")\r\n        | extend LogonType = tostring(EventData.LogonType)\r\n        | where LogonType == 3 \r\n        | extend Account = strcat(tostring(EventData.TargetDomainName), \"\\\\\", tostring(EventData.TargetUserName))\r\n        | extend ProcessName = tostring(EventData.ProcessName)\r\n        | extend IpAddress = tostring(EventData.IpAddress)\r\n        | extend TargetUserSid = tostring(EventData.TargetUserSid)\r\n        | extend AccountType=case(Account endswith \"$\" or TargetUserSid in (\"S-1-5-18\", \"S-1-5-19\", \"S-1-5-20\"), \"Machine\", isempty(TargetUserSid), \"\", \"User\")\r\n        | extend Activity=\"4624 - An account was successfully logged on.\"\r\n        | extend LogonTypeName=\"10 - RemoteInteractive\"\r\n        | summarize\r\n            StartTime = min(TimeGenerated),\r\n            EndTime = max(TimeGenerated),\r\n            ConnectionCount = count()\r\n            by\r\n            Account = tolower(Account),\r\n            Computer = toupper(Computer),\r\n            IpAddress,\r\n            AccountType,\r\n            Activity,\r\n            LogonTypeName,\r\n            ProcessName\r\n        ))\r\n    | join kind=leftanti (\r\n        (union isfuzzy=true\r\n            (SecurityEvent\r\n            | where TimeGenerated between (ago(starttime) .. ago(endtime))\r\n            | where LogonType == 3 and AccountType contains \"User\"\r\n            | where EventID == 4624\r\n            | summarize by Computer = toupper(Computer), IpAddress, Account = tolower(Account)\r\n            ),\r\n            (WindowsEvent\r\n            | where TimeGenerated between (ago(starttime) .. ago(endtime))\r\n            | where EventID == 4624\r\n            | extend IpAddress = tostring(EventData.IpAddress)\r\n            | extend Account = strcat(tostring(EventData.TargetDomainName), \"\\\\\", tostring(EventData.TargetUserName))\r\n            | summarize by Computer = toupper(Computer), IpAddress, Account = tolower(Account)\r\n            ))\r\n        )\r\n        on IpAddress\r\n    | summarize\r\n        StartTime = min(StartTime),\r\n        EndTime = max(EndTime),\r\n        ConnectionCount = sum(ConnectionCount)\r\n        by Account, Computer, IpAddress, AccountType, Activity, LogonTypeName, ProcessName\r\n    | extend\r\n        timestamp = StartTime,\r\n        AccountCustomEntity = Account,\r\n        HostCustomEntity = Computer,\r\n        IPCustomEntity = IpAddress;\r\nlet additional_info_attempts = SecurityEvent\r\n    | where EventID == 4624\r\n    | project\r\n        TimeGenerated,\r\n        Account,\r\n        Computer,\r\n        IpAddress,\r\n        AccountType,\r\n        Activity,\r\n        LogonTypeName,\r\n        ProcessName\r\n    | summarize IPSuccessfulAttempts14DaysCount = count() by IpAddress;\r\nlet additional_info_time = SecurityEvent\r\n    | where EventID == 4624\r\n    | project\r\n        TimeGenerated,\r\n        Account,\r\n        Computer,\r\n        IpAddress,\r\n        AccountType,\r\n        Activity,\r\n        LogonTypeName,\r\n        ProcessName\r\n    | summarize OldestSuccessfulAttemptfrom14Days = min(TimeGenerated) by IpAddress;\r\nrpd_table\r\n| join kind=leftouter additional_info_attempts on IpAddress\r\n| join kind=leftouter additional_info_time on IpAddress\r\n| project\r\n    Account,\r\n    Computer,\r\n    IpAddress,\r\n    AccountType,\r\n    Activity,\r\n    LogonTypeName,\r\n    ProcessName,\r\n    StartTime,\r\n    EndTime,\r\n    timestamp,\r\n    ConnectionCount,\r\n    IPSuccessfulAttempts14DaysCount,\r\n    OldestSuccessfulAttemptfrom14Days,\r\n    AccountCustomEntity,\r\n    HostCustomEntity,\r\n    IPCustomEntity\r\n| where not( ipv4_is_private( IPCustomEntity))\r\n| where not( IPCustomEntity == \"0.0.0.0\")\r\n| where not( IPCustomEntity == \"127.0.0.1\")\r\n| where not( IPCustomEntity contains \"169.254\")\r\n| where not( isempty(IPCustomEntity ))",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

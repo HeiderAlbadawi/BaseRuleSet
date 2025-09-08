@@ -1,0 +1,124 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "9d8b5a18-b7db-4c23-84a6-95febaf7e1e4",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a match across various data feeds for  hashes and IP IOC related to Europium\n Reference: https://www.microsoft.com/security/blog/2022/09/08/microsoft-investigates-iranian-attacks-against-the-albanian-government",
+    "DisplayName":  "Europium - Hash and IP IOCs - [WC-THREAT]",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"9d04650d-0000-1100-0000-66caed5f0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  3000000000,
+                                                  "Days":  0,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  5,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.003472222222222222,
+                                                  "TotalHours":  0.083333333333333329,
+                                                  "TotalMilliseconds":  300000,
+                                                  "TotalMinutes":  5,
+                                                  "TotalSeconds":  300
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/7bfc725f-6169-4e12-a622-74adf8b8dd0d",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724575069887)\/",
+    "Name":  "7bfc725f-6169-4e12-a622-74adf8b8dd0d",
+    "Query":  "let iocs = externaldata(DateAdded:string,IoC:string,Type:string,TLP:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Feeds/Europium_September2022.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\nlet sha256Hashes = (iocs | where Type =~ \"sha256\" | project IoC);\nlet IPList = (iocs | where Type =~ \"ip\"| project IoC);\nlet IPRegex = \u0027[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\u0027;\n(union isfuzzy=true\n(CommonSecurityLog\n| where SourceIP in (IPList) or DestinationIP in (IPList) or Message has_any (IPList)\n| parse Message with * \u0027(\u0027 DNSName \u0027)\u0027 * \n| project TimeGenerated, SourceIP, DestinationIP, Message, SourceUserID, RequestURL, DNSName, Type\n| extend MessageIP = extract(IPRegex, 0, Message), RequestIP = extract(IPRegex, 0, RequestURL)\n| extend IPMatch = case(SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", MessageIP in (IPList), \"Message\",  \"NoMatch\")\n| extend timestamp = TimeGenerated, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, IPMatch == \"Message\", MessageIP, \"NoMatch\"), AccountCustomEntity = SourceUserID\n),\n(DnsEvents\n| where IPAddresses in (IPList)  \n| project TimeGenerated, Computer, IPAddresses, Name, ClientIP, Type\n| extend DestinationIPAddress = IPAddresses, DNSName = Name, Computer \n| extend timestamp = TimeGenerated, IPCustomEntity = DestinationIPAddress, HostCustomEntity = Computer\n),\n(VMConnection\n| where SourceIp in (IPList) or DestinationIp in (IPList)\n| parse RemoteDnsCanonicalNames with * \u0027[\"\u0027 DNSName \u0027\"]\u0027 *\n| project TimeGenerated, Computer, Direction, ProcessName, SourceIp, DestinationIp, DestinationPort, RemoteDnsQuestions, DNSName,BytesSent, BytesReceived, RemoteCountry, Type\n| extend IPMatch = case( SourceIp in (IPList), \"SourceIP\", DestinationIp in (IPList), \"DestinationIP\", \"None\") \n| extend timestamp = TimeGenerated, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIp, IPMatch == \"DestinationIP\", DestinationIp, \"NoMatch\"), File = ProcessName, HostCustomEntity = Computer\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\"\n| where EventID == 3\n| extend EvData = parse_xml(EventData)\n| extend EventDetail = EvData.DataItem.EventData.Data\n| extend SourceIP = tostring(EventDetail.[9].[\"#text\"]), DestinationIP = tostring(EventDetail.[14].[\"#text\"]), Image = tostring(EventDetail.[4].[\"#text\"])\n| where SourceIP in (IPList) or DestinationIP in (IPList)\n| project TimeGenerated, SourceIP, DestinationIP, Image, UserName, Computer, Type\n| extend IPMatch = case( SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", \"None\")\n| extend timestamp = TimeGenerated, File = tostring(split(Image, \u0027\\\\\u0027, -1)[-1]), IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, \"None\"), HostCustomEntity = Computer, AccountCustomEntity = UserName\n), \n(OfficeActivity\n| where ClientIP in (IPList) \n| project TimeGenerated, UserAgent, Operation, RecordType, UserId, ClientIP, Type\n| extend timestamp = TimeGenerated, IPCustomEntity = ClientIP, AccountCustomEntity = UserId\n),\n(DeviceNetworkEvents\n| where RemoteIP in (IPList) or InitiatingProcessSHA256 in (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, Computer = DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, RemoteIP, RemoteUrl, RemotePort, LocalIP, Type\n| extend timestamp = TimeGenerated, IPCustomEntity = RemoteIP,  HostCustomEntity = Computer, AccountCustomEntity = InitiatingProcessAccountName\n),\n(WindowsFirewall\n| where SourceIP in (IPList) or DestinationIP in (IPList) \n| project TimeGenerated, Computer, CommunicationDirection, SourceIP, DestinationIP, SourcePort, DestinationPort, Type\n| extend IPMatch = case( SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", \"None\")\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, \"None\")\n), \n(imFileEvent\n| where TargetFileSHA256 has_any (sha256Hashes)\n| extend Account = ActorUsername, Computer = DvcHostname, IPAddress = SrcIpAddr, CommandLine = ActingProcessCommandLine, FileHash = TargetFileSHA256\n| project Type, TimeGenerated, Computer, Account, IPAddress, CommandLine, FileHash\n| extend timestamp = TimeGenerated, IPCustomEntity = IPAddress,  HostCustomEntity = Computer, AccountCustomEntity = Account, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceFileEvents\n| where SHA256 has_any (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend timestamp = TimeGenerated, HostCustomEntity = DeviceName , AccountCustomEntity = InitiatingProcessAccountName,  AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = InitiatingProcessSHA256,  CommandLine = InitiatingProcessCommandLine,Image = InitiatingProcessFolderPath\n),\n(DeviceImageLoadEvents\n| where SHA256 has_any (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend timestamp = TimeGenerated, HostCustomEntity = DeviceName , AccountCustomEntity = InitiatingProcessAccountName,  AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = InitiatingProcessSHA256,  CommandLine = InitiatingProcessCommandLine,Image = InitiatingProcessFolderPath\n),\n(Event\n| where Source =~ \"Microsoft-Windows-Sysmon\"\n| where EventID == 1\n| extend EvData = parse_xml(EventData)\n| extend EventDetail = EvData.DataItem.EventData.Data\n| extend Image = EventDetail.[4].[\"#text\"],  CommandLine = EventDetail.[10].[\"#text\"], Hashes = tostring(EventDetail.[17].[\"#text\"])\n| extend Hashes = extract_all(@\"(?P\u003ckey\u003e\\w+)=(?P\u003cvalue\u003e[a-zA-Z0-9]+)\", dynamic([\"key\",\"value\"]), Hashes)\n| extend Hashes = column_ifexists(\"Hashes\", \"\"), CommandLine = column_ifexists(\"CommandLine\", \"\")\n| where (Hashes has_any (sha256Hashes) )  \n| project TimeGenerated, EventDetail, UserName, Computer, Type, Source, Hashes, CommandLine, Image\n| extend Type = strcat(Type, \": \", Source)\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = UserName, FileHashCustomEntity = Hashes\n)\n)",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

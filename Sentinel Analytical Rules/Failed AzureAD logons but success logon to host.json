@@ -1,0 +1,136 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "8ee967a2-a645-4832-85f4-72b635bcb3a6",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a list of IP addresses with a minimum number (default of 5) of failed logon attempts to Azure Active Directory.\nUses that list to identify any successful remote logons to hosts from these IPs within the same timeframe.",
+    "DisplayName":  "Failed AzureAD logons but success logon to host - [WC-AZURE]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Account",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c0404f6-0000-1100-0000-66caed0c0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  9000000000,
+                                                  "Days":  0,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  15,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.010416666666666666,
+                                                  "TotalHours":  0.25,
+                                                  "TotalMilliseconds":  900000,
+                                                  "TotalMinutes":  15,
+                                                  "TotalSeconds":  900
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/75469252-a24b-4d34-a2ee-92c42c55856b",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574986863)\/",
+    "Name":  "75469252-a24b-4d34-a2ee-92c42c55856b",
+    "Query":  "//Adjust this threshold to fit the environment\nlet signin_threshold = 5;\n//Make a list of all IPs with failed signins to AAD above our threshold\nlet aadFunc = (tableName: string) {\n    let suspicious_signins =\n        table(tableName)\n        | where ResultType !in (\"0\", \"50125\", \"50140\")\n        | where IPAddress !in (\u0027127.0.0.1\u0027, \u0027::1\u0027)\n        | summarize count() by IPAddress\n        | where count_ \u003e signin_threshold\n        | summarize make_set(IPAddress);\n    //See if any of these IPs have sucessfully logged into *nix hosts\n    let linux_logons =\n        Syslog\n        | where Facility contains \"auth\" and ProcessName != \"sudo\"\n        | where SyslogMessage has \"Accepted\"\n        | extend SourceIP = extract(\"(([0-9]{1,3})\\\\.([0-9]{1,3})\\\\.([0-9]{1,3})\\\\.(([0-9]{1,3})))\", 1, SyslogMessage)\n        | where SourceIP in (suspicious_signins)\n        | extend Reason = \"Multiple failed AAD logins from IP address\"\n        | project\n            TimeGenerated,\n            Computer,\n            HostIP,\n            IpAddress = SourceIP,\n            SyslogMessage,\n            Facility,\n            ProcessName,\n            Reason;\n    //See if any of these IPs have sucessfully logged into Windows hosts\n    let win_logons = (union isfuzzy=true\n            (SecurityEvent\n            | where EventID == 4624\n            | where LogonType in (10, 7, 3)\n            | where IpAddress != \"-\"\n            | where IpAddress in (suspicious_signins)\n            | extend Reason = \"Multiple failed AAD logins from IP address\"\n            | project\n                TimeGenerated,\n                Account,\n                AccountType,\n                Computer,\n                Activity,\n                EventID,\n                LogonProcessName,\n                IpAddress,\n                LogonTypeName,\n                TargetUserSid,\n                Reason\n            ),\n            (WindowsEvent\n            | where EventID == 4624 and has_any_ipv4(EventData, toscalar(suspicious_signins))\n            | extend LogonType = tostring(EventData.LogonType)\n            | where LogonType in (10, 7, 3)\n            | extend IpAddress = tostring(EventData.IpAddress)\n            | where IpAddress != \"-\"\n            | where IpAddress in (suspicious_signins)\n            | extend Reason = \"Multiple failed AAD logins from IP address\"\n            | extend Activity = \"4624 - An account was successfully logged on.\"\n            | extend Account =  strcat(tostring(EventData.TargetDomainName), \"\\\\\", tostring(EventData.TargetUserName))\n            | extend TargetUserSid = tostring(EventData.TargetUserSid)\n            | extend TargetAccount = strcat(EventData.TargetDomainName, \"\\\\\", EventData.TargetUserName)\n            | extend AccountType =case(Account endswith \"$\" or TargetUserSid in (\"S-1-5-18\", \"S-1-5-19\", \"S-1-5-20\"), \"Machine\", isempty(TargetUserSid), \"\", \"User\")\n            | extend LogonProcessName = tostring(EventData.LogonProcessName)\n            | project\n                TimeGenerated,\n                Account,\n                AccountType,\n                Computer,\n                Activity,\n                EventID,\n                LogonProcessName,\n                IpAddress,\n                TargetUserSid,\n                Reason\n            )\n        );\n    union isfuzzy=true linux_logons, win_logons\n    | extend\n        timestamp = TimeGenerated,\n        AccountCustomEntity = Account,\n        IPCustomEntity = IpAddress,\n        HostCustomEntity = Computer\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nlet finaltable = union isfuzzy=true aadSignin, aadNonInt;\nlet ManagedAttempts = SigninLogs\n    | where tostring(parse_json(DeviceDetail).trustType) != \"\"\n    | summarize IPManagedAttemptsCount = count() by IPAddress\n    | project IPAddress, IPManagedAttemptsCount;\nfinaltable\n| join kind=leftouter ManagedAttempts on $left.IpAddress == $right.IPAddress\n| extend IPManagedAttemptsCount = coalesce(IPManagedAttemptsCount,0)\n| project\n    TimeGenerated,\n    Computer,\n    IpAddress,\n    Reason,\n    IPManagedAttemptsCount,\n    Account,\n    AccountType,\n    Activity,\n    EventID,\n    LogonProcessName,\n    LogonTypeName,\n    TargetUserSid,\n    timestamp\n| where IPManagedAttemptsCount == 0\n",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  "1.1.1",
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

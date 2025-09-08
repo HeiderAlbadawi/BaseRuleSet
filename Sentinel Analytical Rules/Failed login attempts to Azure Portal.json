@@ -1,0 +1,144 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "223db5c1-1bf8-47d8-8806-bed401b356a4",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies failed login attempts in the Azure Active Directory SigninLogs to the Azure Portal.  Many failed logon \nattempts or some failed logon attempts from multiple IPs could indicate a potential brute force attack.  \nThe following are excluded due to success and non-failure results:\nReferences: https://docs.microsoft.com/azure/active-directory/reports-monitoring/reference-sign-ins-error-codes\n0 - successful logon\n50125 - Sign-in was interrupted due to a password reset or password registration entry.\n50140 - This error occurred due to \u0027Keep me signed in\u0027 interrupt when the user was signing-in.",
+    "DisplayName":  "Failed login attempts to Azure Portal - [WC-AZURE]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"e7009e7a-0000-1100-0000-66b9f0860000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  864000000000,
+                                                  "Days":  1,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  1,
+                                                  "TotalHours":  24,
+                                                  "TotalMilliseconds":  86400000,
+                                                  "TotalMinutes":  1440,
+                                                  "TotalSeconds":  86400
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/Training_Jordan/providers/Microsoft.OperationalInsights/workspaces/AcmeSentinel/providers/Microsoft.SecurityInsights/alertRules/12d5e090-35f5-4013-9582-2e2473ebbe93",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1723461762034)\/",
+    "Name":  "12d5e090-35f5-4013-9582-2e2473ebbe93",
+    "Query":  "let timeRange = 1d;\nlet lookBack = 7d;\nlet threshold_Failed = 5;\nlet threshold_FailedwithSingleIP = 20;\nlet threshold_IPAddressCount = 2;\nlet isGUID = \"[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}\";\nlet aadFunc = (tableName: string) {\n    let azPortalSignins = materialize(table(tableName)\n        | where TimeGenerated \u003e= ago(lookBack)\n        // Azure Portal only\n        | where AppDisplayName =~ \"Azure Portal\")\n    ;\n    let successPortalSignins = azPortalSignins\n        | where TimeGenerated \u003e= ago(timeRange)\n        // Azure Portal only and exclude non-failure Result Types\n        | where ResultType in (\"0\", \"50125\", \"50140\")\n        // Tagging identities not resolved to friendly names\n        //| extend Unresolved = iff(Identity matches regex isGUID, true, false)\n        | distinct TimeGenerated, UserPrincipalName\n    ;\n    let failPortalSignins = azPortalSignins\n        | where TimeGenerated \u003e= ago(timeRange)\n        // Azure Portal only and exclude non-failure Result Types\n        | where ResultType !in (\"0\", \"50125\", \"50140\", \"70044\", \"70043\")\n        // Tagging identities not resolved to friendly names\n        | extend Unresolved = iff(Identity matches regex isGUID, true, false)\n    ;\n    // Verify there is no success for the same connection attempt after the fail\n    let failnoSuccess = failPortalSignins\n        | join kind= leftouter (\n            successPortalSignins \n            )\n            on UserPrincipalName\n        | where TimeGenerated \u003e TimeGenerated1 or isempty(TimeGenerated1)\n        | project-away TimeGenerated1, UserPrincipalName1\n    ;\n    // Lookup up resolved identities from last 7 days\n    let identityLookup = azPortalSignins\n        | where TimeGenerated \u003e= ago(lookBack)\n        | where not(Identity matches regex isGUID)\n        | summarize\n            by\n            UserId,\n            lu_UserDisplayName = UserDisplayName,\n            lu_UserPrincipalName = UserPrincipalName;\n    // Join resolved names to unresolved list from portal signins\n    let unresolvedNames = failnoSuccess\n        | where Unresolved == true\n        | join kind= inner (\n            identityLookup \n            )\n            on UserId\n        | extend UserDisplayName = lu_UserDisplayName, UserPrincipalName = lu_UserPrincipalName\n        | project-away lu_UserDisplayName, lu_UserPrincipalName;\n    // Join Signins that had resolved names with list of unresolved that now have a resolved name\n    let u_azPortalSignins = failnoSuccess\n        | where Unresolved == false\n        | union unresolvedNames;\n    u_azPortalSignins\n    | extend\n        DeviceDetail = todynamic(DeviceDetail),\n        Status = todynamic(DeviceDetail),\n        LocationDetails = todynamic(LocationDetails)\n    | extend\n        Status = strcat(ResultType, \": \", ResultDescription),\n        OS = tostring(DeviceDetail.operatingSystem),\n        Browser = tostring(DeviceDetail.browser)\n    | extend\n        State = tostring(LocationDetails.state),\n        City = tostring(LocationDetails.city),\n        Region = tostring(LocationDetails.countryOrRegion)\n    | extend FullLocation = strcat(Region, \u0027|\u0027, State, \u0027|\u0027, City)\n    | summarize\n        TimeGenerated = makelist(TimeGenerated),\n        Status = makelist(Status),\n        IPAddresses = makelist(IPAddress),\n        IPAddressCount = dcount(IPAddress),\n        FailedLogonCount = count()\n        by\n        UserPrincipalName,\n        UserId,\n        UserDisplayName,\n        AppDisplayName,\n        Browser,\n        OS,\n        FullLocation,\n        Type\n    | mvexpand TimeGenerated, IPAddresses, Status\n    | extend\n        TimeGenerated = todatetime(tostring(TimeGenerated)),\n        IPAddress = tostring(IPAddresses),\n        Status = tostring(Status)\n    | project-away IPAddresses\n    | summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated)\n        by\n        UserPrincipalName,\n        UserId,\n        UserDisplayName,\n        Status,\n        FailedLogonCount,\n        IPAddress,\n        IPAddressCount,\n        AppDisplayName,\n        Browser,\n        OS,\n        FullLocation,\n        Type\n    | where (IPAddressCount \u003e= threshold_IPAddressCount and FailedLogonCount \u003e= threshold_Failed) or FailedLogonCount \u003e= threshold_FailedwithSingleIP\n    | extend\n        timestamp = StartTime,\n        AccountCustomEntity = UserPrincipalName,\n        IPCustomEntity = IPAddress\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nlet alerttable = union isfuzzy=true aadSignin, aadNonInt;\nlet IPManagedAttempts = SigninLogs\n| union AADNonInteractiveUserSignInLogs\n| where tostring(parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring(parse_json(DeviceDetail_string).trustType) != \"\"\n| summarize IPManagedAttemptsCount = count() by IPAddress;\nalerttable\n| join kind=leftouter IPManagedAttempts on IPAddress\n| extend IPManagedAttemptsCount = coalesce(IPManagedAttemptsCount,0)\n| project-away IPAddress1\n| where IPManagedAttemptsCount == 0\n",
+    "QueryFrequency":  {
+                           "Ticks":  864000000000,
+                           "Days":  1,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  1,
+                           "TotalHours":  24,
+                           "TotalMilliseconds":  86400000,
+                           "TotalMinutes":  1440,
+                           "TotalSeconds":  86400
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  6048000000000,
+                        "Days":  7,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  7,
+                        "TotalHours":  168,
+                        "TotalMilliseconds":  604800000,
+                        "TotalMinutes":  10080,
+                        "TotalSeconds":  604800
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

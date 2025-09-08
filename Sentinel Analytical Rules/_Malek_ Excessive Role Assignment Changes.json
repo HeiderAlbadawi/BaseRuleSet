@@ -1,0 +1,127 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This query retrieves and analyzes Azure activity logs for role assignments over the past 48 hours. It focuses on identifying operations where role assignments were modified (\"MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE\"). The query filters these activities within the specified time range and summarizes the data by counting the number of operations performed by each caller within each resource group. It then selects only those entries where more than three such operations occurred, orders the results by the count in descending order, and projects the caller, resource group, start time, end time, and count of operations.",
+    "DisplayName":  "[Malek] Excessive Role Assignment Changes",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"06003b52-0000-1100-0000-66b3e9a90000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/d93e3542-4bc7-4067-b22f-3cc2327775e4",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1723066789783)\/",
+    "Name":  "d93e3542-4bc7-4067-b22f-3cc2327775e4",
+    "Query":  "let startTime = ago(48h);\r\nlet endTime = now();\r\nlet roleChanges = AzureActivity\r\n| where TimeGenerated between (startTime .. endTime)\r\n| where OperationNameValue == \"MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE\"\r\n| summarize Count = count(), StartTime = min(TimeGenerated),\r\nEndTime = max(TimeGenerated) by Caller, ResourceGroup\r\n| where Count \u003e 3\r\n| order by Count desc;\r\nroleChanges\r\n| project Caller, ResourceGroup, StartTime, EndTime, Count",
+    "QueryFrequency":  {
+                           "Ticks":  108000000000,
+                           "Days":  0,
+                           "Hours":  3,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.125,
+                           "TotalHours":  3,
+                           "TotalMilliseconds":  10800000,
+                           "TotalMinutes":  180,
+                           "TotalSeconds":  10800
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  108000000000,
+                        "Days":  0,
+                        "Hours":  3,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.125,
+                        "TotalHours":  3,
+                        "TotalMilliseconds":  10800000,
+                        "TotalMinutes":  180,
+                        "TotalSeconds":  10800
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   },
+                   {
+
+                   },
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

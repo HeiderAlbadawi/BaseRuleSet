@@ -1,0 +1,159 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "f2eb15bd-8a88-4b24-9281-e133edfba315",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This query maps any IP indicators of compromise (IOCs) from threat intelligence (TI), by searching for matches in SigninLogs.",
+    "DisplayName":  "TI Map IP Entity to SigninLogs - [WC-AZURE]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Name",
+                                                       "Identifier":  "Name"
+                                                   },
+                                                   {
+                                                       "ColumnName":  "UPNSuffix",
+                                                       "Identifier":  "UPNSuffix"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPAddress",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "Url",
+                                                       "Identifier":  "Url"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c0436f6-0000-1100-0000-66caed0c0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/e4302167-da3c-4ea4-8d6f-e069b209223d",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574986883)\/",
+    "Name":  "e4302167-da3c-4ea4-8d6f-e069b209223d",
+    "Query":  "let dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nlet Signins = materialize(union isfuzzy=true\n        (SigninLogs\n        | where TimeGenerated \u003e= ago(dt_lookBack)),\n        (AADNonInteractiveUserSignInLogs\n        | where TimeGenerated \u003e= ago(dt_lookBack)\n        | extend Status = todynamic(Status), LocationDetails = todynamic(LocationDetails)));\nlet SigninIPs = Signins\n    | summarize make_list(IPAddress);\nlet TI = materialize(ThreatIntelligenceIndicator\n    | where isnotempty(NetworkIP)\n        or isnotempty(EmailSourceIpAddress)\n        or isnotempty(NetworkDestinationIP)\n        or isnotempty(NetworkSourceIP)\n    | where TimeGenerated \u003e= ago(ioc_lookBack)\n    | extend TI_ipEntity = coalesce(NetworkIP, EmailSourceIpAddress, NetworkDestinationIP, NetworkSourceIP)\n    | where TI_ipEntity in (SigninIPs)\n    | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n    | where Active == true and ExpirationDateTime \u003e now()\n    | where Description !contains_cs \"State: inactive;\" and Description !contains_cs \"State: falsepos;\");\nTI\n// using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n| join kind=innerunique (Signins) on $left.TI_ipEntity == $right.IPAddress\n| project-rename SigninLogs_TimeGenerated = TimeGenerated\n| where SigninLogs_TimeGenerated \u003c ExpirationDateTime\n| extend\n    StatusCode = tostring(Status.errorCode),\n    StatusDetails = tostring(Status.additionalDetails),\n    StatusReason = tostring(Status.failureReason)\n| summarize SigninLogs_TimeGenerated = arg_max(SigninLogs_TimeGenerated, *) by IndicatorId, IPAddress\n| project\n    SigninLogs_TimeGenerated,\n    Description,\n    ActivityGroupNames,\n    IndicatorId,\n    ThreatType,\n    Url,\n    ExpirationDateTime,\n    ConfidenceScore,\n    TI_ipEntity,\n    IPAddress,\n    UserPrincipalName,\n    AppDisplayName,\n    StatusCode,\n    StatusDetails,\n    StatusReason,\n    NetworkIP,\n    NetworkDestinationIP,\n    NetworkSourceIP,\n    EmailSourceIpAddress,\n    Type\n| extend\n    timestamp = SigninLogs_TimeGenerated,\n    Name = tostring(split(UserPrincipalName, \u0027@\u0027, 0)[0]),\n    UPNSuffix = tostring(split(UserPrincipalName, \u0027@\u0027, 1)[0])\n    | where not( (StatusCode == 50126 or StatusCode == 50053) and AppDisplayName == \"Office 365 Exchange Online\")",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  "1.2.6",
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

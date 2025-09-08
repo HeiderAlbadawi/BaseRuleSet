@@ -1,0 +1,144 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This rule checks for MFA abuse to a user where an attacker may have compromised/phished the credentials and will then keep sending MFA requests, hoping the user accepts. ",
+    "DisplayName":  "MFA Repeated Requests",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "UserPrincipalName",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPAddress",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"23013aff-0000-1100-0000-66bb231d0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/b0cb5d48-cd10-4d37-a9a1-b45aaa6f74b9",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1723540249696)\/",
+    "Name":  "b0cb5d48-cd10-4d37-a9a1-b45aaa6f74b9",
+    "Query":  "let timeRange = 5d;\r\nlet MaxAllowedTimes = 25;\r\nlet TargetUser = SigninLogs\r\n| where TimeGenerated \u003e ago(timeRange)\r\n| where ResultType == 500121\r\n| summarize FailedLogonCounter=count() by UserPrincipalName,IPAddress\r\n| where FailedLogonCounter \u003e= MaxAllowedTimes;\r\nlet ManagedAttempts = SigninLogs\r\n| union AADNonInteractiveUserSignInLogs\r\n| where TimeGenerated \u003e ago(14d)\r\n| where (tostring( parse_json(DeviceDetail_dynamic).trustType) != \"\" or tostring( parse_json(DeviceDetail_string).trustType) != \"\") or (DeviceDetail_dynamic or DeviceDetail_string contains \"PII Removed\")\r\n| summarize IPManagedAttempts = count() by IPAddress;\r\nSigninLogs\r\n| join kind=inner TargetUser on UserPrincipalName,IPAddress\r\n| project-away UserPrincipalName1,IPAddress1\r\n| summarize Device = make_set(DeviceDetail),ClientApp =make_set(ClientAppUsed),Set_Result = make_set(ResultType),Set_Status = make_set(Status),Applications = make_set(AppDisplayName),RiskType = make_set(RiskEventTypes),RiskTypeV2 = make_set(RiskEventTypes_V2),UserAgent = make_set(UserAgent),Time = make_set(TimeGenerated,1),AccessedLocation = make_set(LocationDetails), AuthDetails = make_set(AuthenticationDetails) by UserPrincipalName,IPAddress\r\n// | join kind=leftouter ManagedAttempts on IPAddress\r\n// | extend IPManagedAttempts = coalesce(IPManagedAttempts,0)\r\n// | project-reorder Time,UserPrincipalName,IPAddress,AccessedLocation,Set_Result,Set_Status,AuthDetails,Applications,Device,ClientApp,UserAgent,RiskType,RiskTypeV2,IPManagedAttempts\r\n// | where IPManagedAttempts == 0",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  12096000000000,
+                        "Days":  14,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  14,
+                        "TotalHours":  336,
+                        "TotalMilliseconds":  1209600000,
+                        "TotalMinutes":  20160,
+                        "TotalSeconds":  1209600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

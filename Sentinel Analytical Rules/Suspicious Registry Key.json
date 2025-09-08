@@ -1,0 +1,88 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  null,
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This detection identifies suspicious registry key modifications that may indicate attempts to achieve persistence or evade security controls.",
+    "DisplayName":  "Suspicious Registry Key",
+    "Enabled":  true,
+    "EntityMapping":  null,
+    "Etag":  "\"850030a7-0000-1100-0000-68667eff0000\"",
+    "GroupingConfigurationEnabled":  false,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/6cd6df64-eb55-4bef-80b7-2e8d57c48276",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1751547647339)\/",
+    "Name":  "6cd6df64-eb55-4bef-80b7-2e8d57c48276",
+    "Query":  "DeviceRegistryEvents\r\n| where RegistryKey has_any (\"Windows Defender\", \"Run\", \"Disable\", \"add\", \"del\") \r\n| where ActionType in (\"RegistryValueSet\", \"RegistryValueDeleted\", \"RegistryKeyCreated\", \"RegistryKeyDeleted\", \"RegistryKeyRenamed\")\r\n| where InitiatingProcessFileName !in~ (\"explorer.exe\", \"svchost.exe\", \"msiexec.exe\", \"services.exe\", \"system\")\r\n| where InitiatingProcessFileName in~ (\"reg.exe\", \"regedit.exe\", \"powershell.exe\", \"cmd.exe\", \"wscript.exe\", \"cscript.exe\")\r\n// | where InitiatingProcessAccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\")\r\n// | where RegistryValueData has_any (\".exe\", \"TEMP\", \"Downloads\", \"Startup\", \"AppData\")\r\n| project TimeGenerated, ActionType, DeviceName, RegistryKey, RegistryValueName, RegistryValueData,\r\n          InitiatingProcessFileName, InitiatingProcessCommandLine,\r\n          InitiatingProcessAccountName, InitiatingProcessAccountSid, DeviceId, ReportId",
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

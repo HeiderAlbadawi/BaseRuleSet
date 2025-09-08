@@ -1,0 +1,181 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "c37711a4-5f44-4472-8afc-0679bc0ef966",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "Identifies a match across various data feeds for IOCs related to FoggyWeb backdoor by the threat actor NOBELIUM.\n FoggyWeb is a passive and highly targeted backdoor capable of remotely exfiltrating sensitive information from a compromised AD FS server.\n It can also receive additional malicious components from a command-and-control (C2) server and execute them on the compromised server.\n Reference: https://aka.ms/nobelium-foggy-web",
+    "DisplayName":  "NOBELIUM IOCs related to FoggyWeb backdoor [WC-THREAT]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "HostCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "IPCustomEntity",
+                                                       "Identifier":  "Address"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AlgorithmCustomEntity",
+                                                       "Identifier":  "Algorithm"
+                                                   },
+                                                   {
+                                                       "ColumnName":  "FileHashCustomEntity",
+                                                       "Identifier":  "Value"
+                                                   }
+                                               ]
+                          },
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "ProcessCustomEntity",
+                                                       "Identifier":  "ProcessId"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9d04750d-0000-1100-0000-66caed5f0000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  180000000000,
+                                                  "Days":  0,
+                                                  "Hours":  5,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  0,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.20833333333333331,
+                                                  "TotalHours":  5,
+                                                  "TotalMilliseconds":  18000000,
+                                                  "TotalMinutes":  300,
+                                                  "TotalSeconds":  18000
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/23fa671f-9762-4aa4-be4e-009263845a58",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724575070085)\/",
+    "Name":  "23fa671f-9762-4aa4-be4e-009263845a58",
+    "Query":  "let iocs = externaldata(DateAdded:string,IoC:string,Type:string,TLP:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Feeds/FoggyWebIOC.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\nlet sha256Hashes = (iocs | where Type == \"sha256\" | project IoC);\nlet FilePaths = (iocs | where Type =~ \"FilePath\" | project IoC);\nlet POST_URI = (iocs | where Type =~ \"URI1\" | project IoC);\nlet GET_URI = (iocs | where Type =~ \"URI2\" | project IoC);\n//Include in the list below, the ADFS servers you know about in your environment.  In the next part of the query, we will try to identify them for you if you have the telemetry.\nlet ADFS_Servers1 = datatable(Computer:string)\n[ \"\u003cADFS01\u003e.\u003cDOMAIN\u003e.\u003cCOM\u003e\",\n\"\u003cADFS02\u003e.\u003cDOMAIN\u003e.\u003cCOM\u003e\"\n];\n// Automatically identify potential ADFS services in your environment by searching process event telemetry for \"Microsoft.IdentityServer.ServiceHost.exe\".\nlet ADFS_Servers2 = \n(union isfuzzy=true\n(SecurityEvent\n| where EventID == 4688 and SubjectLogonId != \"0x3e4\"\n| where ProcessName has \"Microsoft.IdentityServer.ServiceHost.exe\"\n| distinct Computer\n),\n( WindowsEvent\n| where EventID == 4688 and EventData has \"Microsoft.IdentityServer.ServiceHost.exe\" and EventData has \"0x3e4\"\n| extend ProcessName = tostring(EventData.ProcessName)\n| where ProcessName == \"Microsoft.IdentityServer.ServiceHost.exe\"\n| extend SubjectLogonId = tostring(EventData.SubjectLogonId)\n| where SubjectLogonId != \"0x3e4\"\n| distinct Computer\n),\n(DeviceProcessEvents\n| where InitiatingProcessFileName == \u0027Microsoft.IdentityServer.ServiceHost.exe\u0027\n| extend Computer = DeviceName\n| distinct Computer\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\"\n| where EventID == 1\n| extend EventData = parse_xml(EventData).DataItem.EventData.Data\n| mv-expand bagexpansion=array EventData\n| evaluate bag_unpack(EventData)\n| extend Key=tostring([\u0027@Name\u0027]), Value=[\u0027#text\u0027]\n| evaluate pivot(Key, any(Value), TimeGenerated, Source, EventLog, Computer, EventLevel, EventLevelName, UserName, RenderedDescription, MG, ManagementGroupName, Type, _ResourceId)\n| extend process = split(Image, \u0027\\\\\u0027, -1)[-1]\n| where process =~ \"Microsoft.IdentityServer.ServiceHost.exe\"\n| distinct Computer\n)\n);\nlet ADFS_Servers =\nADFS_Servers1\n| union  (ADFS_Servers2 | distinct Computer);\n(union isfuzzy=true\n(DeviceNetworkEvents\n| where DeviceName in (ADFS_Servers)\n| where isnotempty(InitiatingProcessSHA256) or isnotempty(InitiatingProcessFolderPath)\n| where  InitiatingProcessSHA256 has_any (sha256Hashes) or InitiatingProcessFolderPath has_any (FilePaths)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId,  InitiatingProcessParentFileName, InitiatingProcessFileName, RemoteIP, RemoteUrl, RemotePort, LocalIP, Type\n| extend timestamp = TimeGenerated, IPCustomEntity = RemoteIP, HostCustomEntity = DeviceName\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\" and EventID == \u00277\u0027\n| where Computer in (ADFS_Servers)\n| extend EvData = parse_xml(EventData)\n| extend EventDetail = EvData.DataItem.EventData.Data\n| extend ImageLoaded = EventDetail.[5].[\"#text\"], Hashes = EventDetail.[11].[\"#text\"]\n| parse Hashes with * \u0027SHA256=\u0027 SHA256 \u0027\",\u0027 *\n| where ImageLoaded has_any (FilePaths) or SHA256 has_any (sha256Hashes) \n| project TimeGenerated, EventDetail, UserName, Computer, Type, Source, SHA256, ImageLoaded, EventID\n| extend Type = strcat(Type,\":\",EventID, \": \", Source), Account = UserName, FileHash = SHA256, Image = EventDetail.[4].[\"#text\"] \n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = tostring(split(Image, \u0027\\\\\u0027, -1)[-1]), AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(CommonSecurityLog\n| where FileHash in (sha256Hashes)\n| project TimeGenerated,  Message, SourceUserID, FileHash, Type\n| extend timestamp = TimeGenerated, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceEvents\n| where DeviceName in (ADFS_Servers)\n| extend FilePath = strcat(FolderPath, \u0027\\\\\u0027, FileName)\n| where InitiatingProcessSHA256 has_any (sha256Hashes) or FilePath has_any (FilePaths)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceFileEvents\n| where DeviceName in (ADFS_Servers)\n| where FolderPath has_any (FilePaths) or SHA256 has_any (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(DeviceImageLoadEvents\n| where DeviceName in (ADFS_Servers)\n| where FolderPath has_any (FilePaths) or SHA256 has_any (sha256Hashes)\n| project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type\n| extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath\n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(Event\n| where Source == \"Microsoft-Windows-Sysmon\"\n| where Computer in (ADFS_Servers)\n| extend EvData = parse_xml(EventData)\n| extend EventDetail = EvData.DataItem.EventData.Data\n| parse EventDetail with * \u0027SHA256=\u0027 SHA256 \u0027\",\u0027 *\n| where EventDetail has_any (sha256Hashes) \n| project TimeGenerated, EventDetail, UserName, Computer, Type, Source, SHA256\n| extend Type = strcat(Type, \": \", Source), Account = UserName, FileHash = SHA256, Image = EventDetail.[4].[\"#text\"] \n| extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = tostring(split(Image, \u0027\\\\\u0027, -1)[-1]), AlgorithmCustomEntity = \"SHA256\", FileHashCustomEntity = FileHash\n),\n(W3CIISLog \n| where ( csMethod == \u0027GET\u0027 and csUriStem has_any (GET_URI)) or (csMethod == \u0027POST\u0027 and csUriStem has_any (POST_URI))\n| summarize StartTime = max(TimeGenerated), EndTime = min(TimeGenerated), cIP_MethodCount = count() \nby cIP, cIP_MethodCountType = \"Count of repeated entries, this is to reduce rowsets returned\", csMethod, \ncsHost, scStatus, sIP, csUriStem, csUriQuery, csUserName, csUserAgent, csCookie, csReferer\n| extend timestamp = StartTime, IPCustomEntity = cIP, HostCustomEntity = csHost, AccountCustomEntity = csUserName\n),\n(imFileEvent\n| where DvcHostname in (ADFS_Servers)\n| where TargetFileSHA256 has_any (sha256Hashes) or FilePath has_any (FilePaths)\n| extend Account = ActorUsername, Computer = DvcHostname, IPAddress = SrcIpAddr, CommandLine = ActingProcessCommandLine, FileHash = TargetFileSHA256\n| project Type, TimeGenerated, Computer, Account, IPAddress, CommandLine, FileHash\n)\n)",
+    "QueryFrequency":  {
+                           "Ticks":  9000000000,
+                           "Days":  0,
+                           "Hours":  0,
+                           "Milliseconds":  0,
+                           "Minutes":  15,
+                           "Seconds":  0,
+                           "TotalDays":  0.010416666666666666,
+                           "TotalHours":  0.25,
+                           "TotalMilliseconds":  900000,
+                           "TotalMinutes":  15,
+                           "TotalSeconds":  900
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  9000000000,
+                        "Days":  0,
+                        "Hours":  0,
+                        "Milliseconds":  0,
+                        "Minutes":  15,
+                        "Seconds":  0,
+                        "TotalDays":  0.010416666666666666,
+                        "TotalHours":  0.25,
+                        "TotalMilliseconds":  900000,
+                        "TotalMinutes":  15,
+                        "TotalSeconds":  900
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  "2.1.1",
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}

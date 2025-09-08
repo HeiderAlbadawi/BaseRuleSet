@@ -1,0 +1,133 @@
+﻿{
+    "AlertDetailOverrideAlertDescriptionFormat":  null,
+    "AlertDetailOverrideAlertDisplayNameFormat":  null,
+    "AlertDetailOverrideAlertSeverityColumnName":  null,
+    "AlertDetailOverrideAlertTacticsColumnName":  null,
+    "AlertRuleTemplateName":  "bff058b2-500e-4ae5-bb49-a5b1423cbd5b",
+    "CustomDetail":  {
+
+                     },
+    "Description":  "This detection identifies an external user is added to a Team or Teams chat\nand shares a files which is accessed by many users (\u003e10) and the users is removed within short period of time. This might be\nan indicator of suspicious activity.",
+    "DisplayName":  "Accessed files shared by temporary external user  - [WC-O365]",
+    "Enabled":  true,
+    "EntityMapping":  [
+                          {
+                              "EntityType":  {
+
+                                             },
+                              "FieldMapping":  [
+                                                   {
+                                                       "ColumnName":  "AccountCustomEntity",
+                                                       "Identifier":  "FullName"
+                                                   }
+                                               ]
+                          }
+                      ],
+    "Etag":  "\"9c04dac1-0000-1100-0000-66caec600000\"",
+    "EventGroupingSettingAggregationKind":  {
+
+                                            },
+    "GroupingConfigurationEnabled":  true,
+    "GroupingConfigurationGroupByAlertDetail":  [
+
+                                                ],
+    "GroupingConfigurationGroupByCustomDetail":  [
+
+                                                 ],
+    "GroupingConfigurationGroupByEntity":  [
+
+                                           ],
+    "GroupingConfigurationLookbackDuration":  {
+                                                  "Ticks":  3000000000,
+                                                  "Days":  0,
+                                                  "Hours":  0,
+                                                  "Milliseconds":  0,
+                                                  "Minutes":  5,
+                                                  "Seconds":  0,
+                                                  "TotalDays":  0.003472222222222222,
+                                                  "TotalHours":  0.083333333333333329,
+                                                  "TotalMilliseconds":  300000,
+                                                  "TotalMinutes":  5,
+                                                  "TotalSeconds":  300
+                                              },
+    "GroupingConfigurationMatchingMethod":  {
+
+                                            },
+    "GroupingConfigurationReopenClosedIncident":  false,
+    "Id":  "/subscriptions/5cfeafdb-fc6b-4d09-971d-3320c5ec14a0/resourceGroups/training_jordan/providers/Microsoft.OperationalInsights/workspaces/acmesentinel/providers/Microsoft.SecurityInsights/alertRules/1b788c61-3959-432a-9909-73f590c9a4d4",
+    "IncidentConfigurationCreateIncident":  true,
+    "Kind":  {
+
+             },
+    "LastModifiedUtc":  "\/Date(1724574813929)\/",
+    "Name":  "1b788c61-3959-432a-9909-73f590c9a4d4",
+    "Query":  "let fileAccessThrehold = 10;\nOfficeActivity\n | where OfficeWorkload =~ \"MicrosoftTeams\"\n | where Operation =~ \"MemberAdded\"\n | extend UPN = tostring(parse_json(Members)[0].UPN)\n | where UPN contains (\"#EXT#\")\n | project TimeAdded=TimeGenerated, Operation, UPN, UserWhoAdded = UserId, TeamName\n | join kind = inner(\n                       OfficeActivity\n                       | where OfficeWorkload =~ \"MicrosoftTeams\"\n                       | where Operation =~ \"MemberRemoved\"\n                       | extend UPN = tostring(parse_json(Members)[0].UPN)\n                       | where UPN contains (\"#EXT#\")\n                       | project TimeDeleted=TimeGenerated, Operation, UPN, UserWhoDeleted = UserId, TeamName\n                     ) on UPN\n | where TimeDeleted \u003e TimeAdded\n | join kind=inner \n                   (\n                   OfficeActivity\n                   | where RecordType == \"SharePointFileOperation\"\n                   | where SourceRelativeUrl has \"Microsoft Teams Chat Files\"\n                   | where Operation == \"FileUploaded\"\n                   | join kind = inner \n                                       (\n                                       OfficeActivity\n                                       | where RecordType == \"SharePointFileOperation\"\n                                       | where Operation  == \"FileAccessed\"\n                                       | where SourceRelativeUrl has \"Microsoft Teams Chat Files\"\n                                       | summarize FileAccessCount = count() by OfficeObjectId\n                                       | where FileAccessCount \u003e fileAccessThrehold\n                                       ) on $left.OfficeObjectId == $right.OfficeObjectId\n                   )on $left.UPN == $right.UserId\n | extend timestamp=TimeGenerated, AccountCustomEntity = UserWhoAdded",
+    "QueryFrequency":  {
+                           "Ticks":  36000000000,
+                           "Days":  0,
+                           "Hours":  1,
+                           "Milliseconds":  0,
+                           "Minutes":  0,
+                           "Seconds":  0,
+                           "TotalDays":  0.041666666666666664,
+                           "TotalHours":  1,
+                           "TotalMilliseconds":  3600000,
+                           "TotalMinutes":  60,
+                           "TotalSeconds":  3600
+                       },
+    "QueryPeriod":  {
+                        "Ticks":  36000000000,
+                        "Days":  0,
+                        "Hours":  1,
+                        "Milliseconds":  0,
+                        "Minutes":  0,
+                        "Seconds":  0,
+                        "TotalDays":  0.041666666666666664,
+                        "TotalHours":  1,
+                        "TotalMilliseconds":  3600000,
+                        "TotalMinutes":  60,
+                        "TotalSeconds":  3600
+                    },
+    "Severity":  {
+
+                 },
+    "SuppressionDuration":  {
+                                "Ticks":  180000000000,
+                                "Days":  0,
+                                "Hours":  5,
+                                "Milliseconds":  0,
+                                "Minutes":  0,
+                                "Seconds":  0,
+                                "TotalDays":  0.20833333333333331,
+                                "TotalHours":  5,
+                                "TotalMilliseconds":  18000000,
+                                "TotalMinutes":  300,
+                                "TotalSeconds":  18000
+                            },
+    "SuppressionEnabled":  false,
+    "SystemData":  {
+                       "CreatedAt":  null,
+                       "CreatedBy":  null,
+                       "CreatedByType":  null,
+                       "LastModifiedAt":  null,
+                       "LastModifiedBy":  null,
+                       "LastModifiedByType":  null
+                   },
+    "SystemDataCreatedAt":  null,
+    "SystemDataCreatedBy":  null,
+    "SystemDataCreatedByType":  null,
+    "SystemDataLastModifiedAt":  null,
+    "SystemDataLastModifiedBy":  null,
+    "SystemDataLastModifiedByType":  null,
+    "Tactic":  [
+                   {
+
+                   }
+               ],
+    "TemplateVersion":  null,
+    "TriggerOperator":  {
+
+                        },
+    "TriggerThreshold":  0,
+    "Type":  "Microsoft.SecurityInsights/alertRules"
+}
