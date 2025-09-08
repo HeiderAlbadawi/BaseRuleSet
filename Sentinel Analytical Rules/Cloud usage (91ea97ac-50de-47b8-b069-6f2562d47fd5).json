@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "Cloud usage",
                                              "description":  "test",
-                                             "severity":  "low",
+                                             "severity":  "high",
                                              "enabled":  true,
                                              "query":  "AzureActivity //the table - this is where Cloud Shell activity is logged\n| where ResourceGroup startswith \"CLOUD-SHELL\" //filtering for Cloud Shell\n| where ResourceProviderValue == \"MICROSOFT.STORAGE\" //To not mistake this for some other Cloud Shell operation, also filtering on MICROSOFT.STORAGE. Storage is created anytime Cloud Shell runs.\n| where ActivityStatusValue == \"Start\" //Making sure that the activity is the spawning of a new Cloud Shell instance\n| summarize count() by TimeGenerated , ResourceGroup  , Caller , CallerIpAddress , ActivityStatusValue //Getting a count of how many times each individual has run Cloud Shell\n| extend AccountCustomEntity = Caller //Assigning the Caller column - name of person - to AccountCustomEntity - this is what is used for the User Entity in Microsoft Sentinel Incidents\n| extend IPCustomEntity = CallerIpAddress //Assigning the CallerIpAddress column - IP Address of user\u0027s system - to IPCustomEntity - this is what is used for the IP Entity in Microsoft Sentinel Incidents",
                                              "queryFrequency":  "PT5H",
