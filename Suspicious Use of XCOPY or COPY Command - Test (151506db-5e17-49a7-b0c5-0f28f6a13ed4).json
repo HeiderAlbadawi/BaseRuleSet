@@ -1,0 +1,96 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/151506db-5e17-49a7-b0c5-0f28f6a13ed4\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/151506db-5e17-49a7-b0c5-0f28f6a13ed4\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "Suspicious Use of XCOPY or COPY Command - Test",
+                                             "description":  "Detects file or folder copy operations using xcopy or copy, possibly with wildcard or remote destinations.",
+                                             "severity":  "High",
+                                             "enabled":  true,
+                                             "query":  "// 1) Folder-level xcopy command events\r\nlet FolderCopyCmds = DeviceProcessEvents\r\n| where tolower(ProcessCommandLine) has \"xcopy\"\r\n| extend Tokens = split(ProcessCommandLine, \" \")\r\n| extend FileOrFolderPath = tostring(Tokens[1])\r\n| extend IsWildcardCopy = substring(FileOrFolderPath, strlen(FileOrFolderPath) - 1, 1) == \"\\\\\"\r\n| extend FolderName = extract(@\"\\\\([^\\\\]+)\\\\?$\", 1, FileOrFolderPath)\r\n| extend FileName = iif(IsWildcardCopy, \"\u003cMultiple Files\u003e\", extract(@\"([^\\\\]+)$\", 1, FileOrFolderPath))\r\n| extend FileExtension = extract(@\"\\.([a-zA-Z0-9]+)$\", 1, FileName)\r\n| extend RemotePath = tostring(Tokens[2])\r\n| extend RemoteIP = extract(@\"\\\\\\\\(\\d{1,3}(?:\\.\\d{1,3}){3})\", 1, RemotePath)\r\n| extend Success = \"Likely Yes\"\r\n| extend SourceType = \"CommandLine\"\r\n| project\r\n    TimeGenerated,\r\n    DeviceName,\r\n    InitiatingProcessAccountName,\r\n    FolderName,\r\n    FileName,\r\n    FileExtension,\r\n    FileOrFolderPath,\r\n    RemotePath,\r\n    RemoteIP,\r\n    IsWildcardCopy,\r\n    Success,\r\n    ProcessCommandLine,\r\n    SourceType;\r\n// 2) Per-file accesses (exclude .lnk), include Office types\r\nlet FileAccessEvents = DeviceEvents\r\n| where tolower(InitiatingProcessFileName) endswith \"xcopy.exe\" or tolower(InitiatingProcessCommandLine) has \"xcopy\"\r\n| extend FileName = tostring(FileName)\r\n| extend FileExtension = extract(@\"\\.([a-zA-Z0-9]+)$\", 1, FileName)\r\n| where FileExtension in~ (\"txt\", \"pdf\", \"zip\", \"rar\", \"7z\", \"docx\", \"xlsx\", \"pptx\")  // Add more if needed\r\n| where FileExtension != \"lnk\"  // Exclude shortcuts\r\n| extend FolderName = extract(@\"([^\\\\]+)$\", 1, FolderPath)\r\n| extend RemotePath = tostring(split(InitiatingProcessCommandLine, \" \")[-2])\r\n| extend RemoteIP = extract(@\"\\\\\\\\(\\d{1,3}(?:\\.\\d{1,3}){3})\", 1, RemotePath)\r\n| extend Success = \"Likely Yes\"\r\n| extend SourceType = \"FileAccess\"\r\n| project\r\n    TimeGenerated,\r\n    DeviceName,\r\n    InitiatingProcessAccountName,\r\n    FolderName,\r\n    FileName,\r\n    FileExtension,\r\n    FileOrFolderPath = FolderPath,\r\n    RemotePath,\r\n    RemoteIP,\r\n    IsWildcardCopy = false,\r\n    Success,\r\n    ProcessCommandLine = InitiatingProcessCommandLine,\r\n    SourceType;\r\n// Combine and order\r\nFolderCopyCmds\r\n| union FileAccessEvents\r\n| order by TimeGenerated desc\r\n\r\n",
+                                             "queryFrequency":  "PT5M",
+                                             "queryPeriod":  "PT1H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Exfiltration"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  null,
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "File",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "FolderName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "DeviceName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Process",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "CommandLine",
+                                                                                                  "columnName":  "ProcessCommandLine"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  null
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

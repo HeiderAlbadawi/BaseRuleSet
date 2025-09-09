@@ -1,0 +1,100 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/e4302167-da3c-4ea4-8d6f-e069b209223d\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/e4302167-da3c-4ea4-8d6f-e069b209223d\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "TI Map IP Entity to SigninLogs - [WC-AZURE]",
+                                             "description":  "This query maps any IP indicators of compromise (IOCs) from threat intelligence (TI), by searching for matches in SigninLogs.",
+                                             "severity":  "Medium",
+                                             "enabled":  true,
+                                             "query":  "let dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nlet Signins = materialize(union isfuzzy=true\n        (SigninLogs\n        | where TimeGenerated \u003e= ago(dt_lookBack)),\n        (AADNonInteractiveUserSignInLogs\n        | where TimeGenerated \u003e= ago(dt_lookBack)\n        | extend Status = todynamic(Status), LocationDetails = todynamic(LocationDetails)));\nlet SigninIPs = Signins\n    | summarize make_list(IPAddress);\nlet TI = materialize(ThreatIntelligenceIndicator\n    | where isnotempty(NetworkIP)\n        or isnotempty(EmailSourceIpAddress)\n        or isnotempty(NetworkDestinationIP)\n        or isnotempty(NetworkSourceIP)\n    | where TimeGenerated \u003e= ago(ioc_lookBack)\n    | extend TI_ipEntity = coalesce(NetworkIP, EmailSourceIpAddress, NetworkDestinationIP, NetworkSourceIP)\n    | where TI_ipEntity in (SigninIPs)\n    | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n    | where Active == true and ExpirationDateTime \u003e now()\n    | where Description !contains_cs \"State: inactive;\" and Description !contains_cs \"State: falsepos;\");\nTI\n// using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n| join kind=innerunique (Signins) on $left.TI_ipEntity == $right.IPAddress\n| project-rename SigninLogs_TimeGenerated = TimeGenerated\n| where SigninLogs_TimeGenerated \u003c ExpirationDateTime\n| extend\n    StatusCode = tostring(Status.errorCode),\n    StatusDetails = tostring(Status.additionalDetails),\n    StatusReason = tostring(Status.failureReason)\n| summarize SigninLogs_TimeGenerated = arg_max(SigninLogs_TimeGenerated, *) by IndicatorId, IPAddress\n| project\n    SigninLogs_TimeGenerated,\n    Description,\n    ActivityGroupNames,\n    IndicatorId,\n    ThreatType,\n    Url,\n    ExpirationDateTime,\n    ConfidenceScore,\n    TI_ipEntity,\n    IPAddress,\n    UserPrincipalName,\n    AppDisplayName,\n    StatusCode,\n    StatusDetails,\n    StatusReason,\n    NetworkIP,\n    NetworkDestinationIP,\n    NetworkSourceIP,\n    EmailSourceIpAddress,\n    Type\n| extend\n    timestamp = SigninLogs_TimeGenerated,\n    Name = tostring(split(UserPrincipalName, \u0027@\u0027, 0)[0]),\n    UPNSuffix = tostring(split(UserPrincipalName, \u0027@\u0027, 1)[0])\n    | where not( (StatusCode == 50126 or StatusCode == 50053) and AppDisplayName == \"Office 365 Exchange Online\")",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "P14D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "Impact"
+                                                         ],
+                                             "techniques":  [
+
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "f2eb15bd-8a88-4b24-9281-e133edfba315",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "Name"
+                                                                                              },
+                                                                                              {
+                                                                                                  "identifier":  "UPNSuffix",
+                                                                                                  "columnName":  "UPNSuffix"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "IPAddress"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "URL",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Url",
+                                                                                                  "columnName":  "Url"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  "1.2.6"
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}

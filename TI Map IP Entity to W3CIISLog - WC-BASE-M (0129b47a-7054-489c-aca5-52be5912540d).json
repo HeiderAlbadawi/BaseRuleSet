@@ -1,0 +1,96 @@
+﻿{
+    "contentVersion":  "1.0.0.0",
+    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources":  [
+                      {
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/0129b47a-7054-489c-aca5-52be5912540d\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/0129b47a-7054-489c-aca5-52be5912540d\u0027)]",
+                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+                          "kind":  "Scheduled",
+                          "apiVersion":  "2023-12-01-preview",
+                          "properties":  {
+                                             "displayName":  "TI Map IP Entity to W3CIISLog - [WC-BASE-M]",
+                                             "description":  "This query maps any IP indicators of compromise (IOCs) from threat intelligence (TI), by searching for matches in W3CIISLog.",
+                                             "severity":  "Medium",
+                                             "enabled":  false,
+                                             "query":  "let dt_lookBack = 1h; // Look back 1 hour for W3CIISLog events\nlet ioc_lookBack = 14d; // Look back 14 days for threat intelligence indicators\n// Fetch threat intelligence indicators related to IP addresses\nlet IP_Indicators = ThreatIntelIndicators\n| where TimeGenerated \u003e ago(14d)\n| distinct TIEntity = ObservableValue\n| where isnotempty( TIEntity)\n| where ipv4_is_private(TIEntity) == false\n        and TIEntity !startswith \"fe80\"\n        and TIEntity !startswith \"::\"\n        and TIEntity !startswith \"127.\";\n// Perform a join between IP indicators and W3CIISLog events\nIP_Indicators\n// Use innerunique to keep performance fast and result set low, as we only need one match to indicate potential malicious activity that needs investigation\n| join kind=innerunique (\n    W3CIISLog\n    | where TimeGenerated \u003e= ago(dt_lookBack)\n    | where isnotempty(cIP)\n    | where ipv4_is_private(cIP) == false\n        and cIP !startswith \"fe80\"\n        and cIP !startswith \"::\"\n        and cIP !startswith \"127.\"\n    | extend W3CIISLog_TimeGenerated = TimeGenerated\n    )\n    on $left.TIEntity == $right.cIP\n// Filter out W3CIISLog events that occurred after the expiration of the corresponding indicator\n// Group the results by IndicatorId and keep the W3CIISLog event with the latest timestamp\n| summarize W3CIISLog_TimeGenerated = arg_max(W3CIISLog_TimeGenerated, *) by cIP\n| where scStatus startswith \"2\" or scStatus startswith \"3\"\n| where csUriStem != \"/\"\n",
+                                             "queryFrequency":  "PT1H",
+                                             "queryPeriod":  "P14D",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
+                                             "suppressionDuration":  "PT5H",
+                                             "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
+                                             "tactics":  [
+                                                             "CommandAndControl"
+                                                         ],
+                                             "techniques":  [
+                                                                "T1071"
+                                                            ],
+                                             "subTechniques":  [
+
+                                                               ],
+                                             "alertRuleTemplateName":  "5e45930c-09b1-4430-b2d1-cc75ada0dc0f",
+                                             "incidentConfiguration":  {
+                                                                           "createIncident":  true,
+                                                                           "groupingConfiguration":  {
+                                                                                                         "enabled":  false,
+                                                                                                         "reopenClosedIncident":  false,
+                                                                                                         "lookbackDuration":  "PT5H",
+                                                                                                         "matchingMethod":  "AllEntities",
+                                                                                                         "groupByEntities":  [
+
+                                                                                                                             ],
+                                                                                                         "groupByAlertDetails":  [
+
+                                                                                                                                 ],
+                                                                                                         "groupByCustomDetails":  [
+
+                                                                                                                                  ]
+                                                                                                     }
+                                                                       },
+                                             "eventGroupingSettings":  {
+                                                                           "aggregationKind":  "SingleAlert"
+                                                                       },
+                                             "alertDetailsOverride":  null,
+                                             "customDetails":  null,
+                                             "entityMappings":  [
+                                                                    {
+                                                                        "entityType":  "Account",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Name",
+                                                                                                  "columnName":  "csUserName"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "Host",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "HostName",
+                                                                                                  "columnName":  "Computer"
+                                                                                              }
+                                                                                          ]
+                                                                    },
+                                                                    {
+                                                                        "entityType":  "IP",
+                                                                        "fieldMappings":  [
+                                                                                              {
+                                                                                                  "identifier":  "Address",
+                                                                                                  "columnName":  "cIP"
+                                                                                              }
+                                                                                          ]
+                                                                    }
+                                                                ],
+                                             "sentinelEntitiesMappings":  null,
+                                             "templateVersion":  "1.4.2"
+                                         }
+                      }
+                  ],
+    "parameters":  {
+                       "workspace":  {
+                                         "type":  "String"
+                                     }
+                   }
+}
