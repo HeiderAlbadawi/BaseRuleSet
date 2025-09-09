@@ -1,0 +1,113 @@
+FileName, CommitSha
+Sentinel Analytical Rules/BruteForce_Aldrin_Alia (47662c38-2f8c-4596-a240-4754a9e04636).json,7a99375ef590cb2c6d3db6fcda087a716d50bb2c
+Sentinel Analytical Rules/Brute Force - Carl Von Nicanor (3151a835-6565-4652-bb18-3e3ba3a2058a).json,5570ad0f007b6458c070ce0e0f91115e7cbc78db
+Sentinel Analytical Rules/Elfawair Inactive User (ebb24961-4436-4af9-a061-16fec79773c8).json,e3704e47a9fe9a80f4984dc75ed242b83fb9e916
+Sentinel Analytical Rules/Detect Panda (APT Group) Log4Shell Vulnerability Exploited - WC-THREAT (f28eba2a-b31f-4059-b724-7120b4e49591).json,ee15dc92143d0400bf66adec2725a2b38dd6b0c9
+Sentinel Analytical Rules/Anomalous sign-in location by user account and authenticating application - WC-AZURE (42ae503f-ca2b-4e0e-a175-cc75e31d47b9).json,2bdf3a2cbbfc941d7b808ed4c37f5a9ce08e31e0
+Sentinel Analytical Rules/DNS events related to ToR proxies  - WC-THREAT (36cd7678-06b0-4e9f-a670-1c5eef7580af).json,5ddb7caa4f6b340863855344dce2c84376550e31
+Sentinel Analytical Rules/Failed host logons but success logon to AzureAD - WC-AZURE (03a40f28-4afb-4907-86e7-ce6edeaf1f32).json,8f800470beec1f641c4380de0685133caf3e310d
+Sentinel Analytical Rules/Europium - Hash and IP IOCs - WC-THREAT (7bfc725f-6169-4e12-a622-74adf8b8dd0d).json,c0ae529b6d8e3e1f5b90fafe8dafcb1855c8bb3c
+Sentinel Analytical Rules/CVE-2020-1350 DNS Remote Code Exploit SIGRED - WC-THREAT (ca357133-fcd1-4a1d-b991-bd93399baf8b).json,5e7496834cdc926501b151c9a0862436a5969a75
+Sentinel Analytical Rules/BlackByte Ransomware query Active Directory for Computer Names - WC-THREAT (80b78790-7c39-4b9e-add4-86b6262f68df).json,71c76c097b3bbed331785125570792b8df5ef131
+Sentinel Analytical Rules/Exchange workflow MailItemsAccessed operation anomaly - WC-O365 (14b28a3f-8251-4799-a4e6-99cdf15da90a).json,0e174ca9b4d73faa24775124cacc23376e81fc8f
+Sentinel Analytical Rules/Accessed files shared by temporary external user  - WC-O365 (1b788c61-3959-432a-9909-73f590c9a4d4).json,7f7f9cfd2ff3816704ac5621d5762cb7bf2c377a
+Sentinel Analytical Rules/Failed AzureAD logons but success logon to host - WC-AZURE (75469252-a24b-4d34-a2ee-92c42c55856b).json,4d5c98122a9748c44506f62dddf918c7ca9d2d59
+Sentinel Analytical Rules/Failed Brute Force on Exchange Online (6d18d7dc-f4b8-4850-a329-2f22421b8cb8).json,0c0047511eabcbcf76efa62b70d32e036c38f078
+Sentinel Analytical Rules/BruteForce - Jonlord Mirando (77aed53f-b475-4389-b28a-0eec7fe80a74).json,0ae25116a3a4a2ba70e40139993a162323d18950
+Sentinel Analytical Rules/Abuawad Test (dc4c11e0-db64-41cb-aaed-43bc5e3b8ec9).json,9a425099669db5c2b57ad596eefd0a440bbe3fda
+Sentinel Analytical Rules/Detecting Impossible travel with mailbox permission tampering  Privilege Escalation attempt - WC-O365 (81e9b242-7e2b-454f-96c9-609c0518a160).json,8387526f079babe3a41f2d9f35387dabd02aece6
+Sentinel Analytical Rules/Chinese APT Uses WMIC to Execute Commands to list System  - WC-THREAT (1b829ac8-6bb3-470d-9ab8-a2bfc38716d4).json,a77476e77760413aa9045b440e4274f21ade2dd5
+Sentinel Analytical Rules/Anomalous login followed by Teams action - WC-O365 (ba964d12-17c2-42ab-bcfe-0ac8273ab859).json,b08b0fc35f1f6acf7695b092d530417a26838be8
+Sentinel Analytical Rules/Hackers Using New Evasive Technique to Deliver AsyncRAT Malware - WC-THREAT (a53cf6de-fe71-4f3d-a57d-c344bae319cc).json,14e81b568f8ed7f8f145b49496d7c83b3a987504
+Sentinel Analytical Rules/Invoke-SMBExec PowerShell Command - WC-AGENT (874c3d45-2b4a-4ceb-b809-bbb5f5a9373c).json,9f4e20d367b5078a820d97829d90bce67d3a9456
+Sentinel Analytical Rules/Edge Browser Data Theft Detection -hasan (7e13ae53-a4eb-4b84-a3d1-bfd3ee762f48).json,3457d0eae0344a2b2c6f05a776c02af8dfd2fa6b
+Sentinel Analytical Rules/Excessive Windows logon failures - WC-AGENT (1fb6b468-4c23-4231-95f5-54864a422288).json,a68f2b86724f06888476a2d892ef6285dc53c07f
+Sentinel Analytical Rules/BruteForce - Vince Edward Tan (db28c59e-dd98-439a-8fcd-e73125a91969).json,3cbb6be4051fd16248c12223a0d45b1501b5a5c9
+Sentinel Analytical Rules/Anomalous Sign-in Detected - WC-AZURE (33912fd7-58cb-49d9-bb68-128055bc2f79).json,216f6db7b5a8286166c0e13e88b0941e1ee402a9
+Sentinel Analytical Rules/Credential Dump via CmdKey (T1539) -Hasan (1f092b87-a527-4cb7-9204-7fdec4757235).json,57dcbb4ba0bdca7cedacabc9485059efe5e80e5f
+Sentinel Analytical Rules/Correlation Phish Delivered Followed by an Anomalous Sign-In (c0c89a84-fdff-4ed4-a443-405ad0af56ef).json,4468cd94b3889a91f959055206ae2d58c9959c67
+Sentinel Analytical Rules/Disbaled Firewall (b2a0c8bf-2acc-4f1f-b91b-88893ac0d07e).json,a3960523f5df765f3a7ec7f0cd2b8476f62ef8bb
+Sentinel Analytical Rules/Detection of Revix Ransomware - WC-THREAT (3bc5b380-c456-4328-95b2-c38871aaa83c).json,0adf0027dce611f2c619007d28b27390327527d5
+Sentinel Analytical Rules/Anomalous User Agent connection attempt - WC-IIS (a06d2bac-abb0-4a54-83a4-06188407d446).json,b08e078655bbe1615ea9d3f8a33d075d5d017738
+Sentinel Analytical Rules/Authentication Methods Changed for an Account Followed by a Password Reset (cf0472dc-f3ca-47bc-87ae-0f0ee8301da5).json,845d6f543680ff1c4061719ae97d08f07a1c7a79
+Sentinel Analytical Rules/Brute Force-Carl bustamante (f53d638a-b39d-49f2-af1f-6263f453f7fc).json,e414e35be108dd30c7d00e829771f20b3f855a69
+Sentinel Analytical Rules/APT Kimsuky - HotDogeToken and DonutCat Malware Detect - WC-THREAT (fe6b09af-3add-4c33-9f55-39720679a088).json,d3f72fb2f14908bd4c15306bef21d3ae4aedcc44
+Sentinel Analytical Rules/Anomalous Sign-in Detected - WC-AZURE (3ad8db0f-9208-42f8-a0ed-1de8f50b0d04).json,a732ff975be3f65fb28ea09064769551bedd6e9a
+Sentinel Analytical Rules/Active Directory Domain Services Elevation of Privilege Vulnerability - WC-THREAT (294780ba-52b8-44d1-8c2a-44012b8f19af).json,ffc3125f77b10acff69c664a5cb17667454de298
+Sentinel Analytical Rules/DNS exfiltration - OmarY (2313d623-6b79-4b44-8ff9-06aa026d323c).json,dfcc37aeb688a663b7c1ce88242ed301795b1b08
+Sentinel Analytical Rules/High Failed Logins - Test (0403a811-6722-4e3f-9b57-c72aa9b15053).json,e56748f4c5c23b0afef23ef675d95c79e08352f7
+Sentinel Analytical Rules/CVE-2025-29824 Detection - WC-BASE (2b4e0cd7-ddfb-46e4-9878-b4461a774404).json,04f1a12f87db6d7a454b7b3574f86d8ce422723f
+Sentinel Analytical Rules/Azure VM Deletion. (5238d8c2-23e5-486d-b39d-536416b8fead).json,87f779e2dbf930f0416b24aac50589fd6545db86
+Sentinel Analytical Rules/DEV Ayham Assaf Process Dumping Using Silent Process Exit (b6ecd3aa-119a-42b9-a121-032f3fef8c2c).json,6a7dae21fe58116c9197f05dc1c43a47fead18f3
+Sentinel Analytical Rules/Attempts to sign in to disabled accounts - WC-AZURE (96546fee-ab3c-411b-b2ec-93a9b6682003).json,4a0116c43b58b71908a83527accd350ca1810d49
+Sentinel Analytical Rules/Dev-0530 IOC - July 2022  - WC-THREAT (5df9a1eb-2fc5-4cae-a939-29b106336385).json,aee7bb60a2ba5bb08b98e225e149f2c013f160ed
+Sentinel Analytical Rules/ACTINIUM AV hits - Feb 2022 - WC-THREAT (e47f2c14-8e13-440e-b08f-e3272f1d9535).json,232e9872b3722367affb1a9efed13c765407046b
+Sentinel Analytical Rules/BruteForce-Jonathan Joseph Archog (cc48d360-3346-4f63-89ce-f9cc5e2f13f5).json,73e2b43102d98e01f173584a3cce53d713106dbb
+Sentinel Analytical Rules/IP with multiple failed Azure AD logins successfully logs in to Palo Alto VPN  - WC-PALOALTO (f2eae60f-94fe-4093-bb10-b759eea508c8).json,29c4e1d34eece128f9893b95f46bae6a7dbc3691
+Sentinel Analytical Rules/BruteForce - Johanne Sanchez (781c50ff-4b21-4fe5-b453-d887e6ceac13).json,1a8de861570a8af7da64ba849dd3f2e7f56ec801
+Sentinel Analytical Rules/Detection of Emotet New Behaviors - WC-THREAT (2d1defdf-f456-491b-acc6-6ab67f7f6c46).json,b6628c5c3aa60937dd669bfce43cfd585c86385c
+Sentinel Analytical Rules/Curl Command Detection by Jawad (217e40a2-d35c-4f04-9d73-5863bc13a705).json,83e8c6431f6cea7e9b176773d3c88de0b3ab234e
+Sentinel Analytical Rules/Cloud usage (91ea97ac-50de-47b8-b069-6f2562d47fd5).json,dfeb6a72ec3921ccd6c9db309cb1e2caa7c2253c
+Sentinel Analytical Rules/Failed logon attempts by valid accounts within 10 mins - WC-AZURE (5bc317a8-db61-4a02-8943-c53b33e55a91).json,2016ffa4d66194fb9fee4c15455ea0221a05c4f3
+Sentinel Analytical Rules/Authentication Attempt from New Country  - WC-AZURE (d3130091-a3e5-48ee-a7bd-7c86ced493e0).json,dfb0bf54f09e8b27fbe6240c38d1e9ed3b90c3eb
+Sentinel Analytical Rules/Exchange AuditLog disabled - WC-O365 (c06c4846-60c7-4663-bcda-86826e80271a).json,4a5e3ab1f7d1f9d3976fdb2ddd8d59b6f7038260
+Sentinel Analytical Rules/Hidden Files (620d0e0d-52db-486b-9b19-4ce88e026a84).json,59a0d39f3f716f3095c2f9c10409c76f6dbd7dfc
+Sentinel Analytical Rules/Create incidents based on Microsoft 365 Insider Risk Management - WC-O365 (4ec26de0-7985-4f9f-b2a7-495cf54cc04e).json,d52ee9e5daff575590a7821b0e4d4bcb000af6ea
+Sentinel Analytical Rules/Brute Force - Danni Raphael Morta (0e443085-2696-41b7-b28f-4b576225e87a).json,df4bdeac4310451adc6ff382022f514b51932791
+Sentinel Analytical Rules/Hive Ransomware Detection - WC-THREAT (d6d5580c-feac-4086-866d-ab7e5773ab20).json,33ac50341ff2cf58c440b9dbf236f3327dbe9d17
+Sentinel Analytical Rules/External user added and removed in short timeframe - WC-O365 (9fb61b86-e501-4bfb-817b-64ab465ef89f).json,8a0ad54aff726fc22c2abb023a5e871278b589f8
+Sentinel Analytical Rules/Elfawair Ticket Encryption Downgrade Detection (f9274788-84c0-4155-b573-cdc01dc4fab6).json,e39e389a8b6f81ec7f75a2fe24f6d00a40b09399
+Sentinel Analytical Rules/Active Vulnerability Scanning Detected - WC-DFE (a3eaed57-b3c4-4723-a34b-2d1d85bf7879).json,d0491204a7082984f21d768c44ebd3948f65cc17
+Sentinel Analytical Rules/Detection of a Spoofed Domain (520cd31b-e4e2-41fa-b645-2ddb20722a09).json,f89909e375ad6d6981edbd0e5bb3723ac8a54597
+Sentinel Analytical Rules/Firewall Disabled Using netsh (461a74f1-e98b-40fb-9278-703e354e67b5).json,39ef3d4e0825a1395bded64f4f73e3c8ca09c563
+Sentinel Analytical Rules/Distribution of Dridex via Log4j - WC-THREAT (b58fc23b-e0f8-44f1-80c7-d09ea774b3fb).json,d6c27ba36d91426c78568314d2e78a7c65b065de
+Sentinel Analytical Rules/FireEye Red Team Tool - ADPASSHunt - WC-THREAT (1b8753f7-121f-49fc-bcd0-e5028bbf0d41).json,ee98ce01440320a4c00676ff944ea3a1b40f8d01
+Sentinel Analytical Rules/Attempt to bypass conditional access rule in Microsoft Entra ID (7471d269-7fa8-4996-b127-dbcd0a50964f).json,21b7ab87882c56ca303920e432b4007d5cafcb73
+Sentinel Analytical Rules/Detected SSPR From an Unfamiliar IP Address (c8dbce7d-a65a-4b41-8429-4bf7ec5fd94a).json,894059397d6371b54fee77b00f52eae86904fc13
+Sentinel Analytical Rules/BruteForce-Lyanna Padillo (6ef9f38b-1159-456a-a376-221843abe676).json,d9a0ccb2e24db1c1b182adad78ed9a7cb1d1b5f3
+Sentinel Analytical Rules/Excessive Windows Logon Failures - WC-AGENT (081f16c7-72de-4e80-91d2-97a912477d84).json,fe79b35204f00e68f5577dc8e84adb6f31dcbb4a
+Sentinel Analytical Rules/Authentication Attempt from New Country  - WC-AZURE (00057868-cef9-4f64-ae87-885e7cc02ca9).json,125ef164f5006d70e6946af6137ceefcea9bb348
+Sentinel Analytical Rules/Hidden Files (T1564.001) (8d1f3c4b-7a13-40b2-96f3-a719ed5f1b9a).json,7ce68b7f57b3fb47fb463d15271f845ebc15fe4b
+Sentinel Analytical Rules/JavaScript malware works as a RATDispenser - WC-THREAT (90858c89-05a9-4dc1-a969-49c53c6e8f93).json,e7afdbddad4e1225ad1f98a8e34f53e9ab3f1835
+Sentinel Analytical Rules/Failed login attempts to Azure Portal - WC-AZURE (ac274b59-3858-4d79-a1ea-7f9114ddd9be).json,55994fd026f03d20df78ca05d93fe4b9ca7a054d
+Sentinel Analytical Rules/Hash-Incident-Test (25aa8f8a-207f-4f30-a1e8-707722e7c6c0).json,adb57b6ded827968651ec6d6b427cf9f097075a0
+Sentinel Analytical Rules/Hasan Al-Rawashdeh (0187419f-8ea3-4ed9-8df4-ce46e4342676).json,52311579b87d86fb15cdf9815cac05a991376263
+Sentinel Analytical Rules/AV detections related to Ukraine threats WC-THREAT (2edb8022-ddbc-4bce-a8ae-03c93bbe5757).json,fcddeed6b6a91e9c9715d534cc1852f973d51116
+Sentinel Analytical Rules/Explicit MFA Deny - WC-AZURE (8e083ebf-b132-4c0d-bb82-a6fe6ad28dd9).json,da332dcaf46d331397f97446b38a7c91894cab85
+Sentinel Analytical Rules/Avos Locker (via registry_event) - WC-THREAT (3682a24f-18d7-4fd0-b829-61c240c2ee2c).json,a0fe8b29f1de7e2de216ccac19675ea957882626
+Sentinel Analytical Rules/DNS events related to mining pools - WC-THREAT (e9819005-c624-44d5-9ce5-c682bd606d6d).json,4efbdfc9c5455c7f137582d29a03b77382c6cf29
+Sentinel Analytical Rules/Distributed Password cracking attempts in Entra ID - WC-AZURE (84b5d883-5ff5-4e6b-ac12-ff25c05cd1c2).json,36cc2959897623dbc056366ca8473df1a2f6640b
+Sentinel Analytical Rules/Azure VM  Deletion (2aa992af-2aff-409f-a010-cd76c3499743).json,9dc6e6e4597707b51454b4e21e48e0d67563113c
+Sentinel Analytical Rules/Detect Download Files Using MsedgeChrome - Lolbas - WC-THREAT (1e634110-20d5-4801-a563-7bbb64329987).json,10f3e3c1f3dbcdbae5bc0acb20078f1607db0018
+Sentinel Analytical Rules/Detecting the PetitPotam Attack via MultiPotato Tool - WC-THREAT (4d1b2d7e-e1cc-4fe7-b312-c607120e9d7a).json,5985d8151c9bd363e45dc5289118b37bea7c15e2
+Sentinel Analytical Rules/Archive Collected Data Archive via Utility T1560.001 (60d05980-3284-44e3-b6b7-18d5b6251ea1).json,b5cfe74a3c86d71cacd252f4d371d37a691a437b
+Sentinel Analytical Rules/Inactive User Account Alert (ba0617fb-5a52-4349-856b-8f7800932dcb).json,3b9e79f96815a28494379d37b9ce2fa9956be41b
+Sentinel Analytical Rules/Create incidents based on Microsoft Defender for Office 365 alerts  - WC-O365 (3638a919-5430-4da7-8e04-6083c4956c91).json,9b830a8f2cee8eb9fc3e3d52f697872900252d0d
+Sentinel Analytical Rules/Authentication Attempt from a new country (9e84e5c8-7a53-4264-a5f5-573a8b2e4757).json,3cf1005d60ec8ca3c6ae2dfe2354b3f0ccea01b7
+Sentinel Analytical Rules/Email containing OAuth consent URL - WC-O365 (1206d648-0276-42c2-a818-984bfbce1365).json,421bd6bdddbc3d9e179437359046edfa41d6c27b
+Sentinel Analytical Rules/Defender Tampering via PowerShell (Set-MpPreference) - Faris (1e32703b-24c0-4b45-919c-398b23df703b).json,4f97884a26df45b63e7993fee4b27f4daac6e5e1
+Sentinel Analytical Rules/Elfawair Detect SharpHound  AD Explorer Usage (d8d22704-21db-44c7-8e19-4f3a86f90209).json,9590b0958782189aa6480279febd997e7f0cd2c1
+Sentinel Analytical Rules/Dridex Trojan - WC-THREAT (4ccb83b5-bea8-4f82-93e9-59281036913e).json,4abf5b95f051831c15ad4b99c854dd90ee9890d4
+Sentinel Analytical Rules/Azure Defender only medium and high alerts (6caf3202-3b8e-457a-8e10-74bebc347cf9).json,47c35ba851a34d883fee12d8c10687ba400d25f6
+Sentinel Analytical Rules/Brute force attack against a Cloud PC - WC-AZURE (38ffba33-0448-429f-b4a6-21f5d65e0802).json,d3176efe05a84ed7b1a3b301f61014ce7965879b
+Sentinel Analytical Rules/Firewall Disabled via netsh (a7958465-697b-4012-a1d8-d76d07885684).json,d52b73b134125e0268ac3d91e08f37eac0aeb646
+Sentinel Analytical Rules/inactive user account (3e1f091c-bba5-4e3e-9f2f-f58501163c8b).json,afbe19648a7463eb531cbdec42112b37fcfe782a
+Sentinel Analytical Rules/High count of failed attempts from same client IP - WC-IIS (a9d6a3aa-fdcb-4e7e-b559-a1092a66fe56).json,e99d8eafc67b0f53891c2856838ad76443f09ec5
+Sentinel Analytical Rules/Elfawair A member was added to a security-enabled local group (6e5a0584-99bf-45a5-85ca-6ac30d8d5bca).json,e0564d77067b01d9d4dcb2b580dc14db8cd7be6b
+Sentinel Analytical Rules/Create incidents based on Microsoft Defender for Cloud (5048a299-b4f5-4964-b307-1fdd3b98699d).json,0eed65d3a60ae433461f811900186475f972a55b
+Sentinel Analytical Rules/abdallah test (a5440e4e-118a-4fef-9058-78e1236b93a5).json,13572a1437053bf47ba0e9c38f3e400c087af824
+Sentinel Analytical Rules/Failed Brute Force on Exchange Online (b3e10170-1ae9-4534-a664-8352db108b49).json,aa319ff6d333e04538c74262a3cfe61b567b8824
+Sentinel Analytical Rules/BruteForce-Allyza Dumagpi (8145ed93-f6b2-4c81-ab83-d93f2fef1158).json,d5628ddd3ff6a4c06771568b1d2374969ab55ece
+Sentinel Analytical Rules/Disbaled Firewall (80855fac-80ce-4b9b-bedf-ba8f4e3a4296).json,ee86406bdbf5028e967b6a9377e0565d207cd397
+Sentinel Analytical Rules/fmwc demo rule - auto revoke example (9b2db18e-2337-4434-871f-4abf754db130).json,b5e742eb267d369089dafde78dbe26b417abf862
+Sentinel Analytical Rules/BruteForce - Zach Francia (6a7bce94-d795-457a-850e-ff9ef2ecc6e0).json,393bda36da836ff0d567d30a9a257bf1946eddf4
+Sentinel Analytical Rules/Conti Ransomware Detection - WC-THREAT (f4923fff-3d9f-4bf7-b599-b30cb603fe4a).json,c63ff737e7ab34186e41d441c5fca18a6dc75f38
+Sentinel Analytical Rules/Azure AD Role Management Permission Grant - WC-AZURE (c8792b1e-9baf-4ec2-a356-f244177a49c0).json,ac357304eedd6eb51448e0efbcdc8eb1f56f62c6
+Sentinel Analytical Rules/Explicit MFA Deny (31120e13-d986-4135-8a5f-1fc6eb924721).json,8cbde03a9997e12bb7062a804925171d875f05aa
+Sentinel Analytical Rules/Failed logon attempts by valid accounts within 10 mins - WC-AZURE (493607c3-3900-46bf-b467-cef431d73336).json,63c6db68b317b1900a4c49c64504e81f5231f299
+Sentinel Analytical Rules/Elfawair WannaCry Hashes Lookup - Testing (d0ea00e3-de65-4bb9-9b03-96ab8d14c4e2).json,a836a0c41089bab63138ca4ea9e2a0b67fac0997
+Sentinel Analytical Rules/BlackCat Ransomware Execution And Recon UUID - WC-THREAT (1daa0a9e-fa98-4f9b-b39f-666eb06e40ea).json,a1757c25e8606545c5f3a1f767d18c1301b69d87
+Sentinel Analytical Rules/Failed login attempts to Azure Portal - WC-AZURE (12d5e090-35f5-4013-9582-2e2473ebbe93).json,0acea6a6cc148199772d5aac3d3cdf0fe7307040
+Sentinel Analytical Rules/Elfawair USB Data Exfiltration (6bbf260b-25c1-4815-b344-dc7d23740a3b).json,5d70ed672bc46b4b642fb85d6445e1e3dd477fc0
+Sentinel Analytical Rules/Detect SSPRF Self Service Password Reset from Unknown IP (a028eddc-4674-4dc4-b68f-dad60657a302).json,0bfd81a45f497faecbe35ab37ea4c0917a6c5f44
+
