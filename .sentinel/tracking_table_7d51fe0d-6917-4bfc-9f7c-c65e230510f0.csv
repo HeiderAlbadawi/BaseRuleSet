@@ -1,52 +1,52 @@
 FileName, CommitSha
-Base Rule Set/TI map Domain entity to SecurityAlert - WC-THREAT (8f7b63c3-3235-4851-9b9a-044a4def7714).json,58e96d2ea178a1199af506b1bcf036aa1c738661
-Base Rule Set/when a user account was added to a security-enabled local group (5eb55696-7973-4952-8cce-f0ce67f12e65).json,61cf30bd8c686a0174c4687d99054c366bb27da7
-Base Rule Set/User Added to Security-Enabled Local Group (e24e347a-53eb-4dfe-a1d5-035bce4786d3).json,6a64eecb3f54c3f45f65a00e77dcb739466405e0
-Base Rule Set/TI Map IP Entity to Cisco Meraki - WC-BASE (9823cecb-1929-4b43-a8cb-c5188171ee16).json,5a032ead74471baa9c97e179e889cbac6abd62ad
-Base Rule Set/Unapproved Country Login Attempt (d5026bfa-41c0-4d8e-9466-f36889e50153).json,291f7c0f454f7581c89da45d71195d465a7792f2
-Base Rule Set/Suspicious Screen Capture - Omar (6d49de52-c476-458c-97d3-a91418a88cdd).json,b8e2eefe936d8e49fd92aefb2b21a4964e2971a5
-Base Rule Set/Suspicious Remote File Transfer Activity (T1105 - Remote File Copy) (6d9e173f-d7ad-4b52-8fbb-15ff99feede7).json,ee458eeec83561bb00c7902ead08599e617ae0a8
-Base Rule Set/User Account Inactive for More Than 90 Days by huda (51a2a776-d609-4a16-b6bb-9419737d0944).json,3b24381d8db388ec42e85835cd51d68867977a64
-Base Rule Set/T1566.002 Phishing Spearphishing Link (9e33359a-dc4c-4131-bb92-9645ce3569cf).json,efd050fdba0b014ebdc7a0098b2fe1e59f768bc3
-Base Rule Set/Suspicious PowerShell Download  Credential Dump Attempt (6a040bb0-ee6a-43e1-960a-7e4b278e48a0).json,cac62e1c8580d4bb007fb81a059e0b0d2d6ee183
-Base Rule Set/TEST New Rule Created From Python 3HI (d60e8461-9f5a-447c-a366-365b52d405ac).json,210b956c3b3db3c5c43bcea44b58dc9a0fe13db1
-Base Rule Set/TI map Email entity to CommonSecurityLog WC-O365 (f3199d3d-7b77-43e1-9945-9206e70aba2f).json,8db55e435fe36ca5a227006be48097e6e5721438
-Base Rule Set/User Added to Security-Enabled Local Group. (344b5422-d84a-4d58-83d3-33a017a6ea6f).json,ccf5253d709731912ca2c434c8c9e4e5dc39a12a
-Base Rule Set/Suspicious Service Creation - Possible Windows Service Abuse (T1569.002) - Test (9e2c7cf3-db78-462a-99f0-cd85b7db7daf).json,8958bbc7999585965c12f6b09777fb94178d0830
-Base Rule Set/Suspicious Scheduled Tasks using schtasks (e5169751-54ec-41a0-acfb-147629470e6d).json,50acc3653c9759c66f3c7602339b3d25dbfbf6e7
-Base Rule Set/T1176 - Dina (bbed09ac-0045-4b00-af0f-4064b63bd51b).json,dd7d08babc85fe54f68246ad5598795940c48c7d
-Base Rule Set/TI Map IP Entity to SigninLogs - WC-AZURE (e4302167-da3c-4ea4-8d6f-e069b209223d).json,d2f94c3b19ed7667f34be227d58da347baa55d91
-Base Rule Set/TI map IP entity to OfficeActivity - WC-O365 (c5ea7aed-3985-42cc-b20b-ebe22c45cc0d).json,a5236a71ddadaa8c0d9b4363bc3e1fae15eeecfc
-Base Rule Set/TI map IP entity to AWSCloudTrail - WC-BASE (e887da73-d6ff-4dff-b332-eb1e82612825).json,5967c38838736582f56705ae52352cbf1382a4d6
-Base Rule Set/TI map Email entity to SigninLogs  - WC-O365 (aeeedc28-1bc3-4cc9-9f8b-01fedb836019).json,4afc5721228d4435421d411779b6ecf974d005e3
-Base Rule Set/T1115 - Dina (e21b4778-67f0-4b04-91a9-1e96e8f9d049).json,5af8213c3508c1ffc9d4f2438f2f99e51bbcdd7a
-Base Rule Set/TI map Domain entity to Syslog - WC-BASE (c00e1146-bd07-498b-a9a6-0b14255eeabc).json,7ac5cd41087652cd4ede3041da76df9234c9289c
-Base Rule Set/User Added to Local Security Group (112a5c55-7791-4aa3-9900-368d3327b5bf).json,c01969d0c1c5172047f782177ed869761d4176aa
-Base Rule Set/TI map Email entity to SecurityAlert - WC-O365 (a70cc2f4-9dd6-46db-b3fa-17c40f1e7000).json,4468c22178d1774d93064cc8b8d241f848e348a2
-Base Rule Set/T1531 Ã¢â‚¬â€œ Account Access Removal by Mohamad Al-Shahwan and Ahmad Altrabsheh (02308083-36e4-4cee-ab44-25dbf80c575f).json,8b61b9ca139d002e133a76c78db15851cb8472f3
-Base Rule Set/User Login from Different States Within 3 Hours (f78ccd15-6ec1-4cfa-bec4-d9d27d1bb4d5).json,bb9bed888eabdd3734c218c72ddf6127567615b2
-Base Rule Set/TI map IP Entity to SecurityEvent Logon - WC-BASE (faa534a1-de8c-48f7-99d7-6e51516c0df2).json,43fc5805490a039fd984838aadebec7379b73ccd
-Base Rule Set/Windows Scheduled Task Creation on Remote Host with at.exe - WC-THREAT (42b49386-21e9-429b-bcfc-8e40fe5d6b56).json,fb4ff871c6429a635ac9f43b2f960df7ad708462
-Base Rule Set/TI Map IP Entity to CommonSecurityLog - WC-BASE-M (8f9ec686-77ed-4787-abfc-6a166a136460).json,1e0dcefea4fe80ca1e1b31671ca88cbfdf2ca152
-Base Rule Set/TI Map IP Entity to W3CIISLog - WC-BASE-M (0129b47a-7054-489c-aca5-52be5912540d).json,ace0ab36212314504daa10ac4d8daee5569383d4
-Base Rule Set/VSS backup deletion via WMI (Powershell) - WC-DFE (5041ee68-ef8a-4fbc-b286-3d898d200eec).json,c798a496b6d1ef9ed6498e67851d48af0d8b6ea9
-Base Rule Set/Suspicious Registry Persistence via Run Key (fc028d40-4d0e-40d1-9657-1c6f3f3cbec7).json,429a0edaeb388a473d8b9db97e6ae4b0d210ac86
-Base Rule Set/Unfamiliar Linux Device Login (d633e402-284f-4d0a-a03a-5b04647ed217).json,1239cf587b908cb30148f7e74ffd248aaa0948ba
-Base Rule Set/Suspicious Registry Key (6cd6df64-eb55-4bef-80b7-2e8d57c48276).json,6c67cfca89773ba35a850fd4e6881e454afb0eb3
-Base Rule Set/User Login from Different Countries Within 3 Hours (42718c04-51b3-4b7f-8511-0c19252ea44b).json,cbfd88a1721b67c29cc9ab8b13f9772175e29db2
-Base Rule Set/User Account Added to Security-Enabled Local Group (617f445a-f29f-45c0-a2e4-1a093c1e3bda).json,5ed3099ab0ae4d73a3b1d318af3a20f8f8a401b6
-Base Rule Set/Test-Offboarding_H (7c84c9ae-0936-43fe-9e13-2450b9050710).json,062ca0f9c0289b5b21cce5d1557c0052180d5f57
-Base Rule Set/Threat Actors RTF Template Injection Technique - WC-THREAT (8847ff8d-8b04-416b-a750-432bc962f8c2).json,a040e1dc8da45e76cbccad36922a126d43c62be7
-Base Rule Set/TI map URL entity to OfficeActivity data - WC-O365 (253b441d-dc29-4856-9bd9-e09ba5363449).json,9a29c905e7286e8ada2c1809fedab935419f41ff
-Base Rule Set/User Added to Security-Enabled Local Group (38c80ab7-14fe-4383-bcfe-7c1294368785).json,171f0038428a60dfff452661eb64b998ceb16623
-Base Rule Set/TI map Email entity to OfficeActivity WC-O365 (fb763665-8935-445c-b6a2-c5c978964f4f).json,8c24d852b9f346580ff95dc32f5da047ac7abcea
-Base Rule Set/TI Map IP Entity to Azure Kubernetes - WC-BASE (73b61c2b-4550-4b5e-8079-f0b772281d1f).json,4b97ca329ece695f4b19d300d958b2568bb436a2
-Base Rule Set/Suspicious Use of XCOPY or COPY Command - Test (151506db-5e17-49a7-b0c5-0f28f6a13ed4).json,f559610651f166c8b4fe6edd554fe71b81d8e615
-Base Rule Set/TI Map IP Entity to VMConnection - WC-BASE-M (ac6c74ba-7f4d-4981-b4ca-19db82ca7e34).json,373026c7fe8f3e75f7a283fa6dd121652db29b9b
 Base Rule Set/Windows Defender Preferences Suspicious Changes - WC-THREAT (f1fcf0e4-92ca-4e2b-bf1d-b36a2590191e).json,6f46a8ac482ffd2f48e311edfe1ceb623c3bba97
+Base Rule Set/User Login from Different Countries Within 3 Hours (42718c04-51b3-4b7f-8511-0c19252ea44b).json,cbfd88a1721b67c29cc9ab8b13f9772175e29db2
+Base Rule Set/Unapproved Country Login Attempt (d5026bfa-41c0-4d8e-9466-f36889e50153).json,291f7c0f454f7581c89da45d71195d465a7792f2
+Base Rule Set/User Added to Local Security Group (112a5c55-7791-4aa3-9900-368d3327b5bf).json,c01969d0c1c5172047f782177ed869761d4176aa
+Base Rule Set/User Added to Security-Enabled Local Group. (344b5422-d84a-4d58-83d3-33a017a6ea6f).json,ccf5253d709731912ca2c434c8c9e4e5dc39a12a
+Base Rule Set/Unfamiliar Linux Device Login (d633e402-284f-4d0a-a03a-5b04647ed217).json,1239cf587b908cb30148f7e74ffd248aaa0948ba
+Base Rule Set/User Added to Security-Enabled Local Group (e24e347a-53eb-4dfe-a1d5-035bce4786d3).json,6a64eecb3f54c3f45f65a00e77dcb739466405e0
+Base Rule Set/Threat Actors RTF Template Injection Technique - WC-THREAT (8847ff8d-8b04-416b-a750-432bc962f8c2).json,a040e1dc8da45e76cbccad36922a126d43c62be7
+Base Rule Set/TI map IP Entity to SecurityEvent Logon - WC-BASE (faa534a1-de8c-48f7-99d7-6e51516c0df2).json,43fc5805490a039fd984838aadebec7379b73ccd
+Base Rule Set/TI map Domain entity to SecurityAlert - WC-THREAT (8f7b63c3-3235-4851-9b9a-044a4def7714).json,58e96d2ea178a1199af506b1bcf036aa1c738661
+Base Rule Set/Suspicious Service Creation - Possible Windows Service Abuse (T1569.002) - Test (9e2c7cf3-db78-462a-99f0-cd85b7db7daf).json,8958bbc7999585965c12f6b09777fb94178d0830
+Base Rule Set/TI map Domain entity to Syslog - WC-BASE (c00e1146-bd07-498b-a9a6-0b14255eeabc).json,7ac5cd41087652cd4ede3041da76df9234c9289c
 Base Rule Set/Suspicious Resource deployment - WC-AZURE (e0b0ebd0-dcb0-44ef-b664-d36a5a4f206b).json,8fc9a3db9f61fd136e5d4ebb87e6a4a30ecdabc2
-Base Rule Set/Vulnerability Scanning Tool Detection WC-DFE (a2c011a6-3986-411a-9e27-286d018e1b65).json,b982ed4634ee75131507dde14f3d02154edf2d91
+Base Rule Set/TEST New Rule Created From Python 3HI (d60e8461-9f5a-447c-a366-365b52d405ac).json,210b956c3b3db3c5c43bcea44b58dc9a0fe13db1
+Base Rule Set/VSS backup deletion via WMI (Powershell) - WC-DFE (5041ee68-ef8a-4fbc-b286-3d898d200eec).json,c798a496b6d1ef9ed6498e67851d48af0d8b6ea9
+Base Rule Set/TI Map IP Entity to W3CIISLog - WC-BASE-M (0129b47a-7054-489c-aca5-52be5912540d).json,ace0ab36212314504daa10ac4d8daee5569383d4
+Base Rule Set/Windows Scheduled Task Creation on Remote Host with at.exe - WC-THREAT (42b49386-21e9-429b-bcfc-8e40fe5d6b56).json,fb4ff871c6429a635ac9f43b2f960df7ad708462
 Base Rule Set/TI map Email entity to SecurityEvent  - WC-O365 (a8af7df7-3eb6-4dce-806d-b3fba94490f0).json,895bb9b8701a3d89b10a04e2122d96db21c12830
-Base Rule Set/User agent search for log4j exploitation attempt - WC-THREAT (bfe5d88c-52e8-4910-a689-a92926f5652a).json,01a025ddd2bade3ccb37e5b7bdbc04a8ba2678e9
+Base Rule Set/User Login from Different States Within 3 Hours (f78ccd15-6ec1-4cfa-bec4-d9d27d1bb4d5).json,bb9bed888eabdd3734c218c72ddf6127567615b2
+Base Rule Set/TI Map IP Entity to VMConnection - WC-BASE-M (ac6c74ba-7f4d-4981-b4ca-19db82ca7e34).json,373026c7fe8f3e75f7a283fa6dd121652db29b9b
+Base Rule Set/Suspicious Registry Persistence via Run Key (fc028d40-4d0e-40d1-9657-1c6f3f3cbec7).json,429a0edaeb388a473d8b9db97e6ae4b0d210ac86
+Base Rule Set/TI Map IP Entity to SigninLogs - WC-AZURE (e4302167-da3c-4ea4-8d6f-e069b209223d).json,d2f94c3b19ed7667f34be227d58da347baa55d91
+Base Rule Set/User Account Added to Security-Enabled Local Group (617f445a-f29f-45c0-a2e4-1a093c1e3bda).json,5ed3099ab0ae4d73a3b1d318af3a20f8f8a401b6
+Base Rule Set/T1531 Ã¢â‚¬â€œ Account Access Removal by Mohamad Al-Shahwan and Ahmad Altrabsheh (02308083-36e4-4cee-ab44-25dbf80c575f).json,8b61b9ca139d002e133a76c78db15851cb8472f3
+Base Rule Set/TI map URL entity to OfficeActivity data - WC-O365 (253b441d-dc29-4856-9bd9-e09ba5363449).json,9a29c905e7286e8ada2c1809fedab935419f41ff
+Base Rule Set/Suspicious Scheduled Tasks using schtasks (e5169751-54ec-41a0-acfb-147629470e6d).json,50acc3653c9759c66f3c7602339b3d25dbfbf6e7
+Base Rule Set/Suspicious Remote File Transfer Activity (T1105 - Remote File Copy) (6d9e173f-d7ad-4b52-8fbb-15ff99feede7).json,ee458eeec83561bb00c7902ead08599e617ae0a8
+Base Rule Set/TI map Email entity to SecurityAlert - WC-O365 (a70cc2f4-9dd6-46db-b3fa-17c40f1e7000).json,4468c22178d1774d93064cc8b8d241f848e348a2
+Base Rule Set/TI Map IP Entity to Cisco Meraki - WC-BASE (9823cecb-1929-4b43-a8cb-c5188171ee16).json,5a032ead74471baa9c97e179e889cbac6abd62ad
+Base Rule Set/User Account Inactive for More Than 90 Days by huda (51a2a776-d609-4a16-b6bb-9419737d0944).json,3b24381d8db388ec42e85835cd51d68867977a64
+Base Rule Set/TI map Email entity to OfficeActivity WC-O365 (fb763665-8935-445c-b6a2-c5c978964f4f).json,8c24d852b9f346580ff95dc32f5da047ac7abcea
+Base Rule Set/Suspicious Screen Capture - Omar (6d49de52-c476-458c-97d3-a91418a88cdd).json,b8e2eefe936d8e49fd92aefb2b21a4964e2971a5
+Base Rule Set/Test-Offboarding_H (7c84c9ae-0936-43fe-9e13-2450b9050710).json,062ca0f9c0289b5b21cce5d1557c0052180d5f57
+Base Rule Set/TI Map IP Entity to Azure Kubernetes - WC-BASE (73b61c2b-4550-4b5e-8079-f0b772281d1f).json,4b97ca329ece695f4b19d300d958b2568bb436a2
+Base Rule Set/TI map Email entity to SigninLogs  - WC-O365 (aeeedc28-1bc3-4cc9-9f8b-01fedb836019).json,4afc5721228d4435421d411779b6ecf974d005e3
+Base Rule Set/TI Map IP Entity to CommonSecurityLog - WC-BASE-M (8f9ec686-77ed-4787-abfc-6a166a136460).json,1e0dcefea4fe80ca1e1b31671ca88cbfdf2ca152
+Base Rule Set/Suspicious Use of XCOPY or COPY Command - Test (151506db-5e17-49a7-b0c5-0f28f6a13ed4).json,f559610651f166c8b4fe6edd554fe71b81d8e615
+Base Rule Set/TI map IP entity to OfficeActivity - WC-O365 (c5ea7aed-3985-42cc-b20b-ebe22c45cc0d).json,a5236a71ddadaa8c0d9b4363bc3e1fae15eeecfc
+Base Rule Set/Suspicious Registry Key (6cd6df64-eb55-4bef-80b7-2e8d57c48276).json,0fd995531ef3bdadab82dd442c0ce0660cb95665
 Base Rule Set/TI map URL entity to SecurityAlert data - WC-THREAT (c4fc2450-e2fa-45ae-aae2-033cbe030d20).json,2d7a8ca1a9785119e0fa51d03e2791d7aa034456
+Base Rule Set/TI map IP entity to AWSCloudTrail - WC-BASE (e887da73-d6ff-4dff-b332-eb1e82612825).json,5967c38838736582f56705ae52352cbf1382a4d6
+Base Rule Set/Suspicious PowerShell Download  Credential Dump Attempt (6a040bb0-ee6a-43e1-960a-7e4b278e48a0).json,cac62e1c8580d4bb007fb81a059e0b0d2d6ee183
+Base Rule Set/T1176 - Dina (bbed09ac-0045-4b00-af0f-4064b63bd51b).json,dd7d08babc85fe54f68246ad5598795940c48c7d
+Base Rule Set/TI map Email entity to CommonSecurityLog WC-O365 (f3199d3d-7b77-43e1-9945-9206e70aba2f).json,8db55e435fe36ca5a227006be48097e6e5721438
+Base Rule Set/User agent search for log4j exploitation attempt - WC-THREAT (bfe5d88c-52e8-4910-a689-a92926f5652a).json,01a025ddd2bade3ccb37e5b7bdbc04a8ba2678e9
+Base Rule Set/User Added to Security-Enabled Local Group (38c80ab7-14fe-4383-bcfe-7c1294368785).json,171f0038428a60dfff452661eb64b998ceb16623
+Base Rule Set/T1115 - Dina (e21b4778-67f0-4b04-91a9-1e96e8f9d049).json,5af8213c3508c1ffc9d4f2438f2f99e51bbcdd7a
+Base Rule Set/Vulnerability Scanning Tool Detection WC-DFE (a2c011a6-3986-411a-9e27-286d018e1b65).json,b982ed4634ee75131507dde14f3d02154edf2d91
+Base Rule Set/T1566.002 Phishing Spearphishing Link (9e33359a-dc4c-4131-bb92-9645ce3569cf).json,efd050fdba0b014ebdc7a0098b2fe1e59f768bc3
+Base Rule Set/when a user account was added to a security-enabled local group (5eb55696-7973-4952-8cce-f0ce67f12e65).json,61cf30bd8c686a0174c4687d99054c366bb27da7
 
