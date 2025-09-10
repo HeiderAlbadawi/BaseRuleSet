@@ -9,7 +9,7 @@
                           "kind":  "NRT",
                           "apiVersion":  "2023-12-01-preview",
                           "properties":  {
-                                             "displayName":  "Suspicious Registry Key",
+                                             "displayName":  "Suspicious Registry Key name changed sorry",
                                              "description":  "This detection identifies suspicious registry key modifications that may indicate attempts to achieve persistence or evade security controls.",
                                              "severity":  "Medium",
                                              "enabled":  true,
