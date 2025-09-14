@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "T1531 Ã¢â‚¬â€œ Account Access Removal by Mohamad Al-Shahwan and Ahmad Altrabsheh",
                                              "description":  "Account Access Removal Detection",
-                                             "severity":  "Medium",
+                                             "severity":  "Low",
                                              "enabled":  true,
                                              "query":  "Event\r\n| where EventID in (4723, 4724, 4725, 4726)  // Password change, reset, disable, delete \r\n| where TimeGenerated \u003e= ago(1d) \r\n| where EventLog == \"Security\"\r\n| extend \r\n    Action = case( \r\n        EventID == 4723, \"Attempted Password Change\", \r\n        EventID == 4724, \"Password Reset\", \r\n        EventID == 4725, \"Account Disabled\", \r\n        EventID == 4726, \"Account Deleted\", \"Other\" ) \r\n| extend ParsedParams = parse_xml(ParameterXml)\r\n| extend\r\n    TargetUserName = tostring(ParsedParams.Param[0]),\r\n    ComputerName = tostring(ParsedParams.Param[1]),\r\n    SubjectUserName = tostring(ParsedParams.Param[4])\r\n| where isnotempty(TargetUserName)\r\n| project TimeGenerated, EventID , Action, ComputerName, SubjectUserName, TargetUserName\r\n| extend TimeBin = bin(TimeGenerated, 5m)  // Group events into 5-minute intervals\r\n| summarize \r\n    NumberOfChanges = count(),\r\n    EventIDs = make_list(EventID),\r\n    Actions = make_list(Action),\r\n    TargetUsers = make_list(TargetUserName)\r\n    by SubjectUserName, TimeBin\r\n| where NumberOfChanges \u003e= 4",
                                              "queryFrequency":  "PT5M",
