@@ -13,28 +13,49 @@ on:
   push:
     branches: [ main ]
     paths:
-    - "**"
+    - 'MasterWizard/**'
+    - 'Base Rule Set/**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
     - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
 
 jobs:
-  deploy-content:
+  deploy-masterwizard:
     runs-on: windows-latest
+    if: contains(github.event.head_commit.message, 'MasterWizard') || contains(join(fromJSON(toJSON(github.event.commits)).*.modified), 'MasterWizard/')
     env:
       resourceGroupName: 'training_jordan'
       workspaceName: 'acmesentinel'
       workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      directory: '${{ github.workspace }}'
+      directory: '${{ github.workspace }}/MasterWizard'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
       sourceControlId: '7d51fe0d-6917-4bfc-9f7c-c65e230510f0'
-      rootDirectory: '${{ github.workspace }}'
+      rootDirectory: '${{ github.workspace }}/MasterWizard'
       githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
       smartDeployment: 'true'
     permissions:
       contents: write
-      id-token: write # Require write permission to Fetch an OIDC token.
+      id-token: write
+
+  deploy-baserules:
+    runs-on: windows-latest
+    if: contains(github.event.head_commit.message, 'BaseRules') || contains(join(fromJSON(toJSON(github.event.commits)).*.modified), 'BaseRules/')
+    env:
+      resourceGroupName: 'training_jordan'
+      workspaceName: 'acmesentinel'
+      workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
+      directory: '${{ github.workspace }}/BaseRules'
+      cloudEnv: 'AzureCloud'
+      contentTypes: 'AnalyticsRule'
+      branch: 'main'
+      sourceControlId: '7d51fe0d-6917-4bfc-9f7c-c65e230510f0'
+      rootDirectory: '${{ github.workspace }}/BaseRules'
+      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
+      smartDeployment: 'true'
+    permissions:
+      contents: write
+      id-token: write
 
     steps:
     - name: Login to Azure (Attempt 1)
@@ -93,5 +114,6 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+
 
 
