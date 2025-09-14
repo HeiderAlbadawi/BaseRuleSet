@@ -1,126 +1,98 @@
-# ===============================================
+# ===================================================================
 # Azure Sentinel Deployment Script
-# ===============================================
+# Deploy rules from local folders to Sentinel
+# ===================================================================
 
 # -----------------------------
-# Global variables
+# Configuration
 # -----------------------------
-$rootDirectory = "D:\a\BaseRuleSet\BaseRuleSet"
-$branchName = "main-sentinel-deployment"
-$trackingTableFile = ".sentinel/tracking_table_7d51fe0d-6917-4bfc-9f7c-c65e230510f0.csv"
-$smartDeployment = $true
+$trackingTableFile = Join-Path -Path $PSScriptRoot -ChildPath ".sentinel\tracking_table_$(New-Guid).csv"
+$rulesFolders = @(
+    "$PSScriptRoot\MasterWizard",
+    "$PSScriptRoot\Base Rule Set"
+)
 
 # -----------------------------
-# Function: LoadDeploymentConfig
+# Helper Functions
 # -----------------------------
+
+# Ensure .sentinel folder exists and tracking table is initialized
 function LoadDeploymentConfig {
+    $trackingDir = Split-Path $trackingTableFile -Parent
+    if (-not (Test-Path $trackingDir)) {
+        Write-Host "[Info] Creating tracking folder: $trackingDir"
+        New-Item -Path $trackingDir -ItemType Directory -Force | Out-Null
+    }
+
     if (-Not (Test-Path $trackingTableFile)) {
         Write-Host "[Info] Tracking table not found. Creating new one."
-        @() | Export-Csv -Path $trackingTableFile -NoTypeInformation
+        @() | Export-Csv -Path $trackingTableFile -NoTypeInformation -Force
     }
 }
 
-# -----------------------------
-# Function: AttemptInvokeRestMethod
-# -----------------------------
+# Wrapper to call REST APIs with basic retry
 function AttemptInvokeRestMethod {
-    param(
-        [Parameter(Mandatory=$true)][string]$Method,
-        [Parameter(Mandatory=$true)][string]$Uri,
-        [Parameter(Mandatory=$false)][hashtable]$Headers = $null,
-        [Parameter(Mandatory=$false)][object]$Body = $null
+    param (
+        [string]$Method,
+        [string]$Uri,
+        [hashtable]$Headers = $null,
+        [object]$Body = $null
     )
-
-    $retryCount = 3
-    for ($i=0; $i -lt $retryCount; $i++) {
-        try {
-            return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $Headers -Body $Body
-        } catch {
-            Write-Warning "Attempt $($i+1) failed: $_"
-            Start-Sleep -Seconds 2
-        }
+    try {
+        return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $Headers -Body $Body -ErrorAction Stop
     }
-    throw "Failed to call $Uri after $retryCount attempts."
+    catch {
+        Write-Warning "REST call failed: $($_.Exception.Message)"
+        return $null
+    }
 }
 
-# -----------------------------
-# Function: filterContentFile
-# -----------------------------
+# Example filter function: skip files we don’t want deployed
 function filterContentFile {
-    param(
-        [Parameter(Mandatory=$true)][string]$filePath
-    )
-    $excludePatterns = @(
-        "\.ps1$",
-        "\.md$",
-        "\.json$"
-    )
-    foreach ($pattern in $excludePatterns) {
-        if ($filePath -match $pattern) { return $true }
-    }
+    param($filePath)
+    # Add your custom filtering logic here
+    # Example: skip .md files
+    if ($filePath -like "*.md") { return $true }
     return $false
 }
 
 # -----------------------------
-# Initialize tracking table
+# Main Deployment Logic
 # -----------------------------
+
+# Load or initialize tracking table
 LoadDeploymentConfig
 $trackingTable = Import-Csv -Path $trackingTableFile
 
-# Convert to hashtable for faster lookup
-$HashTable = @{}
-foreach ($r in $trackingTable) {
-    if ($r.FileName -and $r.CommitSha) {
-        $HashTable["$($r.FileName)"] = $r.CommitSha
-    }
-}
+foreach ($folder in $rulesFolders) {
+    Write-Host "[Info] Deploying folder: $folder"
+    if (-Not (Test-Path $folder)) { continue }
 
-# -----------------------------
-# Deploy folders
-# -----------------------------
-$foldersToDeploy = @(
-    "$rootDirectory\MasterWizard",
-    "$rootDirectory\Base Rule Set"
-)
+    # Get JSON rule files, filtered
+    $ruleFiles = Get-ChildItem -Path $folder -Recurse -Filter *.json |
+                 Where-Object { -not (filterContentFile $_.FullName) }
 
-foreach ($folder in $foldersToDeploy) {
-    Write-Host "Deploying folder: $folder"
+    foreach ($r in $ruleFiles) {
+        $absolutePath = $r.FullName
 
-    $files = Get-ChildItem -Path $folder -Recurse -File | Where-Object { -not (filterContentFile $_.FullName) }
+        # Track rule file SHA or timestamp (simplified example)
+        $commitSha = (Get-FileHash $absolutePath -Algorithm SHA256).Hash
+        $HashTable = @{}
+        $HashTable[$absolutePath] = $commitSha
 
-    foreach ($file in $files) {
-        $filePath = $file.FullName
-        $relativePath = $file.FullName.Substring($rootDirectory.Length + 1)
+        # Deploy logic placeholder: call Sentinel REST API or Az module here
+        Write-Host "[Info] Deploying $absolutePath with SHA $commitSha"
 
-        # Get Git commit SHA
-        $gitSha = git log -n 1 --pretty=format:%H -- $filePath
-
-        # Skip if already deployed
-        if ($smartDeployment -and $HashTable.ContainsKey($relativePath) -and $HashTable[$relativePath] -eq $gitSha) {
-            Write-Host "[Skipped] $relativePath already deployed"
-            continue
+        # Update tracking table
+        $trackingTable += [PSCustomObject]@{
+            FileName   = $absolutePath
+            CommitSha  = $commitSha
+            Timestamp  = Get-Date
         }
-
-        # Deploy the JSON file
-        Write-Host "[Info] Deploying $relativePath"
-        # Insert actual deployment logic here
-        # e.g., Import-AzSentinelAnalyticsRule -Path $filePath
-
-        # Update hashtable
-        $HashTable[$relativePath] = $gitSha
     }
 }
 
-# -----------------------------
 # Save updated tracking table
-# -----------------------------
-$updatedTable = $HashTable.GetEnumerator() | ForEach-Object {
-    [PSCustomObject]@{
-        FileName = $_.Key
-        CommitSha = $_.Value
-    }
-}
-
-$updatedTable | Export-Csv -Path $trackingTableFile -NoTypeInformation -Force
+$trackingTable | Export-Csv -Path $trackingTableFile -NoTypeInformation -Force
 
 Write-Host "Script execution Complete"
