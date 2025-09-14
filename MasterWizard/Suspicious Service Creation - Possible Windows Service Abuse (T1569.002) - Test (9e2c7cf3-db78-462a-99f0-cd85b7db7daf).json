@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "Suspicious Service Creation - Possible Windows Service Abuse (T1569.002) - Test",
                                              "description":  "Detects potentially malicious attempts to create or modify Windows services using tools such as sc.exe or PowerShell. \nThis technique is often used by attackers for persistence or privilege escalation, as seen in Snake malware or other APT activity.",
-                                             "severity":  "Low",
+                                             "severity":  "High",
                                              "enabled":  true,
                                              "query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1h)\r\n| where FileName in~ (\"sc.exe\", \"powershell.exe\", \"cmd.exe\")\r\n| where ProcessCommandLine has_any (\"create\", \"New-Service\", \"Set-Service\")\r\n| where ProcessCommandLine has_any (\"binPath=\", \"DisplayName=\", \"start=\", \"ServiceName\", \"WinSxS\", \"Temp\", \"AppData\", \"ProgramData\")\r\n| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine\r\n| order by TimeGenerated desc",
                                              "queryFrequency":  "PT5M",
@@ -97,3 +97,4 @@
                    }
 
 }
+
