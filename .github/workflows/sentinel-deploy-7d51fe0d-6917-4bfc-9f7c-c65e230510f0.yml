@@ -16,6 +16,7 @@ on:
     - Base Rule Set
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
     - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
+    - MasterWizard
 
 jobs:
   deploy-content:
@@ -93,3 +94,4 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+
