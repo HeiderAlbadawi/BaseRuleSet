@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "User Added to Security-Enabled Local Group.",
                                              "description":  "bla",
-                                             "severity":  "Medium",
+                                             "severity":  "Low",
                                              "enabled":  true,
                                              "query":  "SecurityEvent\n| where EventID == \"4732\"\n| project TimeGenerated, Computer, AccountName, TargetUserName, SubjectAccount, SubjectUserName\n\n",
                                              "queryFrequency":  "PT5H",
