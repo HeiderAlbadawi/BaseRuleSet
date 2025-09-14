@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "TI Map IP Entity to Azure Kubernetes - [WC-BASE]",
                                              "description":  "This query maps any IP indicators of compromise (IOCs) from threat intelligence (TI), by searching for matches in Azure Kubernetes.",
-                                             "severity":  "Medium",
+                                             "severity":  "High",
                                              "enabled":  false,
                                              "query":  "let TI_IPs = ThreatIntelIndicators\n| where TimeGenerated \u003e ago(14d)\n| distinct TIEntity = ObservableValue\n| where isnotempty(TIEntity);\nAzureDiagnostics\n| where TimeGenerated \u003e ago(1h)\n| where Category == \"kube-audit-admin\"\n| extend SourceIP = tostring(parse_json(log_s).sourceIPs.[0])\n| extend ResponseStatus = tostring(parse_json(log_s).responseStatus.code)\n| join kind=inner TI_IPs on $left.SourceIP == $right.TIEntity\n| where ResponseStatus !startswith \"4\"",
                                              "queryFrequency":  "PT1H",
