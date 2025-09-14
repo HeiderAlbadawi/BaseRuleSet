@@ -56,7 +56,7 @@ function GetCommitShaTable($getTreeResponse) {
     $shaTable = @{}
     $getTreeResponse.tree | ForEach-Object {
         if ($supportedExtensions -contains ([System.IO.Path]::GetExtension($_.path))) {
-            $shaTable[AbsolutePath $_.path] = $_.sha
+            $shaTable[(AbsolutePath $_.path)] = $_.sha
         }
     }
     return $shaTable
@@ -168,3 +168,4 @@ DeployFolder "$rootDirectory\Base Rule Set" $fullDeploymentFlag $remoteShaTable
 PushCsvToRepo
 
 Write-Host "Deployment complete."
+
