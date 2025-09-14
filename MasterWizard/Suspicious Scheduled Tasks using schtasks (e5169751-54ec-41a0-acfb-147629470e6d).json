@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "Suspicious Scheduled Tasks using schtasks",
                                              "description":  "alert on suspicious persistence or lateral movement attempts.",
-                                             "severity":  "High",
+                                             "severity":  "Informational",
                                              "enabled":  true,
                                              "query":  "SecurityAlert\r\n|where TimeGenerated \u003eago(30d)\r\n|where Techniques contains \"T1053\" or SubTechniques contains \"T1053.005\" \r\n|project TimeGenerated,AlertName,Description,Entities,CompromisedEntity,Techniques,SubTechniques,Tactics\r\n ",
                                              "queryFrequency":  "PT5M",
@@ -77,3 +77,4 @@
                    }
 
 }
+
