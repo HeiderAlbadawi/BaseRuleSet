@@ -1,96 +1,190 @@
 name: Deploy Content to acmesentinel [7d51fe0d-6917-4bfc-9f7c-c65e230510f0]
-# Note: This workflow will deploy everything in the root directory.
-# To deploy content only from a specific path (for example SentinelContent):
-#   1. Add the target path to the "paths" property like such
-#    paths:
-#    - 'SentinelContent/**'
-#    - '!.github/workflows/**'
-#    - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
-#   2. Append the path to the directory environment variable below
-#       directory: '${{ github.workspace }}/SentinelContent'
 
 on:
   push:
     branches: [ main ]
     paths:
-    - 'MasterWizard/**'
-    - 'Base Rule Set/**'
-    - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
-    - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
+      - 'MasterWizard/**'
+      - 'Base Rule Set/**'
+      - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
+
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
-  deploy-content:
+  # Detect which folder(s) changed
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      masterwizard: ${{ steps.filter.outputs.masterwizard }}
+      baserules: ${{ steps.filter.outputs.baserules }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Filter changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            masterwizard:
+              - 'MasterWizard/**'
+            baserules:
+              - 'Base Rule Set/**'
+
+  # Deploy MasterWizard only if it changed
+  deploy-masterwizard:
+    needs: changes
+    if: needs.changes.outputs.masterwizard == 'true'
     runs-on: windows-latest
     env:
+      directory: '${{ github.workspace }}/MasterWizard'
+      rootDirectory: '${{ github.workspace }}/MasterWizard'
       resourceGroupName: 'training_jordan'
       workspaceName: 'acmesentinel'
       workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      directory: '${{ github.workspace }}/MasterWizard;${{ github.workspace }}/Base Rule Set'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
       sourceControlId: '7d51fe0d-6917-4bfc-9f7c-c65e230510f0'
-      rootDirectory: '${{ github.workspace }}'
       githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
       smartDeployment: 'true'
-    permissions:
-      contents: write
-      id-token: write # Require write permission to Fetch an OIDC token.
-
     steps:
-    - name: Login to Azure (Attempt 1)
-      continue-on-error: true
-      id: login1
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Wait 30 seconds if login attempt 1 failed
-      if: ${{ steps.login1.outcome=='failure' }}
-      run: powershell Start-Sleep -s 30
+      - name: Azure login attempt 1
+        continue-on-error: true
+        id: login1
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          environment: 'AzureCloud'
+          audience: api://AzureADTokenExchange
+          enable-AzPSSession: true
 
-    - name: Login to Azure (Attempt 2)
-      continue-on-error: true
-      id: login2
-      uses: azure/login@v2
-      if: ${{ steps.login1.outcome=='failure' }}
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
+      - name: Wait 30 seconds if login1 failed
+        if: ${{ steps.login1.outcome == 'failure' }}
+        run: powershell Start-Sleep -s 30
 
-    - name: Wait 30 seconds if login attempt 2 failed
-      if: ${{ steps.login2.outcome=='failure' }}
-      run: powershell Start-Sleep -s 30
+      - name: Azure login attempt 2
+        continue-on-error: true
+        id: login2
+        if: ${{ steps.login1.outcome == 'failure' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          environment: 'AzureCloud'
+          audience: api://AzureADTokenExchange
+          enable-AzPSSession: true
 
-    - name: Login to Azure (Attempt 3)
-      continue-on-error: false
-      id: login3
-      uses: azure/login@v2
-      if: ${{ steps.login2.outcome=='failure'  }}
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
+      - name: Wait 30 seconds if login2 failed
+        if: ${{ steps.login2.outcome == 'failure' }}
+        run: powershell Start-Sleep -s 30
 
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Azure login attempt 3
+        continue-on-error: false
+        id: login3
+        if: ${{ steps.login2.outcome == 'failure' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          environment: 'AzureCloud'
+          audience: api://AzureADTokenExchange
+          enable-AzPSSession: true
 
-    - name: Deploy Content to Microsoft Sentinel
-      uses: azure/powershell@v2
-      with:
-        azPSVersion: 'latest'
-        inlineScript: |
+      - name: Deploy MasterWizard folder
+        uses: azure/powershell@v2
+        with:
+          azPSVersion: 'latest'
+          inlineScript: |
+            Write-Host "Deploying folder: $env:directory"
+            pwsh .\scripts\deploy-sentinel.ps1 -Path $env:directory
 
-          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+  # Deploy Base Rule Set only if it changed
+  deploy-baserules:
+    needs: changes
+    if: needs.changes.outputs.baserules == 'true'
+    runs-on: windows-latest
+    env:
+      directory: '${{ github.workspace }}/Base Rule Set'
+      rootDirectory: '${{ github.workspace }}/Base Rule Set'
+      resourceGroupName: 'training_jordan'
+      workspaceName: 'acmesentinel'
+      workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
+      cloudEnv: 'AzureCloud'
+      contentTypes: 'AnalyticsRule'
+      branch: 'main'
+      sourceControlId: '7d51fe0d-6917-4bfc-9f7c-c65e230510f0'
+      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
+      smartDeployment: 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure login attempt 1
+        continue-on-error: true
+        id: login1
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          environment: 'AzureCloud'
+          audience: api://AzureADTokenExchange
+          enable-AzPSSession: true
+
+      - name: Wait 30 seconds if login1 failed
+        if: ${{ steps.login1.outcome == 'failure' }}
+        run: powershell Start-Sleep -s 30
+
+      - name: Azure login attempt 2
+        continue-on-error: true
+        id: login2
+        if: ${{ steps.login1.outcome == 'failure' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          environment: 'AzureCloud'
+          audience: api://AzureADTokenExchange
+          enable-AzPSSession: true
+
+      - name: Wait 30 seconds if login2 failed
+        if: ${{ steps.login2.outcome == 'failure' }}
+        run: powershell Start-Sleep -s 30
+
+      - name: Azure login attempt 3
+        continue-on-error: false
+        id: login3
+        if: ${{ steps.login2.outcome == 'failure' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7d51fe0d69174bfc9f7cc65e230510f0 }}
+          environment: 'AzureCloud'
+          audience: api://AzureADTokenExchange
+          enable-AzPSSession: true
+
+      - name: Deploy Base Rule Set folder
+        uses: azure/powershell@v2
+        with:
+          azPSVersion: 'latest'
+          inlineScript: |
+            Write-Host "Deploying folder: $env:directory"
+            pwsh .\scripts\deploy-sentinel.ps1 -Path $env:directory
