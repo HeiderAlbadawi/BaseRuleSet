@@ -1,153 +1,170 @@
+# ----------------------------------------------
+# Azure Sentinel Deployment Script - Full Rewrite
+# ----------------------------------------------
+
 ## Globals ##
 $CloudEnv = $Env:cloudEnv
 $ResourceGroupName = $Env:resourceGroupName
 $WorkspaceName = $Env:workspaceName
 $WorkspaceId = $Env:workspaceId
-$RootDirectory = $Env:rootDirectory
-$Directories = $Env:directories -split ',' # now supports multiple directories
-$ContentTypes = $Env:contentTypes
-$SourceControlId = $Env:sourceControlId
-$GitHubAuthToken = $Env:githubAuthToken
-$GitHubRepository = $Env:GITHUB_REPOSITORY
-$BranchName = $Env:branch
-$SmartDeployment = $Env:smartDeployment
-$NewResourceBranch = "$BranchName-sentinel-deployment"
-$CsvPath = "$RootDirectory\.sentinel\tracking_table_$SourceControlId.csv"
-$ConfigPath = "$RootDirectory\sentinel-deployment.config"
-
-$Global:LocalCsvTableFinal = @{}
-$Global:UpdatedCsvTable = @{}
-$Global:ParameterFileMapping = @{}
-$Global:PrioritizedContentFiles = @()
-$Global:ExcludeContentFiles = @()
-
-$ContentTypeMapping = @{
-    "AnalyticsRule"=@("Microsoft.OperationalInsights/workspaces/providers/alertRules","Microsoft.OperationalInsights/workspaces/providers/alertRules/actions")
-    "AutomationRule"=@("Microsoft.OperationalInsights/workspaces/providers/automationRules")
-    "HuntingQuery"=@("Microsoft.OperationalInsights/workspaces/savedSearches")
-    "Parser"=@("Microsoft.OperationalInsights/workspaces/savedSearches")
-    "Playbook"=@("Microsoft.Web/connections","Microsoft.Logic/workflows","Microsoft.Web/customApis")
-    "Workbook"=@("Microsoft.Insights/workbooks")
-}
-$ResourceTypes = $ContentTypes.Split(",") | ForEach-Object { $ContentTypeMapping[$_] } | ForEach-Object { $_.ToLower() }
+$Directory = $Env:directory
+$contentTypes = $Env:contentTypes
+$sourceControlId = $Env:sourceControlId
+$rootDirectory = $Env:rootDirectory
+$githubAuthToken = $Env:githubAuthToken
+$githubRepository = $Env:GITHUB_REPOSITORY
+$branchName = $Env:branch
+$smartDeployment = $Env:smartDeployment
+$newResourceBranch = "$branchName-sentinel-deployment"
+$csvPath = "$rootDirectory\.sentinel\tracking_table_$sourceControlId.csv"
+$global:localCsvTablefinal = @{}
+$global:updatedCsvTable = @{}
 
 $MaxRetries = 3
-$SecondsBetweenAttempts = 5
+$secondsBetweenAttempts = 5
+$supportedExtensions = @(".json", ".bicep", ".bicepparam")
 
-# --- Helper Functions ---
+# ------------------------
+# Utility Functions
+# ------------------------
 
-function RelativePathWithSlash($absolutePath) {
-    return $absolutePath.Replace($RootDirectory + "\", "").Replace("\", "/")
+function RelativePath($absolutePath) {
+    return $absolutePath.Replace("$rootDirectory\", "").Replace("\", "/")
 }
 
-function AbsolutePathWithSlash($relativePath) {
-    return Join-Path -Path $RootDirectory -ChildPath $relativePath
+function AbsolutePath($relativePath) {
+    return Join-Path -Path $rootDirectory -ChildPath $relativePath
 }
 
 function ConvertTableToString {
     $output = "FileName,CommitSha`n"
-    $Global:UpdatedCsvTable.GetEnumerator() | ForEach-Object {
-        $key = RelativePathWithSlash $_.Key
-        $output += "{0},{1}`n" -f $key, $_.Value
+    $global:updatedCsvTable.GetEnumerator() | ForEach-Object {
+        $key = RelativePath $_.Key
+        $output += "$key,$($_.Value)`n"
     }
     return $output
 }
 
+function GetGithubTree {
+    $branchResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$githubRepository/branches/$branchName" -Headers @{Authorization = "Bearer $githubAuthToken"}
+    $treeUrl = "https://api.github.com/repos/$githubRepository/git/trees/$($branchResponse.commit.sha)?recursive=true"
+    $getTreeResponse = Invoke-RestMethod -Uri $treeUrl -Headers @{Authorization = "Bearer $githubAuthToken"}
+    return $getTreeResponse
+}
+
+function GetCommitShaTable($getTreeResponse) {
+    $shaTable = @{}
+    $getTreeResponse.tree | ForEach-Object {
+        if ($supportedExtensions -contains ([System.IO.Path]::GetExtension($_.path))) {
+            $shaTable[AbsolutePath $_.path] = $_.sha
+        }
+    }
+    return $shaTable
+}
+
 function ReadCsvToTable {
-    if (-not (Test-Path $CsvPath)) { return @{} }
-    $csvTable = Import-Csv -Path $CsvPath
+    if (-not (Test-Path $csvPath)) { return @{} }
+    $csvTable = Import-Csv -Path $csvPath
     $HashTable = @{}
-    foreach ($r in $csvTable) {
-        $key = AbsolutePathWithSlash $r.FileName
-        $HashTable[$key] = $r.CommitSha
+    foreach($r in $csvTable) {
+        $HashTable[AbsolutePath $r.FileName] = $r.CommitSha
     }
     return $HashTable
 }
 
 function PushCsvToRepo {
-    if (-not (Test-Path "$RootDirectory\.sentinel")) { New-Item -ItemType Directory -Path "$RootDirectory\.sentinel" | Out-Null }
+    $content = ConvertTableToString
+    $relativeCsvPath = RelativePath $csvPath
 
-    $Content = ConvertTableToString
-    $RelativeCsvPath = RelativePathWithSlash $CsvPath
+    if (-not (Test-Path ".sentinel")) {
+        New-Item -ItemType Directory -Path ".sentinel" | Out-Null
+    }
 
-    if (-not (git ls-remote --heads "https://github.com/$GitHubRepository" $NewResourceBranch)) {
-        git switch --orphan $NewResourceBranch
+    $branchExists = git ls-remote --heads "https://github.com/$githubRepository" $newResourceBranch | Measure-Object | Select-Object -ExpandProperty Count
+    if ($branchExists -eq 0) {
+        git switch --orphan $newResourceBranch
         git commit --allow-empty -m "Initial commit on orphan branch"
-        git push -u origin $NewResourceBranch
+        git push -u origin $newResourceBranch
     } else {
         git fetch
-        git checkout $NewResourceBranch
+        git checkout $newResourceBranch
     }
 
-    $Content | Out-File -FilePath $RelativeCsvPath -Encoding utf8
-    git add $RelativeCsvPath
-    git commit -m "Modified tracking table"
-    git push -u origin $NewResourceBranch
-    git checkout $BranchName
+    Write-Output $content > $csvPath
+    git add $csvPath
+    git commit -m "Updated tracking table"
+    git push -u origin $newResourceBranch
+    git checkout $branchName
 }
 
-function GetGitTree {
-    $BranchResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$GitHubRepository/branches/$BranchName" -Headers @{ Authorization = "Bearer $GitHubAuthToken" }
-    $TreeUrl = "https://api.github.com/repos/$GitHubRepository/git/trees/$($BranchResponse.commit.sha)?recursive=true"
-    return Invoke-RestMethod -Uri $TreeUrl -Headers @{ Authorization = "Bearer $GitHubAuthToken" }
-}
+function SmartDeploy($fullDeploymentFlag, $path, $remoteShaTable) {
+    $skip = $false
+    if (-not $fullDeploymentFlag) {
+        $existingSha = $global:localCsvTablefinal[$path]
+        $remoteSha = $remoteShaTable[$path]
+        $skip = ($existingSha -and $existingSha -eq $remoteSha)
+    }
 
-function GetCommitShaTable($TreeResponse) {
-    $ShaTable = @{}
-    $SupportedExtensions = @(".json", ".bicep", ".bicepparam")
-    $TreeResponse.tree | ForEach-Object {
-        $TruePath = AbsolutePathWithSlash $_.path
-        if (([System.IO.Path]::GetExtension($_.path) -in $SupportedExtensions) -or ($TruePath -eq $ConfigPath)) {
-            $ShaTable[$TruePath] = $_.sha
+    if (-not $skip) {
+        Write-Host "[Info] Deploying $path"
+        $ext = [System.IO.Path]::GetExtension($path)
+        try {
+            if ($ext -eq ".json") {
+                $content = Get-Content -Path $path -Raw | ConvertFrom-Json
+                # Example: Deploy analytics rule
+                New-AzSentinelAlertRule -ResourceGroupName $ResourceGroupName -WorkspaceName $WorkspaceName -RuleId $content.Name -Rule $content
+            } elseif ($ext -eq ".bicep") {
+                New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -TemplateFile $path -ErrorAction Stop
+            }
+        } catch {
+            Write-Host "[Error] Deployment failed for $path : $_"
         }
+    } else {
+        Write-Host "[Info] Skipping $path (unchanged)"
     }
-    return $ShaTable
+    $global:updatedCsvTable[$path] = $remoteShaTable[$path]
 }
 
-function SmartDeployment($FullDeploymentFlag, $RemoteShaTable, $Path) {
-    $Skip = $false
-    if (-not $FullDeploymentFlag) {
-        $ExistingSha = $Global:LocalCsvTableFinal[$Path]
-        $RemoteSha = $RemoteShaTable[$Path]
-        $Skip = ($ExistingSha -and $ExistingSha -eq $RemoteSha)
+function DeployFolder($folder, $fullDeploymentFlag, $remoteShaTable) {
+    if (-not (Test-Path $folder)) {
+        Write-Host "[Warning] $folder not found, skipping..."
+        return
     }
-    return $Skip
-}
 
-function DeployDirectory($Directory, $RemoteShaTable, $FullDeploymentFlag) {
-    if (-not (Test-Path $Directory)) { Write-Host "[Warning] $Directory not found, skipping"; return }
-    Get-ChildItem -Path $Directory -Recurse -Include *.json, *.bicep | ForEach-Object {
-        $FilePath = $_.FullName
-        $Skip = SmartDeployment $FullDeploymentFlag $RemoteShaTable $FilePath
-        if (-not $Skip) {
-            Write-Host "[Info] Deploying $FilePath"
-            # Insert your actual deployment logic here
-        } else {
-            Write-Host "[Info] Skipping $FilePath (unchanged)"
-        }
-        $Global:UpdatedCsvTable[$FilePath] = $RemoteShaTable[$FilePath]
+    Get-ChildItem -Path $folder -Recurse -Include *.json, *.bicep | ForEach-Object {
+        SmartDeploy $fullDeploymentFlag $_.FullName $remoteShaTable
     }
 }
 
-# --- Main ---
+# ------------------------
+# Main
+# ------------------------
 
-function Main {
-    git config --global user.email "donotreply@microsoft.com"
-    git config --global user.name "Sentinel"
+git config --global user.email "donotreply@microsoft.com"
+git config --global user.name "Sentinel"
 
-    if (Test-Path $CsvPath) { $Global:LocalCsvTableFinal = ReadCsvToTable }
+# Load previous CSV tracking
+$global:localCsvTablefinal = ReadCsvToTable
 
-    $Tree = GetGitTree
-    $RemoteShaTable = GetCommitShaTable $Tree
+# Load GitHub tree and get commit SHAs
+$tree = GetGithubTree
+$remoteShaTable = GetCommitShaTable $tree
 
-    $FullDeploymentFlag = $SmartDeployment -eq "false"
-
-    foreach ($Dir in $Directories) {
-        $FullPath = Join-Path $RootDirectory $Dir.Trim()
-        DeployDirectory $FullPath $RemoteShaTable $FullDeploymentFlag
-    }
-
-    PushCsvToRepo
+# Determine full deployment
+$fullDeploymentFlag = $false
+$existingConfigSha = $global:localCsvTablefinal[AbsolutePath "sentinel-deployment.config"]
+$remoteConfigSha = $remoteShaTable[AbsolutePath "sentinel-deployment.config"]
+if ($existingConfigSha -ne $remoteConfigSha -or $smartDeployment -eq "false") {
+    $fullDeploymentFlag = $true
 }
 
-Main
+# Deploy MasterWizard folder first
+DeployFolder "$rootDirectory\MasterWizard" $fullDeploymentFlag $remoteShaTable
+
+# Deploy Base Rule Set folder
+DeployFolder "$rootDirectory\Base Rule Set" $fullDeploymentFlag $remoteShaTable
+
+# Push updated CSV
+PushCsvToRepo
+
+Write-Host "Deployment complete."
