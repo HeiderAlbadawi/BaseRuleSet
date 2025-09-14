@@ -40,17 +40,17 @@ jobs:
 
   deploy-baserules:
     runs-on: windows-latest
-    if: contains(github.event.head_commit.message, 'BaseRules') || contains(join(fromJSON(toJSON(github.event.commits)).*.modified), 'BaseRules/')
+    if: contains(github.event.head_commit.message, 'Base Rule Set') || contains(join(fromJSON(toJSON(github.event.commits)).*.modified), 'Base Rule Set/')
     env:
       resourceGroupName: 'training_jordan'
       workspaceName: 'acmesentinel'
       workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      directory: '${{ github.workspace }}/BaseRules'
+      directory: '${{ github.workspace }}/Base Rule Set'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
       sourceControlId: '7d51fe0d-6917-4bfc-9f7c-c65e230510f0'
-      rootDirectory: '${{ github.workspace }}/BaseRules'
+      rootDirectory: '${{ github.workspace }}/Base Rule Set'
       githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
       smartDeployment: 'true'
     permissions:
@@ -114,6 +114,7 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+
 
 
 
