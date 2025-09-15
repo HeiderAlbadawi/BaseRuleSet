@@ -9,11 +9,11 @@
                           "kind":  "NRT",
                           "apiVersion":  "2023-12-01-preview",
                           "properties":  {
-                                             "displayName":  "Suspicious Registry Key",
+                                             "displayName":  "Suspicious Registry Key - [WC-BASE-W]",
                                              "description":  "This detection identifies suspicious registry key modifications that may indicate attempts to achieve persistence or evade security controls.",
                                              "severity":  "Medium",
                                              "enabled":  true,
-                                             "query":  "DeviceRegistryEvents\r\n| where RegistryKey has_any (\"Windows Defender\", \"Run\", \"Disable\", \"add\", \"del\") \r\n| where ActionType in (\"RegistryValueSet\", \"RegistryValueDeleted\", \"RegistryKeyCreated\", \"RegistryKeyDeleted\", \"RegistryKeyRenamed\")\r\n| where InitiatingProcessFileName !in~ (\"explorer.exe\", \"svchost.exe\", \"msiexec.exe\", \"services.exe\", \"system\")\r\n| where InitiatingProcessFileName in~ (\"reg.exe\", \"regedit.exe\", \"powershell.exe\", \"cmd.exe\", \"wscript.exe\", \"cscript.exe\")\r\n// | where InitiatingProcessAccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\")\r\n// | where RegistryValueData has_any (\".exe\", \"TEMP\", \"Downloads\", \"Startup\", \"AppData\")\r\n| project TimeGenerated, ActionType, DeviceName, RegistryKey, RegistryValueName, RegistryValueData,\r\n          InitiatingProcessFileName, InitiatingProcessCommandLine,\r\n          InitiatingProcessAccountName, InitiatingProcessAccountSid, DeviceId, ReportId",
+                                              "query": "DeviceRegistryEvents\r\n| where RegistryKey has_any (\"Windows Defender\", \"Run\", \"Disable\", \"add\", \"del\")\r\n| where ActionType in (\"RegistryValueSet\", \"RegistryValueDeleted\", \"RegistryKeyCreated\", \"RegistryKeyDeleted\", \"RegistryKeyRenamed\")\r\n| where InitiatingProcessFileName !in~ (\"explorer.exe\", \"svchost.exe\", \"msiexec.exe\", \"services.exe\", \"system\")\r\n| where InitiatingProcessFileName in~ (\"reg.exe\", \"regedit.exe\", \"powershell.exe\", \"cmd.exe\", \"wscript.exe\", \"cscript.exe\")\r\n// | where InitiatingProcessAccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\")\r\n// | where RegistryValueData has_any (\".exe\", \"TEMP\", \"Downloads\", \"Startup\", \"AppData\")\r\n| project TimeGenerated, ActionType, DeviceName, RegistryKey, RegistryValueName, RegistryValueData,\r\n          InitiatingProcessFileName, InitiatingProcessCommandLine,\r\n          InitiatingProcessAccountName, InitiatingProcessAccountSid, DeviceId, ReportId\r\n| where DeviceId !contains 5",
                                              "suppressionDuration":  "PT5H",
                                              "suppressionEnabled":  false,
                                              "tactics":  [
@@ -61,3 +61,4 @@
                                      }
                    }
 }
+
