@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "Suspicious Remote File Transfer Activity (T1105 - Remote File Copy) - [WC-BASE]",
                                              "description":  "Detects potential data exfiltration or file transfer activity using common tools (e.g., PowerShell, certutil, curl, FTP) over network protocols such as HTTP, HTTPS, FTP, and SMB. Mapped to MITRE ATT\u0026CK Technique T1105 Ã¢â‚¬â€œ Remote File Copy.",
-                                             "severity":  "High",
+                                             "severity":  "Low",
                                              "enabled":  true,
                                              "query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| where ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"Invoke-Expression\", \"powershell\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\")\r\n| where FileName in~ (\"powershell.exe\", \"cmd.exe\", \"python.exe\", \"ruby.exe\", \"java.exe\", \"mshta.exe\", \"rundll32.exe\", \"wmic.exe\", \"ftp.exe\", \"curl.exe\", \"wget.exe\", \"bitsadmin.exe\")\r\n| where ProcessCommandLine contains_cs \"C:\\\\Users\\\\\" or ProcessCommandLine contains_cs \"Documents\" or ProcessCommandLine contains_cs \"Desktop\" or ProcessCommandLine contains_cs \"Downloads\"\r\n| where InitiatingProcessFileName !in (\"explorer.exe\", \"System\", \"svchost.exe\", \"taskhostw.exe\", \"dllhost.exe\")\r\n| extend SuspiciousActivity = case(\r\n    ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\"), \"Possible Data Exfiltration\",\r\n    \"Other\")\r\n| summarize ActivityCount = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by DeviceName, InitiatingProcessFileName, FileName, SuspiciousActivity, ProcessCommandLine\r\n| where ActivityCount \u003e 3\r\n| order by LastSeen desc",
                                              "queryFrequency":  "PT5M",
@@ -97,3 +97,4 @@
                    }
 
 }
+
