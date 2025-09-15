@@ -13,8 +13,8 @@ on:
   push:
     branches: [ main ]
     paths:
-    - 'MasterWizard/**'
-    - 'Base Rule Set/**'
+    - 'AcmeSentinel/**' 
+    - 'BaseRules/**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
     - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
 
@@ -25,7 +25,7 @@ jobs:
       resourceGroupName: 'training_jordan'
       workspaceName: 'acmesentinel'
       workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      directory: '${{ github.workspace }}'
+      directory: '${{ github.workspace }}/AcmeSentinel/Staging'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -94,6 +94,7 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+
 
 
 
