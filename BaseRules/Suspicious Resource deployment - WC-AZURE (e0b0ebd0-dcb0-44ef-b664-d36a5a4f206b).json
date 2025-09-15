@@ -9,7 +9,7 @@
                           "kind":  "Scheduled",
                           "apiVersion":  "2023-12-01-preview",
                           "properties":  {
-                                             "displayName":  "Suspicious Resource deployment - [WC-AZURE]",
+                                             "displayName":  "Suspicious Resource deployment - [WC-BASE]",
                                              "description":  "Identifies when a rare Resource and ResourceGroup deployment occurs by a previously unseen Caller.",
                                              "severity":  "Low",
                                              "enabled":  true,
@@ -84,4 +84,5 @@
                                          "type":  "String"
                                      }
                    }
+
 }
