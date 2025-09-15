@@ -513,6 +513,36 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
         $totalFailed = 0;
 	      $iterationList = @()
         $global:prioritizedContentFiles | ForEach-Object  { $iterationList += (AbsolutePathWithSlash $_) }
+		# --- BEGIN: Apply tuning to base rules ---
+$tuningFolder = Join-Path $rootDirectory "AcmeSentinel"   # path to tuned rules for this sentinel
+
+foreach ($tuningFile in Get-ChildItem $tuningFolder -Filter "Tuned: *.json") {
+    $fileName = $tuningFile.BaseName
+    $baseRuleName = $fileName -replace "^Tuned: ", ""
+    $ruleFile = Join-Path $Directory ($baseRuleName + ".json")  # $Directory is the staging folder
+
+    if (Test-Path $ruleFile) {
+        $ruleJson = Get-Content $ruleFile.FullName -Raw | ConvertFrom-Json
+        $tuningJson = Get-Content $tuningFile.FullName -Raw | ConvertFrom-Json
+
+        # Apply NameSuffix (change [WC-BASE] -> [WC-BASE-W])
+        if ($tuningJson.properties.displayName) {
+            $ruleJson.properties.displayName = $tuningJson.properties.displayName
+        }
+
+        # Append KQL line
+        if ($tuningJson.properties.query) {
+            $baseQuery = $ruleJson.properties.query
+            $tuningQuery = $tuningJson.properties.query -replace [regex]::Escape($baseQuery), ""
+            $ruleJson.properties.query = $baseQuery + "`r`n" + $tuningQuery.Trim()
+        }
+
+        # Save updated rule back to staging
+        $ruleJson | ConvertTo-Json -Depth 20 -Compress | Set-Content $ruleFile.FullName
+    }
+}
+# --- END: Apply tuning ---
+
         Get-ChildItem -Path $Directory -Recurse -Include *.bicep, *.json -exclude *metadata.json, *.parameters*.json, *.bicepparam, bicepconfig.json |
                         Where-Object { $null -eq ( filterContentFile $_.FullName ) } |
                         Select-Object -Property FullName |
@@ -640,3 +670,4 @@ function main() {
 }
 
 main
+
