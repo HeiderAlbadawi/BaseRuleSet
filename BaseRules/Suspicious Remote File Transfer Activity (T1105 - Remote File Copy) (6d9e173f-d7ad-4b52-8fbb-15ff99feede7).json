@@ -9,7 +9,7 @@
                           "kind":  "Scheduled",
                           "apiVersion":  "2023-12-01-preview",
                           "properties":  {
-                                             "displayName":  "Suspicious Remote File Transfer Activity (T1105 - Remote File Copy)",
+                                             "displayName":  "Suspicious Remote File Transfer Activity (T1105 - Remote File Copy) - [WC-BASE]",
                                              "description":  "Detects potential data exfiltration or file transfer activity using common tools (e.g., PowerShell, certutil, curl, FTP) over network protocols such as HTTP, HTTPS, FTP, and SMB. Mapped to MITRE ATT\u0026CK Technique T1105 Ã¢â‚¬â€œ Remote File Copy.",
                                              "severity":  "High",
                                              "enabled":  true,
@@ -95,4 +95,5 @@
                                          "type":  "String"
                                      }
                    }
+
 }
