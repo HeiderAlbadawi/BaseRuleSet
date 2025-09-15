@@ -19,7 +19,7 @@ on:
     - '.github/workflows/sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.yml'
 
 jobs:
-  deploy-content:
+  deploy-baserules:
     runs-on: windows-latest
     env:
       resourceGroupName: 'training_jordan'
@@ -95,7 +95,7 @@ jobs:
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
 
-  deploy-content2:
+  deploy-customrules:
     runs-on: windows-latest
     env:
       resourceGroupName: 'training_jordan'
@@ -170,6 +170,7 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+
 
 
 
