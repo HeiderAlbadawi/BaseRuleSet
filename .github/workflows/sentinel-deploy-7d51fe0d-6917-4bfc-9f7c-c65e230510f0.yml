@@ -169,8 +169,8 @@ jobs:
       with:
         azPSVersion: 'latest'
         inlineScript: |
-
-          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+          $ps1Path = "${{ github.workspace }}/AcmeSentinel/deploy-custom-wrapper.ps1"
+          & $ps1Path
 
 
 
