@@ -54,7 +54,7 @@ foreach ($cf in $customJsonFiles) {
             -TemplateFile $outFile -TemplateParameterObject $paramObj -ErrorAction Stop | Out-Host
         Write-Host "[Success] Deployed custom rule $ruleBaseName"
     } catch {
-       Write-Host "[Error] Deployment failed for $ruleBaseName: $($_)"
+       Write-Host "[Error] Deployment failed for ${ruleBaseName}: ${($_.Exception.Message)}"
     }
 }
 
