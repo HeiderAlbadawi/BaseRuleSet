@@ -1,15 +1,27 @@
+<#
+deploy-custom-wrapper.ps1
+Wrapper to call the main Azure Sentinel deploy script for custom rules
+#>
+
 param(
-    [string]$BaseRulesPath  = "$env:GITHUB_WORKSPACE\BaseRules",
-    [string]$SentinelPath   = "$env:GITHUB_WORKSPACE\AcmeSentinel",
-    [string]$ResourceGroupName = "training_jordan",
-    [string]$WorkspaceName = "acmesentinel"
+    [Parameter(Mandatory=$true)][string]$BaseRulesPath,
+    [Parameter(Mandatory=$true)][string]$SentinelPath,
+    [Parameter(Mandatory=$true)][string]$ResourceGroupName,
+    [Parameter(Mandatory=$true)][string]$WorkspaceName
 )
 
-# Path to your original deploy script
-$ps1Path = Join-Path $SentinelPath "azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1"
+# Ensure the main deploy script path (in .github/workflows)
+$ps1Path = Join-Path $env:GITHUB_WORKSPACE ".github\workflows\azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1"
 
-Write-Host "[Info] Running original sentinel deploy script for custom rules"
-& $ps1Path `
+if (-not (Test-Path $ps1Path)) {
+    throw "[ERROR] Deploy script not found at path: $ps1Path"
+}
+
+$ps1FullPath = Resolve-Path $ps1Path
+Write-Host "[Info] Running deploy script: $ps1FullPath"
+
+# Call the main deploy script, passing all mandatory parameters
+& $ps1FullPath `
     -BaseRulesPath $BaseRulesPath `
     -SentinelPath $SentinelPath `
     -ResourceGroupName $ResourceGroupName `
