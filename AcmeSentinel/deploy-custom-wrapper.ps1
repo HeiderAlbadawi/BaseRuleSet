@@ -1,60 +1,18 @@
-<#
-deploy-custom-wrapper.ps1
-Wrapper to deploy custom rules with optional tuning
-#>
+# iterate all JSON rules in SentinelPath
+$ruleJsonFiles = Get-ChildItem -Path $SentinelPath -Filter *.json -File -ErrorAction SilentlyContinue
+if (-not $ruleJsonFiles) { Write-Warning "[Warning] No JSON rules found in $SentinelPath" }
 
-param(
-    [Parameter(Mandatory=$true)][string]$BaseRulesPath,
-    [Parameter(Mandatory=$true)][string]$SentinelPath,
-    [Parameter(Mandatory=$true)][string]$ResourceGroupName,
-    [Parameter(Mandatory=$true)][string]$WorkspaceName
-)
-
-# -----------------------------
-# Temp folder for merged rules
-# -----------------------------
-$TempOutputRoot = Join-Path $env:TEMP "sentinel-build"
-if (-not (Test-Path $TempOutputRoot)) {
-    New-Item -Path $TempOutputRoot -ItemType Directory -Force | Out-Null
-}
-
-# -----------------------------
-# Helper to load JSON
-# -----------------------------
-function Load-JsonFile([string]$path) {
-    try { return Get-Content -Path $path -Raw | ConvertFrom-Json -ErrorAction Stop }
-    catch { throw "Failed to parse JSON file $path : $_" }
-}
-
-# -----------------------------
-# Enumerate custom rules
-# -----------------------------
-$customJsonFiles = Get-ChildItem -Path $SentinelPath -Filter Custom-*.json -File -ErrorAction SilentlyContinue
-
-if (-not $customJsonFiles -or $customJsonFiles.Count -eq 0) {
-    Write-Warning "[Warning] No custom JSON rules found in $SentinelPath"
-}
-
-foreach ($cf in $customJsonFiles) {
-    Write-Host "[Info] Processing custom rule: $($cf.Name)"
+foreach ($cf in $ruleJsonFiles) {
+    Write-Host "[Info] Processing rule: $($cf.Name)"
     $ruleJson = Load-JsonFile $cf.FullName
 
-    # -----------------------------
-    # Check for tuning files
-    # -----------------------------
+    # check for tuning file
     $ruleBaseName = $cf.BaseName
-    $tuningFiles = @(
-        Join-Path $SentinelPath ("Tuning-" + $ruleBaseName + ".txt"),
-        Join-Path $SentinelPath ("Tuned-" + $ruleBaseName + ".txt")
-    )
-
+    $tuningPath1 = Join-Path $SentinelPath ("Tuning-" + $ruleBaseName + ".txt")
+    $tuningPath2 = Join-Path $SentinelPath ("Tuned-" + $ruleBaseName + ".txt")
     $appendKql = $null
-    foreach ($tfile in $tuningFiles) {
-        if (Test-Path $tfile) {
-            $appendKql = Get-Content -Path $tfile -Raw
-            break
-        }
-    }
+    if (Test-Path $tuningPath1) { $appendKql = Get-Content -Path $tuningPath1 -Raw }
+    elseif (Test-Path $tuningPath2) { $appendKql = Get-Content -Path $tuningPath2 -Raw }
 
     if ($appendKql -and $ruleJson.resources.Count -ge 1) {
         $props = $ruleJson.resources[0].properties
@@ -64,35 +22,19 @@ foreach ($cf in $customJsonFiles) {
         }
     }
 
-    # -----------------------------
-    # Write merged JSON to temp folder
-    # -----------------------------
+    # write merged JSON to temp folder
     $outFile = Join-Path $TempOutputRoot $cf.Name
     $ruleJson | ConvertTo-Json -Depth 50 | Out-File -FilePath $outFile -Encoding utf8
 
-    # -----------------------------
-    # Deploy to Sentinel
-    # -----------------------------
+    # deploy to Sentinel
     try {
-        $deploymentName = "sentinel-deploy-custom-$($ruleBaseName)-$(Get-Random)"
+        $deploymentName = "sentinel-deploy-$($ruleBaseName)-$(Get-Random)"
         $paramObj = @{ "workspace" = $WorkspaceName }
-
         Write-Host "[Info] Deploying $ruleBaseName to workspace $WorkspaceName"
-        Write-Host "[DEBUG] Template file: $outFile"
-        Write-Host "[DEBUG] Deployment parameters: $($paramObj | ConvertTo-Json -Compress)"
-
-        # Force deployment: add -ForceDeployment flag if your script supports it
-        New-AzResourceGroupDeployment -Name $deploymentName `
-            -ResourceGroupName $ResourceGroupName `
-            -TemplateFile $outFile `
-            -TemplateParameterObject $paramObj `
-            -ErrorAction Stop | Out-Host
-
-        Write-Host "[Success] Deployed custom rule $ruleBaseName"
-    }
-    catch {
-        Write-Host "[Error] Deployment failed for ${ruleBaseName}: $($_.Exception.Message)"
+        New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $ResourceGroupName `
+            -TemplateFile $outFile -TemplateParameterObject $paramObj -ErrorAction Stop | Out-Host
+        Write-Host "[Success] Deployed rule $ruleBaseName"
+    } catch {
+        Write-Host "[Error] Deployment failed for ${ruleBaseName}: ${($_.Exception.Message)}"
     }
 }
-
-Write-Host "[Info] Custom rules deployment complete."
