@@ -18,6 +18,7 @@ if (-not (Test-Path $ps1Path)) {
 }
 
 $ps1FullPath = Resolve-Path $ps1Path
+$env:smartDeployment = 'true'
 Write-Host "[Info] Running deploy script: $ps1FullPath"
 
 # Call the main deploy script, passing all mandatory parameters
