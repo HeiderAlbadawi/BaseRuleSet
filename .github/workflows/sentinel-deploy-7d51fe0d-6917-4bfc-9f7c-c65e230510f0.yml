@@ -164,13 +164,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Deploy Content to Microsoft Sentinel
+    - name: Deploy Tuned Content to Microsoft Sentinel
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
-
-          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7d51fe0d-6917-4bfc-9f7c-c65e230510f0.ps1
+          # Run the PS1 script that merges base rule + tuning before deployment
+          $ps1Path = Join-Path $Env:rootDirectory ".github/workflows/merge-and-deploy-for-acme.ps1"
+          Write-Host "Running merge-and-deploy-for-acme.ps1 from $ps1Path"
+          & $ps1Path
 
 
 
