@@ -169,8 +169,18 @@ jobs:
       with:
         azPSVersion: 'latest'
         inlineScript: |
-          $ps1Path = "${{ github.workspace }}/AcmeSentinel/deploy-custom-wrapper.ps1"
-          & $ps1Path
+          $BaseRulesPath = '${{ env.directory }}'  # AcmeSentinel folder
+          $SentinelPath = '${{ env.directory }}'
+          $ResourceGroupName = '${{ env.resourceGroupName }}'
+          $WorkspaceName = '${{ env.workspaceName }}'
+          $Wrapper = Join-Path $env:GITHUB_WORKSPACE 'AcmeSentinel\deploy-custom-wrapper.ps1'
+          Write-Host "[Info] Running wrapper: $Wrapper"
+          & $Wrapper `
+            -BaseRulesPath $BaseRulesPath `
+            -SentinelPath $SentinelPath `
+            -ResourceGroupName $ResourceGroupName `
+            -WorkspaceName $WorkspaceName
+
 
 
 
