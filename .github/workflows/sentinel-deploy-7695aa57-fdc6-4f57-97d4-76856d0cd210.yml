@@ -23,7 +23,7 @@ jobs:
       resourceGroupName: 'training_jordan'
       workspaceName: 'acmesentinel'
       workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      directory: '${{ github.workspace }}'
+      directory: '${{ github.workspace }}/BaseRuleSet'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -92,3 +92,4 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.ps1
+
