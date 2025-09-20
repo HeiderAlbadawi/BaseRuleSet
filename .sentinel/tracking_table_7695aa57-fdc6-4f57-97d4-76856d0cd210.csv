@@ -1,13 +1,3 @@
 FileName, CommitSha
-BaseRuleSet/Windows Defender Preferences Suspicious Changes - WC-THREAT (f1fcf0e4-92ca-4e2b-bf1d-b36a2590191e).json,d3e4e9d62e4dc3d9c23241b5a2ac2e05d126d482
-BaseRuleSet/when a user account was added to a security-enabled local group (5eb55696-7973-4952-8cce-f0ce67f12e65).json,8b88f5e3201d546d5444992b59ccae86fe856ffa
-BaseRuleSet/Vulnerability Scanning Tool Detection WC-DFE (a2c011a6-3986-411a-9e27-286d018e1b65).json,08585b6ca8dbf1e6e2dd18242c08791dcd9c6ecd
-BaseRuleSet/User Login from Different Countries Within 3 Hours (42718c04-51b3-4b7f-8511-0c19252ea44b).json,f52a1af8107ecae2524c0a635ac2beee495e646a
-BaseRuleSet/Suspicious Registry Persistence via Run Key (fc028d40-4d0e-40d1-9657-1c6f3f3cbec7).json,62a2342e69f685d3c8f43628ec7e39906bf68085
-BaseRuleSet/Suspicious Registry Key (6cd6df64-eb55-4bef-80b7-2e8d57c48276).json,e037d9c416ca8fd8e7dc8588164c95e4ad190b7c
-BaseRuleSet/T1115 - Dina (e21b4778-67f0-4b04-91a9-1e96e8f9d049).json,152436cd8d66cf1a492c7b0e3cabd8dc9801df8e
-BaseRuleSet/User Login from Different States Within 3 Hours (f78ccd15-6ec1-4cfa-bec4-d9d27d1bb4d5).json,d30bc78cc1e564234f392409b31b610947698511
-BaseRuleSet/Windows Scheduled Task Creation on Remote Host with at.exe - WC-THREAT (42b49386-21e9-429b-bcfc-8e40fe5d6b56).json,33666b1fd8de19a3ffeffc7f35b9a308240d7911
-BaseRuleSet/VSS backup deletion via WMI (Powershell) - WC-DFE (5041ee68-ef8a-4fbc-b286-3d898d200eec).json,debf0bdda2e569f636b8a3ae32bc0245121c83a8
-BaseRuleSet/User agent search for log4j exploitation attempt - WC-THREAT (bfe5d88c-52e8-4910-a689-a92926f5652a).json,97b74626c208eaa830e7059304f38424dd41273b
+BaseRuleSet/Suspicious PowerShell Download  Credential Dump Attempt (6a040bb0-ee6a-43e1-960a-7e4b278e48a0).json,bf7ae6605e501b14610d52cdab781cfbcbcd9d1a
 
