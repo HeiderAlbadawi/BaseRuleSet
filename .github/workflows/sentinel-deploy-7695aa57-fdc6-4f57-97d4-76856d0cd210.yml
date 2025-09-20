@@ -89,19 +89,21 @@ jobs:
 
     - name: Get changed files
       id: changed-files
+      shell: pwsh
       run: |
         # Get list of changed JSON files in BaseRuleSet/ directory
-        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json' | tr '\n' ',' | sed 's/,$//') 
-        echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
-        echo "Changed files: $CHANGED_FILES"
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $changedFilesString = $changedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Changed files: $changedFilesString"
         
         # If no specific rule files changed, we don't need to deploy anything
-        if [ -z "$CHANGED_FILES" ]; then
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
           echo "No JSON rule files changed, skipping deployment"
-          echo "skip_deployment=true" >> $GITHUB_OUTPUT
-        else
-          echo "skip_deployment=false" >> $GITHUB_OUTPUT
-        fi
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
 
     - name: Deploy Content to Microsoft Sentinel
       if: steps.changed-files.outputs.skip_deployment == 'false'
