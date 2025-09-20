@@ -3,24 +3,29 @@
     "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "resources":  [
                       {
-                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/6cd6df64-eb55-4bef-80b7-2e8d57c48276\u0027)]",
-                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/6cd6df64-eb55-4bef-80b7-2e8d57c48276\u0027)]",
+                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/e24e347a-53eb-4dfe-a1d5-035bce4786d3\u0027)]",
+                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/e24e347a-53eb-4dfe-a1d5-035bce4786d3\u0027)]",
                           "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
-                          "kind":  "NRT",
+                          "kind":  "Scheduled",
                           "apiVersion":  "2023-12-01-preview",
                           "properties":  {
-                                             "displayName":  "Suspicious Registry Key",
-                                             "description":  "This detection identifies suspicious registry key modifications that may indicate attempts to achieve persistence or evade security controls.",
-                                             "severity":  "Informational",
+                                             "displayName":  "User Added to Security-Enabled Local Group",
+                                             "description":  ": This alert rule detects when a user account is added to a security-enabled local group within the environment. Adding users to security groups can impact access control and permissions, and monitoring such changes is crucial for maintaining security and compliance. This alert triggers on Event ID 4728, which indicates that a user has been added to a security-enabled local group. By receiving notifications of these changes, security teams can quickly review and verify the modifications to ensure they are legitimate and in line with organizational policies.",
+                                             "severity":  "Medium",
                                              "enabled":  true,
-                                             "query":  "DeviceRegistryEvents\r\n| where RegistryKey has_any (\"Windows Defender\", \"Run\", \"Disable\", \"add\", \"del\") \r\n| where ActionType in (\"RegistryValueSet\", \"RegistryValueDeleted\", \"RegistryKeyCreated\", \"RegistryKeyDeleted\", \"RegistryKeyRenamed\")\r\n| where InitiatingProcessFileName !in~ (\"explorer.exe\", \"svchost.exe\", \"msiexec.exe\", \"services.exe\", \"system\")\r\n| where InitiatingProcessFileName in~ (\"reg.exe\", \"regedit.exe\", \"powershell.exe\", \"cmd.exe\", \"wscript.exe\", \"cscript.exe\")\r\n// | where InitiatingProcessAccountName !in~ (\"SYSTEM\", \"LOCAL SERVICE\", \"NETWORK SERVICE\")\r\n// | where RegistryValueData has_any (\".exe\", \"TEMP\", \"Downloads\", \"Startup\", \"AppData\")\r\n| project TimeGenerated, ActionType, DeviceName, RegistryKey, RegistryValueName, RegistryValueData,\r\n          InitiatingProcessFileName, InitiatingProcessCommandLine,\r\n          InitiatingProcessAccountName, InitiatingProcessAccountSid, DeviceId, ReportId",
+                                             "query":  "SecurityEvent\n| where EventID==\"4732\"\n",
+                                             "queryFrequency":  "PT5H",
+                                             "queryPeriod":  "PT5H",
+                                             "triggerOperator":  "GreaterThan",
+                                             "triggerThreshold":  0,
                                              "suppressionDuration":  "PT5H",
                                              "suppressionEnabled":  false,
+                                             "startTimeUtc":  null,
                                              "tactics":  [
-                                                             "DefenseEvasion"
+
                                                          ],
                                              "techniques":  [
-                                                                "T1112"
+
                                                             ],
                                              "subTechniques":  [
 
@@ -45,7 +50,7 @@
                                                                                                      }
                                                                        },
                                              "eventGroupingSettings":  {
-                                                                           "aggregationKind":  "AlertPerResult"
+                                                                           "aggregationKind":  "SingleAlert"
                                                                        },
                                              "alertDetailsOverride":  null,
                                              "customDetails":  null,
@@ -60,5 +65,4 @@
                                          "type":  "String"
                                      }
                    }
-
 }
