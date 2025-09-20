@@ -5,6 +5,7 @@ $WorkspaceName = $Env:workspaceName
 $WorkspaceId = $Env:workspaceId
 $Directory = $Env:directory
 $contentTypes = $Env:contentTypes
+$ChangedFiles = $Env:CHANGED_FILES
 $contentTypeMapping = @{
     "AnalyticsRule"=@("Microsoft.OperationalInsights/workspaces/providers/alertRules", "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions");
     "AutomationRule"=@("Microsoft.OperationalInsights/workspaces/providers/automationRules");
@@ -511,12 +512,35 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
     {
         $totalFiles = 0;
         $totalFailed = 0;
-	      $iterationList = @()
-        $global:prioritizedContentFiles | ForEach-Object  { $iterationList += (AbsolutePathWithSlash $_) }
-        Get-ChildItem -Path $Directory -Recurse -Include *.bicep, *.json -exclude *metadata.json, *.parameters*.json, *.bicepparam, bicepconfig.json |
-                        Where-Object { $null -eq ( filterContentFile $_.FullName ) } |
-                        Select-Object -Property FullName |
-                        ForEach-Object { $iterationList += $_.FullName }
+        $iterationList = @()
+        
+        # If we have specific changed files, only deploy those
+        if (-not [string]::IsNullOrEmpty($ChangedFiles)) {
+            Write-Host "[Info] Selective deployment mode - only deploying changed files: $ChangedFiles"
+            $changedFileArray = $ChangedFiles -split ','
+            $changedFileArray | ForEach-Object {
+                $relativePath = $_.Trim()
+                if (-not [string]::IsNullOrEmpty($relativePath)) {
+                    $absolutePath = Join-Path $rootDirectory $relativePath
+                    if (Test-Path $absolutePath) {
+                        Write-Host "[Info] Adding changed file to deployment: $absolutePath"
+                        $iterationList += $absolutePath
+                    } else {
+                        Write-Host "[Warning] Changed file not found: $absolutePath"
+                    }
+                }
+            }
+        } else {
+            # Fallback to original behavior for full deployment
+            Write-Host "[Info] Full deployment mode - deploying all files"
+            $global:prioritizedContentFiles | ForEach-Object  { $iterationList += (AbsolutePathWithSlash $_) }
+            Get-ChildItem -Path $Directory -Recurse -Include *.bicep, *.json -exclude *metadata.json, *.parameters*.json, *.bicepparam, bicepconfig.json |
+                            Where-Object { $null -eq ( filterContentFile $_.FullName ) } |
+                            Select-Object -Property FullName |
+                            ForEach-Object { $iterationList += $_.FullName }
+        }
+        
+        Write-Host "[Info] Total files to deploy: $($iterationList.Count)"
         $iterationList | ForEach-Object {
             $path = $_
             Write-Host "[Info] Try to deploy $path"
@@ -622,6 +646,13 @@ function main() {
     git config --global user.email "donotreply@microsoft.com"
     git config --global user.name "Sentinel"
 
+    # Early exit if no files changed and we're in selective mode
+    if (-not [string]::IsNullOrEmpty($ChangedFiles)) {
+        Write-Host "[Info] Selective deployment mode detected with changed files: $ChangedFiles"
+    } elseif ($smartDeployment -eq "true") {
+        Write-Host "[Info] No specific files changed and smart deployment is enabled. Checking for changes using SHA comparison."
+    }
+
     TryGetCsvFile
     LoadDeploymentConfig
     $tree = GetGithubTree
@@ -635,7 +666,15 @@ function main() {
         $global:updatedCsvTable[$configPath] = $remoteConfigSha
     }
 
+    # Only set fullDeploymentFlag for config changes, not for all deployments
     $fullDeploymentFlag = $modifiedConfig -or ($smartDeployment -eq "false")
+    
+    # If we have specific changed files, don't do full deployment even if config changed
+    if (-not [string]::IsNullOrEmpty($ChangedFiles)) {
+        Write-Host "[Info] Using selective deployment - only deploying specific changed files"
+        $fullDeploymentFlag = $false
+    }
+    
     Deployment $fullDeploymentFlag $remoteShaTable $tree
 }
 

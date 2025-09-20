@@ -84,12 +84,32 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 2  # Fetch current and previous commit to detect changes
+
+    - name: Get changed files
+      id: changed-files
+      run: |
+        # Get list of changed JSON files in BaseRuleSet/ directory
+        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json' | tr '\n' ',' | sed 's/,$//') 
+        echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+        echo "Changed files: $CHANGED_FILES"
+        
+        # If no specific rule files changed, we don't need to deploy anything
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "No JSON rule files changed, skipping deployment"
+          echo "skip_deployment=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip_deployment=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Deploy Content to Microsoft Sentinel
+      if: steps.changed-files.outputs.skip_deployment == 'false'
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
-
+          # Set changed files as environment variable for the PowerShell script
+          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.ps1
 
