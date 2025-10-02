@@ -13,9 +13,8 @@ on:
   push:
     branches: [ main ]
     paths:
-    - '**'
+    - 'BaseRuleSet/**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
-    - '.github/workflows/sentinel-deploy-85b18938-fe0f-4011-b4df-32df159b9cfc.yml'
 
 jobs:
   deploy-content:
@@ -91,4 +90,5 @@ jobs:
       with:
         azPSVersion: 'latest'
         inlineScript: |
+
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-85b18938-fe0f-4011-b4df-32df159b9cfc.ps1
