@@ -16,7 +16,7 @@
             "properties": {
                 "displayName": "Palo Alto - Detected Port Scanning Activity - [WC-BASE]",
                 "description": "This rule detects potential port scanning activities by identifying multiple connection attempts to various ports from a single source IP address. The rule monitors traffic over a 3-hour period and flags IP addresses that have scanned more than a predefined threshold of ports. It excludes private and loopback IP addresses, focusing on external sources potentially performing reconnaissance.",
-                "severity": "Medium",
+                "severity": "High",
                 "enabled": true,
                 "query": "let threshold = 20;\r\nCommonSecurityLog\r\n| where TimeGenerated > ago(1h)\r\n| where DeviceVendor contains \"Palo Alto Networks\"\r\n| where DeviceAction contains \"accept\"\r\n| extend AcceptTime = TimeGenerated\r\n| where DestinationPort < 1024\r\n| join kind=leftouter  (CommonSecurityLog\r\n        | where TimeGenerated > ago(1h)\r\n        | where DeviceAction !contains \"accept\"\r\n        | extend CloseTime = TimeGenerated)\r\n        on SourceIP\r\n    | where isnull( CloseTime) or  CloseTime > AcceptTime\r\n    | summarize arg_min(CloseTime,*) by SourceIP\r\n    | where (CloseTime >= AcceptTime + 1m) or isnull( CloseTime)\r\n| summarize ScannedPorts = make_set(DestinationPort) by SourceIP\r\n| where array_length(ScannedPorts) > threshold\r\n| where not(ipv4_is_private(SourceIP)) and SourceIP != \"127.0.0.1\"",
                 "queryFrequency": "PT1H",
