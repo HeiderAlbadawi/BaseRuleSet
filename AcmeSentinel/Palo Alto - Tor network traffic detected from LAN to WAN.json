@@ -16,7 +16,7 @@
             "properties": {
                 "displayName": "Palo Alto - Tor network traffic detected from LAN to WAN - [WC-BASE]",
                 "description": "Detects connection from LAN to WAN Tor exit node",
-                "severity": "High",
+                "severity": "Low",
                 "enabled": true,
                 "query": "let tor_exit_nodes = materialize ( \r\n(externaldata(exit_node: string) [@\"https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst\"] \r\nwith (format=\"txt\")) \r\n| project exit_node \r\n| summarize by exit_node);\r\nCommonSecurityLog\r\n| where TimeGenerated > ago(1h)\r\n| where DeviceVendor contains \"Palo Alto Networks\"\r\n| where DeviceAction contains \"accept\"\r\n| where DestinationIP  in(tor_exit_nodes) \r\n| extend AcceptTime = TimeGenerated\r\n| join kind=leftouter  (CommonSecurityLog\r\n        | where TimeGenerated > ago(1h)\r\n        | where DeviceAction !contains \"accept\"\r\n        | extend CloseTime = TimeGenerated)\r\n        on DestinationIP\r\n    | where isnull( CloseTime) or  CloseTime > AcceptTime\r\n    | summarize arg_min(CloseTime,*) by DestinationIP\r\n    | where (CloseTime >= AcceptTime + 10m) or isnull( CloseTime)",
                 "queryFrequency": "PT1H",
