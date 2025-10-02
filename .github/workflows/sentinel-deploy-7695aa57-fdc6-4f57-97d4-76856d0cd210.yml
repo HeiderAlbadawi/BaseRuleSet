@@ -116,7 +116,7 @@ jobs:
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.ps1
 
-  deploy-content2:
+  deploy-CustomRules:
     runs-on: windows-latest
     env:
       resourceGroupName: 'training_jordan'
@@ -191,7 +191,7 @@ jobs:
       shell: pwsh
       run: |
         # Get list of changed JSON files in BaseRuleSet/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'AcmeSentinel/*.json'
         $changedFilesString = $changedFiles -join ','
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
@@ -213,5 +213,6 @@ jobs:
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.ps1
+
 
 
