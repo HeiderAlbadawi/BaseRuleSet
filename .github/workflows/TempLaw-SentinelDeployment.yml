@@ -24,7 +24,7 @@ jobs:
       resourceGroupName: 'temptest'
       workspaceName: 'templaw'
       workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
-      directory: '${{ github.workspace }}/BaseRuleSet'
+      directory: '${{ github.workspace }}/templaw'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -214,6 +214,7 @@ jobs:
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
+
 
 
 
