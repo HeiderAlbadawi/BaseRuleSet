@@ -114,7 +114,7 @@ jobs:
         inlineScript: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
-          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.ps1
+          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
 
   CustomerRulesDeployment:
     runs-on: windows-latest
@@ -212,7 +212,8 @@ jobs:
         inlineScript: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
-          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.ps1
+          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+
 
 
 
