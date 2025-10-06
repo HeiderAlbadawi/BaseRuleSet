@@ -86,12 +86,129 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Get changed files
+      id: changed-files
+      shell: pwsh
+      run: |
+        # Get list of changed JSON files in BaseRuleSet/ directory
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $changedFilesString = $changedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Changed files: $changedFilesString"
+        
+        # If no specific rule files changed, we don't need to deploy anything
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
+          echo "No JSON rule files changed, skipping deployment"
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
+
     - name: Deploy Content to Microsoft Sentinel
+      if: steps.changed-files.outputs.skip_deployment == 'false'
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
+          # Set changed files as environment variable for the PowerShell script
+          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
 
-          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+  CustomerRulesDeployment:
+    runs-on: windows-latest
+    env:
+      resourceGroupName: 'temptest'
+      workspaceName: 'templaw'
+      workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
+      directory: '${{ github.workspace }}/TempLaw'
+      cloudEnv: 'AzureCloud'
+      contentTypes: 'AnalyticsRule'
+      branch: 'main'
+      sourceControlId: '85b18938-fe0f-4011-b4df-32df159b9cfc'
+      rootDirectory: '${{ github.workspace }}'
+      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
+      smartDeployment: 'true'
+    permissions:
+      contents: write
+      id-token: write # Require write permission to Fetch an OIDC token.
+
+    steps:
+    - name: Login to Azure (Attempt 1)
+      continue-on-error: true
+      id: login1
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_85b18938fe0f4011b4df32df159b9cfc }}
+        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_85b18938fe0f4011b4df32df159b9cfc }}
+        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_85b18938fe0f4011b4df32df159b9cfc }}
+        environment: 'AzureCloud'
+        audience: api://AzureADTokenExchange
+        enable-AzPSSession: true
+
+    - name: Wait 30 seconds if login attempt 1 failed
+      if: ${{ steps.login1.outcome=='failure' }}
+      run: powershell Start-Sleep -s 30
+
+    - name: Login to Azure (Attempt 2)
+      continue-on-error: true
+      id: login2
+      uses: azure/login@v2
+      if: ${{ steps.login1.outcome=='failure' }}
+      with:
+        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_85b18938fe0f4011b4df32df159b9cfc }}
+        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_85b18938fe0f4011b4df32df159b9cfc }}
+        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_85b18938fe0f4011b4df32df159b9cfc }}
+        environment: 'AzureCloud'
+        audience: api://AzureADTokenExchange
+        enable-AzPSSession: true
+
+    - name: Wait 30 seconds if login attempt 2 failed
+      if: ${{ steps.login2.outcome=='failure' }}
+      run: powershell Start-Sleep -s 30
+
+    - name: Login to Azure (Attempt 3)
+      continue-on-error: false
+      id: login3
+      uses: azure/login@v2
+      if: ${{ steps.login2.outcome=='failure'  }}
+      with:
+        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_85b18938fe0f4011b4df32df159b9cfc }}
+        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_85b18938fe0f4011b4df32df159b9cfc }}
+        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_85b18938fe0f4011b4df32df159b9cfc }}
+        environment: 'AzureCloud'
+        audience: api://AzureADTokenExchange
+        enable-AzPSSession: true
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Get changed files
+      id: changed-files
+      shell: pwsh
+      run: |
+        # Get list of changed JSON files in BaseRuleSet/ directory
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- ' TempLaw/*.json'
+        $changedFilesString = $changedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Changed files: $changedFilesString"
+        
+        # If no specific rule files changed, we don't need to deploy anything
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
+          echo "No JSON rule files changed, skipping deployment"
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
+
+    - name: Deploy Content to Microsoft Sentinel
+      if: steps.changed-files.outputs.skip_deployment == 'false'
+      uses: azure/powershell@v2
+      with:
+        azPSVersion: 'latest'
+        inlineScript: |
+          # Set changed files as environment variable for the PowerShell script
+          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
+
 
 
