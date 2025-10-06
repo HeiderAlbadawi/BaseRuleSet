@@ -91,4 +91,5 @@ jobs:
         azPSVersion: 'latest'
         inlineScript: |
 
-          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-85b18938-fe0f-4011-b4df-32df159b9cfc.ps1
+          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+
