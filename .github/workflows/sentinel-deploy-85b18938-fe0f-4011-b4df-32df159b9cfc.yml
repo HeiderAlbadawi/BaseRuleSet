@@ -14,16 +14,17 @@ on:
     branches: [ main ]
     paths:
     - 'BaseRuleSet/**'
+    - 'TempLaw/**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
 
 jobs:
-  deploy-content:
+  BaseRulesDeployment:
     runs-on: windows-latest
     env:
       resourceGroupName: 'temptest'
       workspaceName: 'templaw'
       workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
-      directory: '${{ github.workspace }}'
+      directory: '${{ github.workspace }}/BaseRuleSet'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -92,4 +93,5 @@ jobs:
         inlineScript: |
 
           ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+
 
