@@ -1,7 +1,3 @@
 FileName, CommitSha
-TempLaw/Suspicious Resource deployment - WC-AZURE (e0b0ebd0-dcb0-44ef-b664-d36a5a4f206b).json,71dd6cb5981bad637625423938da0827307f4dc6
-TempLaw/Suspicious Registry Key (6cd6df64-eb55-4bef-80b7-2e8d57c48276).json,effb6c2c68a445e509436b34377d3a08c718558a
-TempLaw/Suspicious Scheduled Tasks using schtasks (e5169751-54ec-41a0-acfb-147629470e6d).json,d3082a185c6cbfb4db135cd8f6d4843bb43b77e4
-TempLaw/Suspicious Screen Capture - Omar (6d49de52-c476-458c-97d3-a91418a88cdd).json,f21737766541da3510c2210a870d20c5eeec6d77
-TempLaw/Suspicious Remote File Transfer Activity (T1105 - Remote File Copy) (6d9e173f-d7ad-4b52-8fbb-15ff99feede7).json,61f07392c4cf3a71307644b51c08398e6ad8b9d3
+TempLaw/Suspicious Registry Key (6cd6df64-eb55-4bef-80b7-2e8d57c48276).json,5a69e6b7fb0e26889364fd57a323730e820aa159
 
