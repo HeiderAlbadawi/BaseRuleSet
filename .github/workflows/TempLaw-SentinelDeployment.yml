@@ -192,19 +192,20 @@ jobs:
       run: |
         # Get list of changed JSON files in BaseRuleSet/ directory
         # $changedFiles = git diff --name-only HEAD~1 HEAD -- 'TempLaw/*.json'
+        # $changedFiles = git diff --name-only HEAD -- 'TempLaw/*.json'
         $changedFiles = git diff -- 'TempLaw/*.json'
         $changedFilesString = $changedFiles -join ','
-        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        # echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
         
         # If no specific rule files changed, we don't need to deploy anything
         echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
-        # if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
-        #   echo "No JSON rule files changed, skipping deployment"
-        #   echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
-        # } else {
-        #   echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
-        # }
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
+          echo "No JSON rule files changed, skipping deployment"
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
 
     - name: Deploy Content to Microsoft Sentinel
       if: steps.changed-files.outputs.skip_deployment == 'false'
@@ -215,6 +216,7 @@ jobs:
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
+
 
 
 
