@@ -91,12 +91,14 @@ jobs:
       shell: pwsh
       run: |
         # Get list of changed JSON files in BaseRuleSet/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        $changedFilesString = $changedFiles -join ','
-        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Changed files: $changedFilesString"
 
-        echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        echo "test"
+        # $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        # $changedFilesString = $changedFiles -join ','
+        # echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        # echo "Changed files: $changedFilesString"
+
+        # echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
         
         # If no specific rule files changed, we don't need to deploy anything
         # if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
@@ -212,6 +214,7 @@ jobs:
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
+
 
 
 
