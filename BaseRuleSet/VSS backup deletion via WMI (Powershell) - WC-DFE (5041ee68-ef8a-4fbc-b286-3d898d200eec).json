@@ -11,7 +11,7 @@
                           "properties":  {
                                              "displayName":  "VSS backup deletion via WMI (Powershell) - [WC-DFE]",
                                              "description":  "Detects scenarios where an attacker attempts to delete existing VSS backup via WMI.\n",
-                                             "severity":  "High",
+                                             "severity":  "Low",
                                              "enabled":  true,
                                              "query":  "DeviceEvents | where ActionType == \"PowerShellCommand\"  | where (((AdditionalFields contains \"Get-WmiObject\" or AdditionalFields contains \"Gwmi\" or AdditionalFields contains \"Get-CimInstance\" or AdditionalFields contains \"Gcim\") or (InitiatingProcessCommandLine contains \"Get-WmiObject\" or InitiatingProcessCommandLine contains \"Gwmi\" or InitiatingProcessCommandLine contains \"Get-CimInstance\" or InitiatingProcessCommandLine contains \"Gcim\")) and (AdditionalFields contains \"Win32_Shadowcopy\" or InitiatingProcessCommandLine contains \"Win32_Shadowcopy\") and ((AdditionalFields contains \"Delete\" or AdditionalFields contains \"Remove-WmiObject\" or AdditionalFields contains \"rwmi\" or AdditionalFields contains \"Remove-CimInstance\" or AdditionalFields contains \"rcim\") or (InitiatingProcessCommandLine contains \"Delete\" or InitiatingProcessCommandLine contains \"Remove-WmiObject\" or InitiatingProcessCommandLine contains \"rwmi\" or InitiatingProcessCommandLine contains \"Remove-CimInstance\" or InitiatingProcessCommandLine contains \"rcim\")))\n",
                                              "queryFrequency":  "PT15M",
@@ -76,4 +76,5 @@
                                          "type":  "String"
                                      }
                    }
+
 }
