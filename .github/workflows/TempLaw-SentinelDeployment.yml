@@ -187,7 +187,7 @@ jobs:
       shell: pwsh
       run: |
         # Get list of changed JSON files in BaseRuleSet/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- ' TempLaw/*.json'
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'TempLaw/*.json'
         $changedFilesString = $changedFiles -join ','
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
@@ -209,6 +209,7 @@ jobs:
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
+
 
 
 
