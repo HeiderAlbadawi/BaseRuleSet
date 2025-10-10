@@ -534,21 +534,45 @@ function ExtractRuleIdFromDeletedFile($relativePath) {
     try {
         $previousFileContent = git show "HEAD~1:$relativePath" 2>$null
         if ($previousFileContent) {
-            $jsonContent = $previousFileContent | ConvertFrom-Json
+            # Remove BOM if present and clean up the content
+            $cleanContent = $previousFileContent -replace '^\uFEFF', '' -replace '^\ufeff', ''
+            $cleanContent = $cleanContent.Trim()
+            
+            if ([string]::IsNullOrWhiteSpace($cleanContent)) {
+                Write-Host "[Warning] Previous commit content is empty for $relativePath"
+                return $null
+            }
+            
+            $jsonContent = $cleanContent | ConvertFrom-Json
             if ($jsonContent.resources -and $jsonContent.resources.Length -gt 0) {
                 $resource = $jsonContent.resources[0]
                 if ($resource.name) {
                     # Extract GUID from the name pattern
                     $namePattern = $resource.name
                     if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
+                        Write-Host "[Info] Successfully extracted rule ID: $($matches[1]) from $relativePath"
                         return $matches[1]
+                    } else {
+                        Write-Host "[Warning] Could not find GUID pattern in name: $namePattern"
                     }
+                } else {
+                    Write-Host "[Warning] No name property found in resource"
                 }
+            } else {
+                Write-Host "[Warning] No resources found in JSON content"
             }
+        } else {
+            Write-Host "[Warning] Could not retrieve previous commit content for $relativePath"
         }
     }
     catch {
         Write-Host "[Warning] Could not extract rule ID from deleted file $relativePath from previous commit. Error: $_"
+        
+        # Alternative approach: try to extract GUID from filename if present
+        if ($relativePath -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
+            Write-Host "[Info] Found GUID in filename: $($matches[1])"
+            return $matches[1]
+        }
     }
     return $null
 }
@@ -568,16 +592,26 @@ function DeleteSentinelRule($ruleId) {
             return $true
         }
         
-        # Attempt to delete the rule
+        # Attempt to delete the rule using the Security Insights cmdlet
         $isSuccess = $false
         $currentAttempt = 0
         
         While (($currentAttempt -lt $MaxRetries) -and (-not $isSuccess)) {
             $currentAttempt++
             Try {
-                Remove-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $ruleName -Force -ErrorAction Stop
-                Write-Host "[Info] Successfully deleted Sentinel rule: $ruleName"
-                $isSuccess = $true
+                # Try using the Security Insights specific removal cmdlet first
+                try {
+                    Remove-AzSentinelAlertRule -ResourceGroupName $ResourceGroupName -WorkspaceName $WorkspaceName -RuleId $ruleId -ErrorAction Stop
+                    Write-Host "[Info] Successfully deleted Sentinel rule using Az.SecurityInsights: $ruleId"
+                    $isSuccess = $true
+                }
+                catch {
+                    Write-Host "[Warning] Az.SecurityInsights cmdlet failed, trying generic Remove-AzResource. Error: $_"
+                    # Fallback to generic resource removal
+                    Remove-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $ruleName -Force -ErrorAction Stop
+                    Write-Host "[Info] Successfully deleted Sentinel rule using Remove-AzResource: $ruleName"
+                    $isSuccess = $true
+                }
             }
             Catch [Exception] {
                 $err = $_
