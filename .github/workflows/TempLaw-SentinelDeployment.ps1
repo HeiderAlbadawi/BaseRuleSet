@@ -6,6 +6,7 @@ $WorkspaceId = $Env:workspaceId
 $Directory = $Env:directory
 $contentTypes = $Env:contentTypes
 $ChangedFiles = $Env:CHANGED_FILES
+$DeletedFiles = $Env:DELETED_FILES
 $contentTypeMapping = @{
     "AnalyticsRule"=@("Microsoft.OperationalInsights/workspaces/providers/alertRules", "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions");
     "AutomationRule"=@("Microsoft.OperationalInsights/workspaces/providers/automationRules");
@@ -454,6 +455,163 @@ function AbsolutePathWithSlash($relativePath) {
 }
 
 #resolve parameter file name, return $null if there is none.
+function ExtractRuleIdFromJsonFile($filePath) {
+    try {
+        if (Test-Path $filePath) {
+            $jsonContent = Get-Content $filePath | Out-String | ConvertFrom-Json
+            if ($jsonContent.resources -and $jsonContent.resources.Length -gt 0) {
+                $resource = $jsonContent.resources[0]
+                if ($resource.name) {
+                    # Extract GUID from the name pattern like "/Microsoft.SecurityInsights/a2c011a6-3986-411a-9e27-286d018e1b65"
+                    $namePattern = $resource.name
+                    if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
+                        return $matches[1]
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-Host "[Error] Failed to extract rule ID from $filePath. Error: $_"
+    }
+    return $null
+}
+
+function ExtractRuleIdFromDeletedFile($relativePath) {
+    # Try to get the rule ID from previous commit
+    try {
+        $previousFileContent = git show "HEAD~1:$relativePath" 2>$null
+        if ($previousFileContent) {
+            $jsonContent = $previousFileContent | ConvertFrom-Json
+            if ($jsonContent.resources -and $jsonContent.resources.Length -gt 0) {
+                $resource = $jsonContent.resources[0]
+                if ($resource.name) {
+                    # Extract GUID from the name pattern
+                    $namePattern = $resource.name
+                    if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
+                        return $matches[1]
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-Host "[Warning] Could not extract rule ID from deleted file $relativePath from previous commit. Error: $_"
+    }
+    return $null
+}
+
+function DeleteSentinelRule($ruleId) {
+    try {
+        $ruleName = "$WorkspaceName/Microsoft.SecurityInsights/$ruleId"
+        Write-Host "[Info] Attempting to delete Sentinel rule: $ruleName"
+        
+        # Check if the rule exists first
+        try {
+            $existingRule = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $ruleName -ErrorAction Stop
+            Write-Host "[Info] Found existing rule $ruleName, proceeding with deletion"
+        }
+        catch {
+            Write-Host "[Warning] Rule $ruleName not found in Sentinel, it may have already been deleted. Error: $_"
+            return $true
+        }
+        
+        # Attempt to delete the rule
+        $isSuccess = $false
+        $currentAttempt = 0
+        
+        While (($currentAttempt -lt $MaxRetries) -and (-not $isSuccess)) {
+            $currentAttempt++
+            Try {
+                Remove-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $ruleName -Force -ErrorAction Stop
+                Write-Host "[Info] Successfully deleted Sentinel rule: $ruleName"
+                $isSuccess = $true
+            }
+            Catch [Exception] {
+                $err = $_
+                if ($currentAttempt -le $MaxRetries) {
+                    Write-Host "[Warning] Failed to delete rule $ruleName (attempt $currentAttempt/$MaxRetries). Error: $err. Retrying in $secondsBetweenAttempts seconds..."
+                    Start-Sleep -Seconds $secondsBetweenAttempts
+                }
+                else {
+                    Write-Host "[Error] Failed to delete rule $ruleName after $currentAttempt attempts. Error: $err"
+                }
+            }
+        }
+        
+        # Also try to delete associated metadata if it exists
+        try {
+            $metadataName = "analyticsrule-$ruleId"
+            $metadataResourceName = "$WorkspaceName/Microsoft.SecurityInsights/$metadataName"
+            Remove-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/metadata" -Name $metadataResourceName -Force -ErrorAction SilentlyContinue
+            Write-Host "[Info] Attempted to delete metadata for rule: $metadataName"
+        }
+        catch {
+            Write-Host "[Warning] Could not delete metadata for rule $ruleId. This is not critical. Error: $_"
+        }
+        
+        return $isSuccess
+    }
+    catch {
+        Write-Host "[Error] Failed to delete Sentinel rule $ruleId. Error: $_"
+        return $false
+    }
+}
+
+function ProcessDeletedFiles() {
+    if ([string]::IsNullOrEmpty($DeletedFiles)) {
+        Write-Host "[Info] No files were deleted"
+        return
+    }
+    
+    Write-Host "[Info] Processing deleted files: $DeletedFiles"
+    $deletedFileArray = $DeletedFiles -split ','
+    $totalDeleted = 0
+    $totalDeleteFailed = 0
+    
+    $deletedFileArray | ForEach-Object {
+        $relativePath = $_.Trim()
+        if (-not [string]::IsNullOrEmpty($relativePath)) {
+            Write-Host "[Info] Processing deleted file: $relativePath"
+            
+            # Extract rule ID from the deleted file
+            $ruleId = ExtractRuleIdFromDeletedFile $relativePath
+            
+            if ($ruleId) {
+                Write-Host "[Info] Extracted rule ID '$ruleId' from deleted file $relativePath"
+                $deleteSuccess = DeleteSentinelRule $ruleId
+                
+                if ($deleteSuccess) {
+                    $totalDeleted++
+                    Write-Host "[Info] Successfully processed deletion of rule $ruleId"
+                    
+                    # Remove from tracking table if it exists
+                    $absolutePath = Join-Path $rootDirectory $relativePath
+                    if ($global:updatedCsvTable.ContainsKey($absolutePath)) {
+                        $global:updatedCsvTable.Remove($absolutePath)
+                        Write-Host "[Info] Removed $absolutePath from tracking table"
+                    }
+                }
+                else {
+                    $totalDeleteFailed++
+                    Write-Host "[Error] Failed to delete rule $ruleId from Sentinel"
+                }
+            }
+            else {
+                Write-Host "[Warning] Could not extract rule ID from deleted file: $relativePath"
+                $totalDeleteFailed++
+            }
+        }
+    }
+    
+    Write-Host "[Info] Deletion summary: $totalDeleted successful, $totalDeleteFailed failed"
+    
+    if ($totalDeleteFailed -gt 0) {
+        Write-Host "[Warning] Some rule deletions failed. Check the logs above for details."
+    }
+}
+
+#resolve parameter file name, return $null if there is none.
 function GetParameterFile($path) {
     if ($path.Length -eq 0) {
         return $null
@@ -649,8 +807,10 @@ function main() {
     # Early exit if no files changed and we're in selective mode
     if (-not [string]::IsNullOrEmpty($ChangedFiles)) {
         Write-Host "[Info] Selective deployment mode detected with changed files: $ChangedFiles"
+    } elseif (-not [string]::IsNullOrEmpty($DeletedFiles)) {
+        Write-Host "[Info] Selective deletion mode detected with deleted files: $DeletedFiles"
     } elseif ($smartDeployment -eq "true") {
-        Write-Host "[Info] No specific files changed and smart deployment is enabled. Checking for changes using SHA comparison."
+        Write-Host "[Info] No specific files changed or deleted and smart deployment is enabled. Checking for changes using SHA comparison."
     }
 
     TryGetCsvFile
@@ -670,10 +830,13 @@ function main() {
     $fullDeploymentFlag = $modifiedConfig -or ($smartDeployment -eq "false")
     
     # If we have specific changed files, don't do full deployment even if config changed
-    if (-not [string]::IsNullOrEmpty($ChangedFiles)) {
-        Write-Host "[Info] Using selective deployment - only deploying specific changed files"
+    if (-not [string]::IsNullOrEmpty($ChangedFiles) -or -not [string]::IsNullOrEmpty($DeletedFiles)) {
+        Write-Host "[Info] Using selective deployment - processing specific changed/deleted files"
         $fullDeploymentFlag = $false
     }
+    
+    # Process deleted files first
+    ProcessDeletedFiles
     
     Deployment $fullDeploymentFlag $remoteShaTable $tree
 }

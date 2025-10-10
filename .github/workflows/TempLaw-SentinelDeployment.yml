@@ -98,9 +98,15 @@ jobs:
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
         
-        # If no specific rule files changed, we don't need to deploy anything
-        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
-          echo "No JSON rule files changed, skipping deployment"
+        # Get list of deleted JSON files in BaseRuleSet/ directory
+        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $deletedFilesString = $deletedFiles -join ','
+        echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Deleted files: $deletedFilesString"
+        
+        # If no specific rule files changed or deleted, we don't need to deploy anything
+        if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
+          echo "No JSON rule files changed or deleted, skipping deployment"
           echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
         } else {
           echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
@@ -114,6 +120,7 @@ jobs:
         inlineScript: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          $env:DELETED_FILES = "${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
 
   CustomerRulesDeployment:
@@ -196,9 +203,15 @@ jobs:
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
         
-        # If no specific rule files changed, we don't need to deploy anything
-        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
-          echo "No JSON rule files changed, skipping deployment"
+        # Get list of deleted JSON files in TempLaw/ directory
+        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'TempLaw/*.json'
+        $deletedFilesString = $deletedFiles -join ','
+        echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Deleted files: $deletedFilesString"
+        
+        # If no specific rule files changed or deleted, we don't need to deploy anything
+        if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
+          echo "No JSON rule files changed or deleted, skipping deployment"
           echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
         } else {
           echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
@@ -212,6 +225,7 @@ jobs:
         inlineScript: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          $env:DELETED_FILES = "${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
 
 
