@@ -9,7 +9,7 @@
                           "kind":  "Scheduled",
                           "apiVersion":  "2023-12-01-preview",
                           "properties":  {
-                                             "displayName":  "Unapproved Country Login Attempt",
+                                             "displayName":  "Unapproved Country Login Attempt tester",
                                              "description":  "This rule triggers an alert when a user logs in from a country not on the approved list.",
                                              "severity":  "Medium",
                                              "enabled":  true,
@@ -65,4 +65,5 @@
                                          "type":  "String"
                                      }
                    }
+
 }
