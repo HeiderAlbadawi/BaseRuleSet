@@ -835,7 +835,7 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
             
             # Log the deployment result and reason
             if ($result.reason) {
-                Write-Host "[Info] Deployment result for $path: $($result.reason)"
+                Write-Host "[Info] Deployment result for $($path): $($result.reason)"
             }
             
             if ($result.isSuccess -eq $false) {
