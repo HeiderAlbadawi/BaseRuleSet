@@ -24,7 +24,7 @@ jobs:
       resourceGroupName: 'temptest'
       workspaceName: 'templaw'
       workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
-      directory: '${{ github.workspace }}/templaw'
+      directory: '${{ github.workspace }}/TempLaw'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'

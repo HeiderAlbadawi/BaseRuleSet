@@ -455,6 +455,58 @@ function AbsolutePathWithSlash($relativePath) {
 }
 
 #resolve parameter file name, return $null if there is none.
+function GetParameterFile($path) {
+    if ($path.Length -eq 0) {
+        return $null
+    }
+
+    $index = RelativePathWithBackslash $path
+    $key = ($global:parameterFileMapping.Keys | Where-Object { $_ -eq $index })
+    if ($key) {
+        $mappedParameterFile = AbsolutePathWithSlash $global:parameterFileMapping[$key]
+        if (Test-Path $mappedParameterFile) {
+            return $mappedParameterFile
+        }
+    }
+
+    $extension = [System.IO.Path]::GetExtension($path)
+    if ($extension -ne ".json" -and $extension -ne ".bicep") {
+        return $null
+    }
+
+    $parameterFilePrefix = $path.Substring(0, $path.Length - $extension.Length)
+
+    # Check for workspace-specific parameter file
+    if ($extension -eq ".bicep") {
+        $workspaceParameterFile = $parameterFilePrefix + "-$WorkspaceId.bicepparam"
+        if (Test-Path $workspaceParameterFile) {
+            return $workspaceParameterFile
+        }
+    }
+
+    $workspaceParameterFile = $parameterFilePrefix + ".parameters-$WorkspaceId.json"
+    if (Test-Path $workspaceParameterFile) {
+        return $workspaceParameterFile
+    }
+
+    # Check for parameter file
+    if ($extension -eq ".bicep") {
+        $defaultParameterFile = $parameterFilePrefix + ".bicepparam"
+        Write-Host "Default parameter file: $defaultParameterFile"
+        if (Test-Path $defaultParameterFile) {
+            return $defaultParameterFile
+        }
+    }
+
+    $defaultParameterFile = $parameterFilePrefix + ".parameters.json"
+    Write-Host "Default parameter file: $defaultParameterFile"
+    if (Test-Path $defaultParameterFile) {
+        return $defaultParameterFile
+    }
+
+    return $null
+}
+
 function ExtractRuleIdFromJsonFile($filePath) {
     try {
         if (Test-Path $filePath) {
@@ -492,22 +544,9 @@ function ExtractRuleIdFromDeletedFile($relativePath) {
             }
             
             $jsonContent = $cleanContent | ConvertFrom-Json
-            if ($jsonContent.resources -and $jsonContent.resources.Length -gt 0) {
-                $resource = $jsonContent.resources[0]
-                if ($resource.name) {
-                    # Extract GUID from the name pattern
-                    $namePattern = $resource.name
-                    if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
-                        Write-Host "[Info] Successfully extracted rule ID: $($matches[1]) from $relativePath"
-                        return $matches[1]
-                    } else {
-                        Write-Host "[Warning] Could not find GUID pattern in name: $namePattern"
-                    }
-                } else {
-                    Write-Host "[Warning] No name property found in resource"
-                }
-            } else {
-                Write-Host "[Warning] No resources found in JSON content"
+            $ruleId = ExtractRuleIdFromJsonContent $jsonContent
+            if ($ruleId) {
+                return $ruleId
             }
         } else {
             Write-Host "[Warning] Could not retrieve previous commit content for $relativePath"
@@ -592,6 +631,96 @@ function DeleteSentinelRule($ruleId) {
     }
 }
 
+function CheckRuleExistsInSentinel($templateObject) {
+    # Extract rule information from template
+    try {
+        if ($templateObject.resources -and $templateObject.resources.Length -gt 0) {
+            $resource = $templateObject.resources[0]
+            
+            # Extract rule ID from the name pattern
+            if ($resource.name) {
+                $namePattern = $resource.name
+                if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
+                    $ruleId = $matches[1]
+                    Write-Host "[Info] Checking if rule with ID '$ruleId' already exists in Sentinel"
+                    
+                    # Try to get the rule from Sentinel
+                    try {
+                        $existingRule = Get-AzSentinelAlertRule -ResourceGroupName $ResourceGroupName -WorkspaceName $WorkspaceName -RuleId $ruleId -ErrorAction SilentlyContinue
+                        if ($existingRule) {
+                            Write-Host "[Info] Rule with ID '$ruleId' already exists in Sentinel. Display Name: '$($existingRule.DisplayName)'"
+                            return $true
+                        } else {
+                            Write-Host "[Info] Rule with ID '$ruleId' does not exist in Sentinel"
+                            return $false
+                        }
+                    }
+                    catch {
+                        # If Az.SecurityInsights cmdlet fails, try alternative method using generic Get-AzResource
+                        Write-Host "[Warning] Az.SecurityInsights cmdlet failed, trying generic Get-AzResource. Error: $_"
+                        try {
+                            $resourceName = "$WorkspaceName/Microsoft.SecurityInsights/$ruleId"
+                            $existingRule = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $resourceName -ErrorAction SilentlyContinue
+                            if ($existingRule) {
+                                Write-Host "[Info] Rule with ID '$ruleId' already exists in Sentinel (found via Get-AzResource)"
+                                return $true
+                            } else {
+                                Write-Host "[Info] Rule with ID '$ruleId' does not exist in Sentinel"
+                                return $false
+                            }
+                        }
+                        catch {
+                            Write-Host "[Warning] Could not check rule existence using Get-AzResource. Error: $_"
+                            # If we can't check, assume it doesn't exist to allow deployment
+                            return $false
+                        }
+                    }
+                } else {
+                    Write-Host "[Warning] Could not extract rule ID from name pattern: $namePattern"
+                    return $false
+                }
+            } else {
+                Write-Host "[Warning] No name property found in template resource"
+                return $false
+            }
+        } else {
+            Write-Host "[Warning] No resources found in template"
+            return $false
+        }
+    }
+    catch {
+        Write-Host "[Warning] Error checking rule existence: $_"
+        return $false
+    }
+}
+
+function ExtractRuleIdFromJsonContent($jsonContent) {
+    # Extract rule ID from JSON content for deleted files
+    try {
+        if ($jsonContent.resources -and $jsonContent.resources.Length -gt 0) {
+            $resource = $jsonContent.resources[0]
+            if ($resource.name) {
+                # Extract GUID from the name pattern
+                $namePattern = $resource.name
+                if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
+                    Write-Host "[Info] Successfully extracted rule ID from JSON content: $($matches[1])"
+                    return $matches[1]
+                } else {
+                    Write-Host "[Warning] Could not find GUID pattern in name: $namePattern"
+                }
+            } else {
+                Write-Host "[Warning] No name property found in resource"
+            }
+        } else {
+            Write-Host "[Warning] No resources found in JSON content"
+        }
+    }
+    catch {
+        Write-Host "[Warning] Error extracting rule ID from JSON content: $_"
+    }
+    return $null
+}
+
 function ProcessDeletedFiles() {
     if ([string]::IsNullOrEmpty($DeletedFiles)) {
         Write-Host "[Info] No files were deleted"
@@ -643,59 +772,6 @@ function ProcessDeletedFiles() {
     if ($totalDeleteFailed -gt 0) {
         Write-Host "[Warning] Some rule deletions failed. Check the logs above for details."
     }
-}
-
-#resolve parameter file name, return $null if there is none.
-function GetParameterFile($path) {
-    if ($path.Length -eq 0) {
-        return $null
-    }
-
-    $index = RelativePathWithBackslash $path
-    $key = ($global:parameterFileMapping.Keys | Where-Object { $_ -eq $index })
-    if ($key) {
-        $mappedParameterFile = AbsolutePathWithSlash $global:parameterFileMapping[$key]
-        if (Test-Path $mappedParameterFile) {
-            return $mappedParameterFile
-        }
-    }
-
-    $extension = [System.IO.Path]::GetExtension($path)
-    if ($extension -ne ".json" -and $extension -ne ".bicep") {
-        return $null
-    }
-
-    $parameterFilePrefix = $path.Substring(0, $path.Length - $extension.Length)
-
-    # Check for workspace-specific parameter file
-    if ($extension -eq ".bicep") {
-        $workspaceParameterFile = $parameterFilePrefix + "-$WorkspaceId.bicepparam"
-        if (Test-Path $workspaceParameterFile) {
-            return $workspaceParameterFile
-        }
-    }
-
-    $workspaceParameterFile = $parameterFilePrefix + ".parameters-$WorkspaceId.json"
-    if (Test-Path $workspaceParameterFile) {
-        return $workspaceParameterFile
-    }
-
-    # Check for parameter file
-    if ($extension -eq ".bicep") {
-        $defaultParameterFile = $parameterFilePrefix + ".bicepparam"
-        Write-Host "Default parameter file: $defaultParameterFile"
-        if (Test-Path $defaultParameterFile) {
-            return $defaultParameterFile
-        }
-    }
-
-    $defaultParameterFile = $parameterFilePrefix + ".parameters.json"
-    Write-Host "Default parameter file: $defaultParameterFile"
-    if (Test-Path $defaultParameterFile) {
-        return $defaultParameterFile
-    }
-
-    return $null
 }
 
 function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
@@ -756,6 +832,12 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
             }
             $parameterFile = GetParameterFile $path
             $result = SmartDeployment $fullDeploymentFlag $remoteShaTable $path $parameterFile $templateObject $templateType
+            
+            # Log the deployment result and reason
+            if ($result.reason) {
+                Write-Host "[Info] Deployment result for $path: $($result.reason)"
+            }
+            
             if ($result.isSuccess -eq $false) {
                 $totalFailed++
             }
@@ -786,6 +868,18 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
     try {
         $skip = $false
         $isSuccess = $null
+        
+        # First check if rule already exists in Sentinel
+        $ruleExists = CheckRuleExistsInSentinel $templateObject
+        if ($ruleExists) {
+            Write-Host "[Info] Skipping deployment of $path - rule already exists in Sentinel"
+            return @{
+                skip = $true
+                isSuccess = $true
+                reason = "Rule already exists in Sentinel"
+            }
+        }
+        
         if (!$fullDeploymentFlag) {
             $existingSha = $global:localCsvTablefinal[$path]
             $remoteSha = $remoteShaTable[$path]
@@ -803,6 +897,7 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         return @{
             skip = $skip
             isSuccess = $isSuccess
+            reason = if ($skip) { "SHA comparison indicates no changes" } else { "Deployment attempted" }
         }
     }
     catch {
