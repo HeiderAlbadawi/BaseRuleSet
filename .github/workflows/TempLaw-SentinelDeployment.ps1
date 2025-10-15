@@ -869,15 +869,12 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         $skip = $false
         $isSuccess = $null
         
-        # First check if rule already exists in Sentinel
+        # Check if rule already exists in Sentinel (for logging purposes only)
         $ruleExists = CheckRuleExistsInSentinel $templateObject
         if ($ruleExists) {
-            Write-Host "[Info] Skipping deployment of $path - rule already exists in Sentinel"
-            return @{
-                skip = $true
-                isSuccess = $true
-                reason = "Rule already exists in Sentinel"
-            }
+            Write-Host "[Info] Rule already exists in Sentinel - will update it with new changes from $path"
+        } else {
+            Write-Host "[Info] Rule does not exist in Sentinel - will create new rule from $path"
         }
         
         if (!$fullDeploymentFlag) {
