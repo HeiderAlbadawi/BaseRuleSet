@@ -1,100 +1,90 @@
-﻿{
-    "contentVersion":  "1.0.0.0",
-    "$schema":  "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "resources":  [
-                      {
-                          "id":  "[concat(resourceId(\u0027Microsoft.OperationalInsights/workspaces/providers\u0027, parameters(\u0027workspace\u0027), \u0027Microsoft.SecurityInsights\u0027),\u0027/alertRules/6d9e173f-d7ad-4b52-8fbb-15ff99feede7\u0027)]",
-                          "name":  "[concat(parameters(\u0027workspace\u0027),\u0027/Microsoft.SecurityInsights/6d9e173f-d7ad-4b52-8fbb-15ff99feede7\u0027)]",
-                          "type":  "Microsoft.OperationalInsights/workspaces/providers/alertRules",
-                          "kind":  "Scheduled",
-                          "apiVersion":  "2023-12-01-preview",
-                          "properties":  {
-                                             "displayName":  "Suspicious Remote File Transfer Activity (T1105 - Remote File Copy)",
-                                             "description":  "Detects potential data exfiltration or file transfer activity using common tools (e.g., PowerShell, certutil, curl, FTP) over network protocols such as HTTP, HTTPS, FTP, and SMB. Mapped to MITRE ATT&CK Technique T1105 - Remote File Copy.",
-                                             "severity":  "Medium",
-                                             "enabled":  true,
-                                             "query":  "DeviceProcessEvents\r\n| where TimeGenerated \u003e ago(1d)\r\n| where ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"Invoke-Expression\", \"powershell\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\")\r\n| where FileName in~ (\"powershell.exe\", \"cmd.exe\", \"python.exe\", \"ruby.exe\", \"java.exe\", \"mshta.exe\", \"rundll32.exe\", \"wmic.exe\", \"ftp.exe\", \"curl.exe\", \"wget.exe\", \"bitsadmin.exe\")\r\n| where ProcessCommandLine contains_cs \"C:\\\\Users\\\\\" or ProcessCommandLine contains_cs \"Documents\" or ProcessCommandLine contains_cs \"Desktop\" or ProcessCommandLine contains_cs \"Downloads\"\r\n| where InitiatingProcessFileName !in (\"explorer.exe\", \"System\", \"svchost.exe\", \"taskhostw.exe\", \"dllhost.exe\")\r\n| extend SuspiciousActivity = case(\r\n    ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\"), \"Possible Data Exfiltration\",\r\n    \"Other\")\r\n| summarize ActivityCount = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by DeviceName, InitiatingProcessFileName, FileName, SuspiciousActivity, ProcessCommandLine\r\n| where ActivityCount \u003e 3\r\n| order by LastSeen desc",
-                                             "queryFrequency":  "PT5M",
-                                             "queryPeriod":  "PT5H",
-                                             "triggerOperator":  "GreaterThan",
-                                             "triggerThreshold":  0,
-                                             "suppressionDuration":  "PT5H",
-                                             "suppressionEnabled":  false,
-                                             "startTimeUtc":  null,
-                                             "tactics":  [
-                                                             "CommandAndControl",
-                                                             "Exfiltration"
-                                                         ],
-                                             "techniques":  [
-                                                                "T1105",
-                                                                "T1020"
-                                                            ],
-                                             "subTechniques":  [
-
-                                                               ],
-                                             "alertRuleTemplateName":  null,
-                                             "incidentConfiguration":  {
-                                                                           "createIncident":  true,
-                                                                           "groupingConfiguration":  {
-                                                                                                         "enabled":  false,
-                                                                                                         "reopenClosedIncident":  false,
-                                                                                                         "lookbackDuration":  "PT5H",
-                                                                                                         "matchingMethod":  "AllEntities",
-                                                                                                         "groupByEntities":  [
-
-                                                                                                                             ],
-                                                                                                         "groupByAlertDetails":  [
-
-                                                                                                                                 ],
-                                                                                                         "groupByCustomDetails":  [
-
-                                                                                                                                  ]
-                                                                                                     }
-                                                                       },
-                                             "eventGroupingSettings":  {
-                                                                           "aggregationKind":  "SingleAlert"
-                                                                       },
-                                             "alertDetailsOverride":  null,
-                                             "customDetails":  null,
-                                             "entityMappings":  [
-                                                                    {
-                                                                        "entityType":  "Account",
-                                                                        "fieldMappings":  [
-                                                                                              {
-                                                                                                  "identifier":  "FullName",
-                                                                                                  "columnName":  "DeviceName"
-                                                                                              }
-                                                                                          ]
-                                                                    },
-                                                                    {
-                                                                        "entityType":  "IP",
-                                                                        "fieldMappings":  [
-                                                                                              {
-                                                                                                  "identifier":  "Address",
-                                                                                                  "columnName":  "DeviceName"
-                                                                                              }
-                                                                                          ]
-                                                                    },
-                                                                    {
-                                                                        "entityType":  "File",
-                                                                        "fieldMappings":  [
-                                                                                              {
-                                                                                                  "identifier":  "Name",
-                                                                                                  "columnName":  "FileName"
-                                                                                              }
-                                                                                          ]
-                                                                    }
-                                                                ],
-                                             "sentinelEntitiesMappings":  null,
-                                             "templateVersion":  null
-                                         }
-                      }
-                  ],
-    "parameters":  {
-                       "workspace":  {
-                                         "type":  "String"
-                                     }
-                   }
-
+{
+    "contentVersion": "1.0.0.0",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6d9e173f-d7ad-4b52-8fbb-15ff99feede7')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6d9e173f-d7ad-4b52-8fbb-15ff99feede7')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2023-12-01-preview",
+            "properties": {
+                "displayName": "Suspicious Remote File Transfer Activity (T1105 - Remote File Copy)",
+                "description": "Detects potential data exfiltration or file transfer activity using common tools (e.g., PowerShell, certutil, curl, FTP) over network protocols such as HTTP, HTTPS, FTP, and SMB. Mapped to MITRE ATT&CK Technique T1105 - Remote File Copy.",
+                "severity": "Medium",
+                "enabled": true,
+                "query": "DeviceProcessEvents\r\n| where TimeGenerated > ago(1d)\r\n| where ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"Invoke-Expression\", \"powershell\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\")\r\n| where FileName in~ (\"powershell.exe\", \"cmd.exe\", \"python.exe\", \"ruby.exe\", \"java.exe\", \"mshta.exe\", \"rundll32.exe\", \"wmic.exe\", \"ftp.exe\", \"curl.exe\", \"wget.exe\", \"bitsadmin.exe\")\r\n| where ProcessCommandLine contains_cs \"C:\\\\Users\\\\\" or ProcessCommandLine contains_cs \"Documents\" or ProcessCommandLine contains_cs \"Desktop\" or ProcessCommandLine contains_cs \"Downloads\"\r\n| where InitiatingProcessFileName !in (\"explorer.exe\", \"System\", \"svchost.exe\", \"taskhostw.exe\", \"dllhost.exe\")\r\n| extend SuspiciousActivity = case(\r\n    ProcessCommandLine has_any (\"download\", \"upload\", \"ftp\", \"curl\", \"Invoke-WebRequest\", \"meterpreter\", \"scp\", \"sftp\", \"wget\", \"tftp\", \"nc\", \"netcat\", \"bitsadmin\"), \"Possible Data Exfiltration\",\r\n    \"Other\")\r\n| summarize ActivityCount = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by DeviceName, InitiatingProcessFileName, FileName, SuspiciousActivity, ProcessCommandLine\r\n| where ActivityCount > 3\r\n| order by LastSeen desc",
+                "queryFrequency": "PT5M",
+                "queryPeriod": "PT5H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "startTimeUtc": null,
+                "tactics": [
+                    "CommandAndControl",
+                    "Exfiltration"
+                ],
+                "techniques": [
+                    "T1105",
+                    "T1020"
+                ],
+                "subTechniques": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "DeviceName"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "DeviceName"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "File",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Name",
+                                "columnName": "FileName"
+                            }
+                        ]
+                    }
+                ],
+                "sentinelEntitiesMappings": null,
+                "templateVersion": null
+            }
+        }
+    ],
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    }
 }
-
