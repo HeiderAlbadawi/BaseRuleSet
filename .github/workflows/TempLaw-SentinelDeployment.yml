@@ -93,17 +93,30 @@ jobs:
       id: changed-files
       shell: pwsh
       run: |
-        # Get list of changed JSON files in BaseRuleSet/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        $changedFilesString = $changedFiles -join ','
-        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Changed files: $changedFilesString"
+        # Get list of NEW JSON files in BaseRuleSet/ directory (added for first time)
+        $newFiles = git diff --name-only --diff-filter=A HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $newFilesString = $newFiles -join ','
+        echo "new_files=$newFilesString" >> $env:GITHUB_OUTPUT
+        echo "New files: $newFilesString"
         
-        # Get list of deleted JSON files in BaseRuleSet/ directory
+        # Get list of MODIFIED JSON files in BaseRuleSet/ directory (already existed, now changed)
+        $modifiedFiles = git diff --name-only --diff-filter=M HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $modifiedFilesString = $modifiedFiles -join ','
+        echo "modified_files=$modifiedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Modified files: $modifiedFilesString"
+        
+        # Get list of DELETED JSON files in BaseRuleSet/ directory
         $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSet/*.json'
         $deletedFilesString = $deletedFiles -join ','
         echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
         echo "Deleted files: $deletedFilesString"
+        
+        # Combine new and modified for total changed files
+        $allChangedFiles = @()
+        if (![string]::IsNullOrWhiteSpace($newFilesString)) { $allChangedFiles += $newFiles }
+        if (![string]::IsNullOrWhiteSpace($modifiedFilesString)) { $allChangedFiles += $modifiedFiles }
+        $changedFilesString = $allChangedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         
         # If no specific rule files changed or deleted, we don't need to deploy anything
         if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
@@ -121,6 +134,8 @@ jobs:
         inlineScript: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          $env:NEW_FILES = "${{ steps.changed-files.outputs.new_files }}"
+          $env:MODIFIED_FILES = "${{ steps.changed-files.outputs.modified_files }}"
           $env:DELETED_FILES = "${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
 

@@ -6,6 +6,8 @@ $WorkspaceId = $Env:workspaceId
 $Directory = $Env:directory
 $contentTypes = $Env:contentTypes
 $ChangedFiles = $Env:CHANGED_FILES
+$NewFiles = $Env:NEW_FILES
+$ModifiedFiles = $Env:MODIFIED_FILES
 $DeletedFiles = $Env:DELETED_FILES
 $contentTypeMapping = @{
     "AnalyticsRule"=@("Microsoft.OperationalInsights/workspaces/providers/alertRules", "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions");
@@ -870,23 +872,56 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         $skip = $false
         $isSuccess = $null
         
-        # Check if rule already exists in Sentinel (for logging purposes only)
-        $ruleExists = CheckRuleExistsInSentinel $templateObject
-        
-        # UPDATE-ONLY MODE: Skip deployment if rule doesn't exist and updateOnlyMode is enabled
-        if ($updateOnlyMode -eq 'true' -and !$ruleExists) {
-            Write-Host "[Info] UPDATE-ONLY MODE: Rule does not exist in Sentinel - skipping creation (update-only mode enabled)"
-            return @{
-                skip = $true
-                isSuccess = $null
-                reason = "Rule does not exist - skipped (update-only mode)"
-            }
+        # Check if this file is NEW or MODIFIED
+        $isNewFile = $false
+        $isModifiedFile = $false
+        if (![string]::IsNullOrWhiteSpace($NewFiles)) {
+            $newFilesList = $NewFiles -split ','
+            $isNewFile = $newFilesList | Where-Object { $path -like "*$_*" }
+        }
+        if (![string]::IsNullOrWhiteSpace($ModifiedFiles)) {
+            $modifiedFilesList = $ModifiedFiles -split ','
+            $isModifiedFile = $modifiedFilesList | Where-Object { $path -like "*$_*" }
         }
         
-        if ($ruleExists) {
-            Write-Host "[Info] Rule already exists in Sentinel - will update it with new changes from $path"
-        } else {
-            Write-Host "[Info] Rule does not exist in Sentinel - will create new rule from $path"
+        # Check if rule already exists in Sentinel
+        $ruleExists = CheckRuleExistsInSentinel $templateObject
+        
+        # NEW FILE LOGIC: Create in all tenants (allow creation)
+        if ($isNewFile) {
+            if ($ruleExists) {
+                Write-Host "[Warning] NEW FILE: Rule already exists in Sentinel - SKIPPING to prevent duplicate!"
+                Write-Host "[Warning] File: $path"
+                Write-Host "[Warning] A rule with this ID already exists in the workspace. Cannot create duplicate."
+                return @{
+                    skip = $true
+                    isSuccess = $null
+                    reason = "Rule already exists - cannot create duplicate (NEW file)"
+                }
+            } else {
+                Write-Host "[Info] NEW FILE: Rule does not exist in Sentinel - will CREATE new rule from $path"
+            }
+        }
+        # MODIFIED FILE LOGIC: Update only if exists (update-only mode)
+        elseif ($isModifiedFile -and $updateOnlyMode -eq 'true') {
+            if (!$ruleExists) {
+                Write-Host "[Info] MODIFIED FILE + UPDATE-ONLY MODE: Rule does not exist in Sentinel - skipping (won't create)"
+                return @{
+                    skip = $true
+                    isSuccess = $null
+                    reason = "Rule does not exist - skipped (MODIFIED file, update-only mode)"
+                }
+            } else {
+                Write-Host "[Info] MODIFIED FILE: Rule exists in Sentinel - will UPDATE with changes from $path"
+            }
+        }
+        # FALLBACK: Normal behavior
+        else {
+            if ($ruleExists) {
+                Write-Host "[Info] Rule already exists in Sentinel - will update it with new changes from $path"
+            } else {
+                Write-Host "[Info] Rule does not exist in Sentinel - will create new rule from $path"
+            }
         }
         
         if (!$fullDeploymentFlag) {
