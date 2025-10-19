@@ -650,6 +650,7 @@ function CheckRuleExistsInSentinel($templateObject) {
                 if ($namePattern -match "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") {
                     $ruleId = $matches[1]
                     Write-Host "[Info] Checking if rule with ID '$ruleId' already exists in Sentinel"
+                    Write-Host "[Debug] ResourceGroup: $ResourceGroupName, Workspace: $WorkspaceName"
                     
                     # Try to get the rule from Sentinel
                     try {
@@ -663,24 +664,10 @@ function CheckRuleExistsInSentinel($templateObject) {
                         }
                     }
                     catch {
-                        # If Az.SecurityInsights cmdlet fails, try alternative method using generic Get-AzResource
-                        Write-Host "[Warning] Az.SecurityInsights cmdlet failed, trying generic Get-AzResource. Error: $_"
-                        try {
-                            $resourceName = "$WorkspaceName/Microsoft.SecurityInsights/$ruleId"
-                            $existingRule = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $resourceName -ErrorAction SilentlyContinue
-                            if ($existingRule) {
-                                Write-Host "[Info] Rule with ID '$ruleId' already exists in Sentinel (found via Get-AzResource)"
-                                return $true
-                            } else {
-                                Write-Host "[Info] Rule with ID '$ruleId' does not exist in Sentinel"
-                                return $false
-                            }
-                        }
-                        catch {
-                            Write-Host "[Warning] Could not check rule existence using Get-AzResource. Error: $_"
-                            # If we can't check, assume it doesn't exist to allow deployment
-                            return $false
-                        }
+                        # If Az.SecurityInsights cmdlet fails, assume doesn't exist
+                        Write-Host "[Warning] Az.SecurityInsights Get-AzSentinelAlertRule failed. Error: $_"
+                        Write-Host "[Info] Rule with ID '$ruleId' does not exist in Sentinel (cmdlet failed)"
+                        return $false
                     }
                 } else {
                     Write-Host "[Warning] Could not extract rule ID from name pattern: $namePattern"
@@ -888,17 +875,35 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         # Check if this file is NEW or MODIFIED
         $isNewFile = $false
         $isModifiedFile = $false
+        
+        Write-Host "[Debug] Checking file status for: $path"
+        Write-Host "[Debug] NewFiles env var: '$NewFiles'"
+        Write-Host "[Debug] ModifiedFiles env var: '$ModifiedFiles'"
+        
         if (![string]::IsNullOrWhiteSpace($NewFiles)) {
             $newFilesList = $NewFiles -split ','
-            $isNewFile = $newFilesList | Where-Object { $path -like "*$_*" }
+            Write-Host "[Debug] New files list: $($newFilesList -join ', ')"
+            $matchingNew = $newFilesList | Where-Object { $path -like "*$_*" }
+            if ($matchingNew) {
+                $isNewFile = $true
+                Write-Host "[Debug] File matched as NEW: $matchingNew"
+            }
         }
         if (![string]::IsNullOrWhiteSpace($ModifiedFiles)) {
             $modifiedFilesList = $ModifiedFiles -split ','
-            $isModifiedFile = $modifiedFilesList | Where-Object { $path -like "*$_*" }
+            Write-Host "[Debug] Modified files list: $($modifiedFilesList -join ', ')"
+            $matchingModified = $modifiedFilesList | Where-Object { $path -like "*$_*" }
+            if ($matchingModified) {
+                $isModifiedFile = $true
+                Write-Host "[Debug] File matched as MODIFIED: $matchingModified"
+            }
         }
+        
+        Write-Host "[Debug] isNewFile=$isNewFile, isModifiedFile=$isModifiedFile, updateOnlyMode=$updateOnlyMode"
         
         # Check if rule already exists in Sentinel
         $ruleExists = CheckRuleExistsInSentinel $templateObject
+        Write-Host "[Debug] ruleExists=$ruleExists"
         
         # NEW FILE LOGIC: Create in all tenants (allow creation)
         if ($isNewFile) {
