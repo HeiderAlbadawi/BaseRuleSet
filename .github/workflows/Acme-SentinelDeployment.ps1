@@ -785,8 +785,17 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
         $totalFailed = 0;
         $iterationList = @()
         
+        # Check if we only have deletions and no changed files (deletion-only mode)
+        $hasDeletedFiles = -not [string]::IsNullOrEmpty($DeletedFiles)
+        $hasChangedFiles = -not [string]::IsNullOrEmpty($ChangedFiles)
+        
+        if ($hasDeletedFiles -and -not $hasChangedFiles) {
+            Write-Host "[Info] Deletion-only mode detected - skipping deployment as only deletions were processed"
+            return @{ totalFiles = 0; totalFailed = 0 }
+        }
+        
         # If we have specific changed files, only deploy those
-        if (-not [string]::IsNullOrEmpty($ChangedFiles)) {
+        if ($hasChangedFiles) {
             Write-Host "[Info] Selective deployment mode - only deploying changed files: $ChangedFiles"
             $changedFileArray = $ChangedFiles -split ','
             $changedFileArray | ForEach-Object {
