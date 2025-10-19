@@ -14,7 +14,7 @@
             "kind": "Scheduled",
             "apiVersion": "2023-12-01-preview",
             "properties": {
-                "displayName": "Palo Alto - Tor network traffic detected from LAN to WAN - [WC-BASE]",
+                "displayName": "test - [WC-BASE]",
                 "description": "Detects connection from LAN to WAN Tor exit node",
                 "severity": "Low",
                 "enabled": true,
