@@ -81,7 +81,15 @@ Tenants/
 | ✅ Has rule | 🗑️ **DELETE** | Rule removed from tenant |
 | ❌ Doesn't have it | ⏭️ **SKIP** | No action taken |
 
-**Behavior:** Deleted rules are removed from ALL tenants that have them.
+**Behavior:** Deleted rules are removed from ALL tenants that have them. **Important:** After processing deletions, the deployment phase is **skipped entirely** to prevent unnecessary redeployment of unchanged rules.
+
+**Example Log (Deletion Only):**
+```
+[Info] Selective deletion mode detected with deleted files: BaseRuleSet/test.json
+[Info] Successfully deleted Sentinel rule: a2153ee2-5eca-40bc-8707-8885da613006
+[Info] Deletion summary: 1 successful, 0 failed
+[Info] Deletion-only mode detected - skipping deployment as only deletions were processed
+```
 
 ---
 
@@ -341,10 +349,17 @@ git push
 3. Change back to `updateOnlyMode: 'true'`
 4. Commit and push again
 
+### Problem: Deleted a rule but all rules were redeployed
+
+**Cause:** This was a bug in versions prior to v3.1. When only deletions occurred with no changed files, the system fell back to full deployment mode.
+
+**Solution:** Fixed in v3.1 (2025-10-19). The system now detects deletion-only scenarios and skips the deployment phase entirely after processing deletions.
+
 ---
 
 ## 📝 Version History
 
+- **v3.1** (2025-10-19): Fixed deletion-only mode to prevent unnecessary full redeployment
 - **v3.0** (2025-10-19): Smart NEW vs MODIFIED detection with duplicate prevention
 - **v2.0** (2025-10-19): Added update-only mode for BaseRuleSet deployments
 - **v1.1** (2025-10-19): Reorganized into Tenants/ directory structure
