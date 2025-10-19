@@ -355,10 +355,20 @@ git push
 
 **Solution:** Fixed in v3.1 (2025-10-19). The system now detects deletion-only scenarios and skips the deployment phase entirely after processing deletions.
 
+### Problem: Deletion log says "Found existing rule" but the rule wasn't deployed to that tenant
+
+**Cause:** This was a bug in versions prior to v3.2. The generic `Get-AzResource` cmdlet was reporting false positives for rule existence checks.
+
+**Solution:** Fixed in v3.2 (2025-10-19). Now uses `Get-AzSentinelAlertRule` for accurate workspace-specific rule existence verification. You'll now see correct skip messages like:
+```
+[Info] Rule <rule-id> not found in Sentinel workspace, skipping deletion
+```
+
 ---
 
 ## 📝 Version History
 
+- **v3.2** (2025-10-19): Fixed false positive in deletion existence check (now uses Get-AzSentinelAlertRule)
 - **v3.1** (2025-10-19): Fixed deletion-only mode to prevent unnecessary full redeployment
 - **v3.0** (2025-10-19): Smart NEW vs MODIFIED detection with duplicate prevention
 - **v2.0** (2025-10-19): Added update-only mode for BaseRuleSet deployments
