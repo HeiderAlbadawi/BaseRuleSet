@@ -1,2 +1,14 @@
 FileName, CommitSha
+BaseRuleSet/User Added to Security-Enabled Local Group (e24e347a-53eb-4dfe-a1d5-035bce4786d3).json,285dc88dce833fe455c30e5f5543fccee32678c6
+BaseRuleSet/VSS backup deletion via WMI (Powershell) - WC-DFE (5041ee68-ef8a-4fbc-b286-3d898d200eec).json,a8b954f99743c3ecefa3c5829d3efed3754dfc58
+BaseRuleSet/test2.json,c88fd7914a8b3be57b3cfd2780fc51335b6be879
+BaseRuleSet/User Login from Different States Within 3 Hours (f78ccd15-6ec1-4cfa-bec4-d9d27d1bb4d5).json,1ee6f7669fa3c182f885b5c32776fdbb6f64a304
+BaseRuleSet/Windows Scheduled Task Creation on Remote Host with at.exe - WC-THREAT (42b49386-21e9-429b-bcfc-8e40fe5d6b56).json,3ac40c439e8991738eb261ba59ecd59dda83008e
+BaseRuleSet/Unapproved Country Login Attempt (d5026bfa-41c0-4d8e-9466-f36889e50153).json,5a5473d1d853d91034348b76cda3363d0038fe69
+BaseRuleSet/User Login from Different Countries Within 3 Hours (42718c04-51b3-4b7f-8511-0c19252ea44b).json,e9c741c4e238f3e0db17ce17e2090838671c7057
+BaseRuleSet/Windows Defender Preferences Suspicious Changes - WC-THREAT (f1fcf0e4-92ca-4e2b-bf1d-b36a2590191e).json,7d488d2eed5236836f3bce7c190de8d4ee2a49be
+BaseRuleSet/User agent search for log4j exploitation attempt - WC-THREAT (bfe5d88c-52e8-4910-a689-a92926f5652a).json,2bef74032337e258ab7824961a8128c7d2de897d
+BaseRuleSet/Suspicious Remote File Transfer Activity (T1105 - Remote File Copy) (6d9e173f-d7ad-4b52-8fbb-15ff99feede7).json,e4c0cfb3eb3990d39a6aea30ff3a745c2a966d6e
+BaseRuleSet/Vulnerability Scanning Tool Detection WC-DFE (a2c011a6-3986-411a-9e27-286d018e1b65).json,fea5119979a91c1f0dc32ee8d2e6bffcef35e219
+BaseRuleSet/when a user account was added to a security-enabled local group (5eb55696-7973-4952-8cce-f0ce67f12e65).json,2269f26739c8bbe69b66695e63a489dd8fa8de06
 
