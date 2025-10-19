@@ -21,6 +21,7 @@ $githubAuthToken = $Env:githubAuthToken
 $githubRepository = $Env:GITHUB_REPOSITORY
 $branchName = $Env:branch
 $smartDeployment = $Env:smartDeployment
+$updateOnlyMode = $Env:updateOnlyMode
 $newResourceBranch = $branchName + "-sentinel-deployment"
 $csvPath = "$rootDirectory\.sentinel\tracking_table_$sourceControlId.csv"
 $configPath = "$rootDirectory\sentinel-deployment.config"
@@ -871,6 +872,17 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         
         # Check if rule already exists in Sentinel (for logging purposes only)
         $ruleExists = CheckRuleExistsInSentinel $templateObject
+        
+        # UPDATE-ONLY MODE: Skip deployment if rule doesn't exist and updateOnlyMode is enabled
+        if ($updateOnlyMode -eq 'true' -and !$ruleExists) {
+            Write-Host "[Info] UPDATE-ONLY MODE: Rule does not exist in Sentinel - skipping creation (update-only mode enabled)"
+            return @{
+                skip = $true
+                isSuccess = $null
+                reason = "Rule does not exist - skipped (update-only mode)"
+            }
+        }
+        
         if ($ruleExists) {
             Write-Host "[Info] Rule already exists in Sentinel - will update it with new changes from $path"
         } else {

@@ -24,7 +24,7 @@ jobs:
       resourceGroupName: 'temptest'
       workspaceName: 'templaw'
       workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
-      directory: '${{ github.workspace }}/Tenants/TempLaw'
+      directory: '${{ github.workspace }}/BaseRuleSet'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -32,6 +32,7 @@ jobs:
       rootDirectory: '${{ github.workspace }}'
       githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
       smartDeployment: 'true'
+      updateOnlyMode: 'true'
     permissions:
       contents: write
       id-token: write # Require write permission to Fetch an OIDC token.

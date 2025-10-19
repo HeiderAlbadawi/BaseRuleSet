@@ -32,6 +32,7 @@ jobs:
       rootDirectory: '${{ github.workspace }}'
       githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
       smartDeployment: 'true'
+      updateOnlyMode: 'true'
     permissions:
       contents: write
       id-token: write # Require write permission to Fetch an OIDC token.
