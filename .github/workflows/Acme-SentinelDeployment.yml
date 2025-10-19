@@ -14,7 +14,7 @@ on:
     branches: [ main ]
     paths:
     - 'BaseRuleSet/**'
-    - 'AcmeSentinel/**'
+    - 'Tenants/AcmeSentinel/**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
 
 jobs:
@@ -129,7 +129,7 @@ jobs:
       resourceGroupName: 'training_jordan'
       workspaceName: 'acmesentinel'
       workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      directory: '${{ github.workspace }}/AcmeSentinel'
+      directory: '${{ github.workspace }}/Tenants/AcmeSentinel'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -197,14 +197,14 @@ jobs:
       id: changed-files
       shell: pwsh
       run: |
-        # Get list of changed JSON files in BaseRuleSet/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'AcmeSentinel/*.json'
+        # Get list of changed JSON files in Tenants/AcmeSentinel/ directory
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
         $changedFilesString = $changedFiles -join ','
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
         
-        # Get list of deleted JSON files in AcmeSentinel/ directory
-        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'AcmeSentinel/*.json'
+        # Get list of deleted JSON files in Tenants/AcmeSentinel/ directory
+        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
         $deletedFilesString = $deletedFiles -join ','
         echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
         echo "Deleted files: $deletedFilesString"

@@ -14,7 +14,7 @@ on:
     branches: [ main ]
     paths:
     - 'BaseRuleSet/**'
-    - 'TempLaw/**'
+    - 'Tenants/TempLaw/**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       resourceGroupName: 'temptest'
       workspaceName: 'templaw'
       workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
-      directory: '${{ github.workspace }}/TempLaw'
+      directory: '${{ github.workspace }}/Tenants/TempLaw'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -129,7 +129,7 @@ jobs:
       resourceGroupName: 'temptest'
       workspaceName: 'templaw'
       workspaceId: '98739ee3-5b09-4317-bf39-65dc869e4db3'
-      directory: '${{ github.workspace }}/TempLaw'
+      directory: '${{ github.workspace }}/Tenants/TempLaw'
       cloudEnv: 'AzureCloud'
       contentTypes: 'AnalyticsRule'
       branch: 'main'
@@ -197,14 +197,14 @@ jobs:
       id: changed-files
       shell: pwsh
       run: |
-        # Get list of changed JSON files in TempLaw/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'TempLaw/*.json'
+        # Get list of changed JSON files in Tenants/TempLaw/ directory
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'Tenants/TempLaw/*.json'
         $changedFilesString = $changedFiles -join ','
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         echo "Changed files: $changedFilesString"
         
-        # Get list of deleted JSON files in TempLaw/ directory
-        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'TempLaw/*.json'
+        # Get list of deleted JSON files in Tenants/TempLaw/ directory
+        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'Tenants/TempLaw/*.json'
         $deletedFilesString = $deletedFiles -join ','
         echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
         echo "Deleted files: $deletedFilesString"
