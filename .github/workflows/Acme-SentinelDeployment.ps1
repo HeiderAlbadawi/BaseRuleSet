@@ -572,13 +572,17 @@ function DeleteSentinelRule($ruleId) {
         $ruleName = "$WorkspaceName/Microsoft.SecurityInsights/$ruleId"
         Write-Host "[Info] Attempting to delete Sentinel rule: $ruleName"
         
-        # Check if the rule exists first
+        # Check if the rule exists first using Sentinel-specific cmdlet
         try {
-            $existingRule = Get-AzResource -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.OperationalInsights/workspaces/providers/alertRules" -Name $ruleName -ErrorAction Stop
+            $existingRule = Get-AzSentinelAlertRule -ResourceGroupName $ResourceGroupName -WorkspaceName $WorkspaceName -RuleId $ruleId -ErrorAction Stop
+            if ($null -eq $existingRule) {
+                Write-Host "[Info] Rule $ruleId not found in Sentinel workspace, skipping deletion"
+                return $true
+            }
             Write-Host "[Info] Found existing rule $ruleName, proceeding with deletion"
         }
         catch {
-            Write-Host "[Warning] Rule $ruleName not found in Sentinel, it may have already been deleted. Error: $_"
+            Write-Host "[Info] Rule $ruleId not found in Sentinel workspace, skipping deletion"
             return $true
         }
         
