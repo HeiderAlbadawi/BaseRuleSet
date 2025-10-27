@@ -145,10 +145,16 @@ function PushCsvToRepo() {
         git switch --orphan $newResourceBranch
         git commit --allow-empty -m "Initial commit on orphan branch"
         git push -u origin $newResourceBranch
-        New-Item -ItemType "directory" -Path ".sentinel"
     } else {
         git fetch > $null
         git checkout $newResourceBranch
+    }
+
+    # Ensure .sentinel directory exists before writing CSV
+    $sentinelDir = Split-Path $relativeCsvPath -Parent
+    if (-not (Test-Path $sentinelDir)) {
+        New-Item -ItemType "directory" -Path $sentinelDir -Force | Out-Null
+        Write-Host "[Info] Created directory: $sentinelDir"
     }
 
     Write-Output $content > $relativeCsvPath
