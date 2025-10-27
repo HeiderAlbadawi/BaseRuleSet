@@ -1,21 +1,14 @@
 name: Deploy Content to acmesentinel [7695aa57-fdc6-4f57-97d4-76856d0cd210]
-# Note: This workflow will deploy everything in the root directory.
-# To deploy content only from a specific path (for example SentinelContent):
-#   1. Add the target path to the "paths" property like such
-#    paths:
-#    - 'SentinelContent/**'
-#    - '!.github/workflows/**'
-#    - '.github/workflows/sentinel-deploy-7695aa57-fdc6-4f57-97d4-76856d0cd210.yml'
-#   2. Append the path to the directory environment variable below
-#       directory: '${{ github.workspace }}/SentinelContent'
 
 on:
   push:
     branches: [ main ]
     paths:
     - 'BaseRuleSet/**'
+    - 'ThirdPartyBaseRuleSet/AWS/**'
+    - 'ThirdPartyBaseRuleSet/Fortinet/**'
     - 'Tenants/AcmeSentinel/**'
-    - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
+    - '!.github/workflows/**'
 
 jobs:
   BaseRulesDeployment:
@@ -35,47 +28,11 @@ jobs:
       updateOnlyMode: 'true'
     permissions:
       contents: write
-      id-token: write # Require write permission to Fetch an OIDC token.
+      id-token: write
 
     steps:
-    - name: Login to Azure (Attempt 1)
-      continue-on-error: true
-      id: login1
+    - name: Login to Azure
       uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
-
-    - name: Wait 30 seconds if login attempt 1 failed
-      if: ${{ steps.login1.outcome=='failure' }}
-      run: powershell Start-Sleep -s 30
-
-    - name: Login to Azure (Attempt 2)
-      continue-on-error: true
-      id: login2
-      uses: azure/login@v2
-      if: ${{ steps.login1.outcome=='failure' }}
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
-
-    - name: Wait 30 seconds if login attempt 2 failed
-      if: ${{ steps.login2.outcome=='failure' }}
-      run: powershell Start-Sleep -s 30
-
-    - name: Login to Azure (Attempt 3)
-      continue-on-error: false
-      id: login3
-      uses: azure/login@v2
-      if: ${{ steps.login2.outcome=='failure'  }}
       with:
         client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
         tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
@@ -87,57 +44,83 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        fetch-depth: 2  # Fetch current and previous commit to detect changes
+        fetch-depth: 2
 
-    - name: Get changed files
+    - name: Get changed BaseRuleSet files
       id: changed-files
       shell: pwsh
       run: |
-        # Get list of NEW JSON files in BaseRuleSet/ directory (added for first time)
-        $newFiles = git diff --name-only --diff-filter=A HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        $newFilesString = $newFiles -join ','
-        echo "new_files=$newFilesString" >> $env:GITHUB_OUTPUT
-        echo "New files: $newFilesString"
-        
-        # Get list of MODIFIED JSON files in BaseRuleSet/ directory (already existed, now changed)
-        $modifiedFiles = git diff --name-only --diff-filter=M HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        $modifiedFilesString = $modifiedFiles -join ','
-        echo "modified_files=$modifiedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Modified files: $modifiedFilesString"
-        
-        # Get list of DELETED JSON files in BaseRuleSet/ directory
-        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        $deletedFilesString = $deletedFiles -join ','
-        echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Deleted files: $deletedFilesString"
-        
-        # Combine new and modified for total changed files
-        $allChangedFiles = @()
-        if (![string]::IsNullOrWhiteSpace($newFilesString)) { $allChangedFiles += $newFiles }
-        if (![string]::IsNullOrWhiteSpace($modifiedFilesString)) { $allChangedFiles += $modifiedFiles }
-        $changedFilesString = $allChangedFiles -join ','
-        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
-        
-        # If no specific rule files changed or deleted, we don't need to deploy anything
-        if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
-          echo "No JSON rule files changed or deleted, skipping deployment"
-          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
-        } else {
-          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
-        }
+        $changed = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
+        echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
+        if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
 
-    - name: Deploy Content to Microsoft Sentinel
+    - name: Deploy Base Rules
       if: steps.changed-files.outputs.skip_deployment == 'false'
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
-          # Set changed files as environment variable for the PowerShell script
-          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
-          $env:NEW_FILES = "${{ steps.changed-files.outputs.new_files }}"
-          $env:MODIFIED_FILES = "${{ steps.changed-files.outputs.modified_files }}"
-          $env:DELETED_FILES = "${{ steps.changed-files.outputs.deleted_files }}"
+          $env:CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
+          $env:DELETED_FILES="${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+
+
+  ThirdPartyRulesDeployment:
+    runs-on: windows-latest
+    env:
+      resourceGroupName: 'training_jordan'
+      workspaceName: 'acmesentinel'
+      workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
+      cloudEnv: 'AzureCloud'
+      contentTypes: 'AnalyticsRule'
+      branch: 'main'
+      sourceControlId: '7695aa57-fdc6-4f57-97d4-76856d0cd210'
+      rootDirectory: '${{ github.workspace }}'
+      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
+      smartDeployment: 'true'
+      updateOnlyMode: 'true'
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
+        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
+        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
+        environment: 'AzureCloud'
+        audience: api://AzureADTokenExchange
+        enable-AzPSSession: true
+
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+
+    - name: Get changed ThirdParty files (AWS + Fortinet)
+      id: changed-thirdparty
+      shell: pwsh
+      run: |
+        $changed = git diff --name-only HEAD~1 HEAD -- 'ThirdPartyBaseRuleSet/AWS/*.json' 'ThirdPartyBaseRuleSet/Fortinet/*.json'
+        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'ThirdPartyBaseRuleSet/AWS/*.json' 'ThirdPartyBaseRuleSet/Fortinet/*.json'
+        echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
+        echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
+        if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
+
+    - name: Deploy AWS + Fortinet Rules
+      if: steps.changed-thirdparty.outputs.skip_deployment == 'false'
+      uses: azure/powershell@v2
+      with:
+        azPSVersion: 'latest'
+        inlineScript: |
+          $env:CHANGED_FILES="${{ steps.changed-thirdparty.outputs.changed_files }}"
+          $env:DELETED_FILES="${{ steps.changed-thirdparty.outputs.deleted_files }}"
+          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+
 
   CustomerRulesDeployment:
     runs-on: windows-latest
@@ -155,47 +138,11 @@ jobs:
       smartDeployment: 'true'
     permissions:
       contents: write
-      id-token: write # Require write permission to Fetch an OIDC token.
+      id-token: write
 
     steps:
-    - name: Login to Azure (Attempt 1)
-      continue-on-error: true
-      id: login1
+    - name: Login to Azure
       uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
-
-    - name: Wait 30 seconds if login attempt 1 failed
-      if: ${{ steps.login1.outcome=='failure' }}
-      run: powershell Start-Sleep -s 30
-
-    - name: Login to Azure (Attempt 2)
-      continue-on-error: true
-      id: login2
-      uses: azure/login@v2
-      if: ${{ steps.login1.outcome=='failure' }}
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
-
-    - name: Wait 30 seconds if login attempt 2 failed
-      if: ${{ steps.login2.outcome=='failure' }}
-      run: powershell Start-Sleep -s 30
-
-    - name: Login to Azure (Attempt 3)
-      continue-on-error: false
-      id: login3
-      uses: azure/login@v2
-      if: ${{ steps.login2.outcome=='failure'  }}
       with:
         client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
         tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
@@ -207,44 +154,24 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        fetch-depth: 2  # Fetch current and previous commit to detect changes
+        fetch-depth: 2
 
-    - name: Get changed files
+    - name: Get changed Tenant files
       id: changed-files
       shell: pwsh
       run: |
-        # Get list of changed JSON files in Tenants/AcmeSentinel/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
-        $changedFilesString = $changedFiles -join ','
-        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Changed files: $changedFilesString"
-        
-        # Get list of deleted JSON files in Tenants/AcmeSentinel/ directory
-        $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
-        $deletedFilesString = $deletedFiles -join ','
-        echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Deleted files: $deletedFilesString"
-        
-        # If no specific rule files changed or deleted, we don't need to deploy anything
-        if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
-          echo "No JSON rule files changed or deleted, skipping deployment"
-          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
-        } else {
-          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
-        }
+        $changed = git diff --name-only HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
+        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
+        echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
+        echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
+        if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
 
-    - name: Deploy Content to Microsoft Sentinel
+    - name: Deploy Tenant Rules
       if: steps.changed-files.outputs.skip_deployment == 'false'
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
-          # Set changed files as environment variable for the PowerShell script
-          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
-          $env:DELETED_FILES = "${{ steps.changed-files.outputs.deleted_files }}"
+          $env:CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
+          $env:DELETED_FILES="${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
-
-
-
-
-
