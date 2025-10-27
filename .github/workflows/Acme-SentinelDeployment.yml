@@ -5,9 +5,8 @@ on:
     branches: [ main ]
     paths:
     - 'BaseRuleSet/**'
-    - 'BaseRuleSetThirdParty/AWS/**'
-    - 'BaseRuleSetThirdParty/Fortinet/**'
     - 'Tenants/AcmeSentinel/**'
+    - 'ThirdParty/Acme/**'
     - '!.github/workflows/**'
 
 jobs:
@@ -31,94 +30,37 @@ jobs:
       id-token: write
 
     steps:
-    - name: Login to Azure
-      uses: azure/login@v2
+    - uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
         tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
         subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
         enable-AzPSSession: true
 
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 2
 
-    - name: Get changed BaseRuleSet files
+    - name: Get changed files
       id: changed-files
       shell: pwsh
       run: |
-        $changed = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSet/*.json'
-        echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
-        echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
-        if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $changedFilesString = $changedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
 
-    - name: Deploy Base Rules
+    - name: Deploy Content to Microsoft Sentinel
       if: steps.changed-files.outputs.skip_deployment == 'false'
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
-          $env:CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
-          $env:DELETED_FILES="${{ steps.changed-files.outputs.deleted_files }}"
-          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
-
-
-  ThirdPartyRulesDeployment:
-    runs-on: windows-latest
-    env:
-      resourceGroupName: 'training_jordan'
-      workspaceName: 'acmesentinel'
-      workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
-      cloudEnv: 'AzureCloud'
-      contentTypes: 'AnalyticsRule'
-      branch: 'main'
-      sourceControlId: '7695aa57-fdc6-4f57-97d4-76856d0cd210'
-      rootDirectory: '${{ github.workspace }}'
-      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
-      smartDeployment: 'true'
-      updateOnlyMode: 'true'
-    permissions:
-      contents: write
-      id-token: write
-
-    steps:
-    - name: Login to Azure
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
-        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
-        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
-        enable-AzPSSession: true
-
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 2
-
-    - name: Get changed ThirdParty files (AWS + Fortinet)
-      id: changed-thirdparty
-      shell: pwsh
-      run: |
-        $changed = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSetThirdParty/AWS/*.json' 'BaseRuleSetThirdParty/Fortinet/*.json'
-        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSetThirdParty/AWS/*.json' 'BaseRuleSetThirdParty/Fortinet/*.json'
-        echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
-        echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
-        if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
-
-    - name: Deploy AWS + Fortinet Rules
-      if: steps.changed-thirdparty.outputs.skip_deployment == 'false'
-      uses: azure/powershell@v2
-      with:
-        azPSVersion: 'latest'
-        inlineScript: |
-          $env:CHANGED_FILES="${{ steps.changed-thirdparty.outputs.changed_files }}"
-          $env:DELETED_FILES="${{ steps.changed-thirdparty.outputs.deleted_files }}"
+          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
 
 
@@ -141,38 +83,88 @@ jobs:
       id-token: write
 
     steps:
-    - name: Login to Azure
-      uses: azure/login@v2
+    - uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
         tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
         subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
-        environment: 'AzureCloud'
-        audience: api://AzureADTokenExchange
         enable-AzPSSession: true
 
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 2
 
-    - name: Get changed Tenant files
+    - name: Get changed files
       id: changed-files
       shell: pwsh
       run: |
-        $changed = git diff --name-only HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
-        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
-        echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
-        echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
-        if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'Tenants/AcmeSentinel/*.json'
+        $changedFilesString = $changedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
 
-    - name: Deploy Tenant Rules
+    - name: Deploy Content to Microsoft Sentinel
       if: steps.changed-files.outputs.skip_deployment == 'false'
       uses: azure/powershell@v2
       with:
         azPSVersion: 'latest'
         inlineScript: |
-          $env:CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
-          $env:DELETED_FILES="${{ steps.changed-files.outputs.deleted_files }}"
+          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
 
+
+  ThirdPartyRulesDeployment:
+    runs-on: windows-latest
+    env:
+      resourceGroupName: 'training_jordan'
+      workspaceName: 'acmesentinel'
+      workspaceId: '8a587a2c-3d1a-453b-b45e-8022007d20c1'
+      directory: '${{ github.workspace }}/ThirdParty/Acme'
+      cloudEnv: 'AzureCloud'
+      contentTypes: 'AnalyticsRule'
+      branch: 'main'
+      sourceControlId: '7695aa57-fdc6-4f57-97d4-76856d0cd210'
+      rootDirectory: '${{ github.workspace }}'
+      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
+      smartDeployment: 'true'
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_SENTINEL_CLIENTID_7695aa57fdc64f5797d476856d0cd210 }}
+        tenant-id: ${{ secrets.AZURE_SENTINEL_TENANTID_7695aa57fdc64f5797d476856d0cd210 }}
+        subscription-id: ${{ secrets.AZURE_SENTINEL_SUBSCRIPTIONID_7695aa57fdc64f5797d476856d0cd210 }}
+        enable-AzPSSession: true
+
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+
+    - name: Get changed files
+      id: changed-files
+      shell: pwsh
+      run: |
+        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'ThirdParty/Acme/*.json'
+        $changedFilesString = $changedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
+        if ([string]::IsNullOrWhiteSpace($changedFilesString)) {
+          echo "skip_deployment=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "skip_deployment=false" >> $env:GITHUB_OUTPUT
+        }
+
+    - name: Deploy Content to Microsoft Sentinel
+      if: steps.changed-files.outputs.skip_deployment == 'false'
+      uses: azure/powershell@v2
+      with:
+        azPSVersion: 'latest'
+        inlineScript: |
+          $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
