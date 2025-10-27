@@ -5,8 +5,8 @@ on:
     branches: [ main ]
     paths:
     - 'BaseRuleSet/**'
-    - 'ThirdPartyBaseRuleSet/AWS/**'
-    - 'ThirdPartyBaseRuleSet/Fortinet/**'
+    - 'BaseRuleSetThirdParty/AWS/**'
+    - 'BaseRuleSetThirdParty/Fortinet/**'
     - 'Tenants/AcmeSentinel/**'
     - '!.github/workflows/**'
 
@@ -105,8 +105,8 @@ jobs:
       id: changed-thirdparty
       shell: pwsh
       run: |
-        $changed = git diff --name-only HEAD~1 HEAD -- 'ThirdPartyBaseRuleSet/AWS/*.json' 'ThirdPartyBaseRuleSet/Fortinet/*.json'
-        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'ThirdPartyBaseRuleSet/AWS/*.json' 'ThirdPartyBaseRuleSet/Fortinet/*.json'
+        $changed = git diff --name-only HEAD~1 HEAD -- 'BaseRuleSetThirdParty/AWS/*.json' 'BaseRuleSetThirdParty/Fortinet/*.json'
+        $deleted = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'BaseRuleSetThirdParty/AWS/*.json' 'BaseRuleSetThirdParty/Fortinet/*.json'
         echo "changed_files=$($changed -join ',')" >> $env:GITHUB_OUTPUT
         echo "deleted_files=$($deleted -join ',')" >> $env:GITHUB_OUTPUT
         if (-not $changed -and -not $deleted) { echo "skip_deployment=true" >> $env:GITHUB_OUTPUT } else { echo "skip_deployment=false" >> $env:GITHUB_OUTPUT }
@@ -175,3 +175,4 @@ jobs:
           $env:CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
           $env:DELETED_FILES="${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/Acme-SentinelDeployment.ps1
+
