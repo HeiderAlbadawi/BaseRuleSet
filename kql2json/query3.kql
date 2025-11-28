@@ -1,0 +1,249 @@
+let lookback = 4h;
+let excluded_senders = dynamic([
+    "funds@eurekahedge.com", "data@absoluteucits.com", "data@eurohedge.com", "data@asiahedge.com",
+    "data@investhedge.com", "Data@hedgefundintelligence.com", "fundupdates@eurekahedge.com",
+    "data.registration@withintelligence.com", "devtest@withintelligence.com",
+    "Andrew.Marquardt@withintelligence.com", "hedgefunds@withintelligence.com",
+    "performance@withintelligence.com", "madealreporting@thedeal.com", "Riz.Malik@withintelligence.com",
+    "Claudia.Glover@withintelligence.com", "Sam.Mohabadian@withintelligence.com",
+    "Reception.London@withintelligence.com", "Robert.Szeluga@withintelligence.com",
+    "Brett.Haensel@withintelligence.com", "Daniel.McKimm@withintelligence.com",
+    "Harry.Peterson@withintelligence.com", "AccountsReceivable@withintelligence.com",
+    "support@foliometrics.co.uk", "Graham.Hatch@withintelligence.com", "manualqa@withintelligence.com",
+    "operations@withintelligence.com", "Chris.Barrett@withintelligence.com",
+    "socialcommittee@withintelligence.com", "Fay.Oborne@withintelligence.com",
+    "accountspayable@withintelligence.com", "BI@withintelligence.com", "j.murray@egr.global",
+    "kristina.pilapil@egr.global", "spsresearcheuro@suttonplacestrategies.com",
+    "Miriana.Vari@withintelligence.com", "procurement@withintelligence.com", "travel@withintelligence.com",
+    "pensionbridge@withintelligence.com", "spsresearch@suttonplacestrategies.com",
+    "Christopher.Manser@withintelligence.com", "qa-ui-automation@withintelligence.com",
+    "hello@savvyinvestor.net", "Pero.Ositelu@withintelligence.com", "Ruby.Oria@withintelligence.com",
+    "arcopies@withintelligence.com", "Adrian.Stringer@withintelligence.com", "William.Smith@withintelligence.com",
+    "EventsTeam@pageantmedia.com", "Douglas.Brown@withintelligence.com", "datapipeline@realfin.com",
+    "cancellation@withintelligence.com", "publicrecords@withintelligence.com",
+    "pm-research@pageantmedia.com", "Mary.TibbettsWu@withintelligence.com", "Sebastian.Black@withintelligence.com",
+    "hr@withintelligence.com", "Riza.Manliguez@egr.global", "contactsdata@withintelligence-email.com",
+    "Joy.Atme@withintelligence.com", "Summits@withintelligence.com", "max.acker@withintelligence.com",
+    "Charlie.Scott-Kerr@withintelligence.com", "reply@pm-research.com", "Solisa.Aarons@withintelligence.com",
+    "hello@withintelligence.com", "hfmbd@pageantmedia.com", "michael.cohen@withintelligence.com",
+    "Jacob.Conley@withintelligence.com", "Richard.Kelly@withintelligence.com", "Matt.Smith@withintelligence.com",
+    "customerservice@thedeal.com", "wi-devops@withintelligence.com", "Mary.Ajibola@withintelligence.com",
+    "Ricky.Cosgrove@withintelligence.com", "speakertravel@withintelligence.com", "Catherene.Daguil@egr.global",
+    "replyHFM@pageantmedia.com", "Events-Partnerships@pageantmedia.onmicrosoft.com"
+    ]);
+// 8. Mailbox Delegation
+let AlertMailboxDelegations = 
+    OfficeActivity
+    | where TimeGenerated > ago(lookback)
+    | where Operation =~ 'Add-MailboxPermission' 
+    | where tolower(UserId) !contains "nt authority\\system"
+    | extend IPAddress = iff(
+                         ClientIP matches regex @'^\[[0-9a-fA-F:]+\]:\d+$',
+                         replace(@'^\[([0-9a-fA-F:]+)\]:\d+$', @'\1', tostring(ClientIP)),
+                         iff(
+    ClientIP matches regex @'^\d{1,3}(\.\d{1,3}){3}:\d+$',
+    replace(@'^(\d{1,3}(\.\d{1,3}){3}):\d+$', @'\1', ClientIP),
+    'Invalid IP'
+)
+                     )
+    | extend TargetID = tostring(parse_json(Parameters)[1].Value)
+    | extend Details = strcat(
+                       "\nUserUPN: ",
+                       tolower(UserId),
+                       "\nOperation: ",
+                       Operation,
+                       "\nTargetID: ",
+                       TargetID,
+                       "\nIPAddress: ",
+                       IPAddress,
+                       "\nOfficeObjectId: ",
+                       OfficeObjectId,
+                       "\nResultStatus: ",
+                       ResultStatus
+                   )
+    | extend Case = "Mailbox Delegation"
+    | project TimeGenerated, Case, Details;
+// 9. Device Isolation
+let AlertDeviceIsolation = 
+    CloudAppEvents
+    | where TimeGenerated > ago(lookback)
+    | where ActionType == "IsolateDevice"
+    | extend Details = strcat(
+                       "\nUserUPN: ",
+                       RawEventData.UserId,
+                       "\nDeviceName: ",
+                       RawEventData.DeviceName
+                   )
+    | extend Case = "Device Isolate"
+    | project TimeGenerated, Case, Details;
+// 10. Privileged Role Assignment
+let AlertPrivilegedRoleAssignment = 
+    AuditLogs
+    | where TimeGenerated > ago(lookback)
+    | where Category =~ "RoleManagement"
+    | where AADOperationType in ("Assign", "AssignEligibleRole")
+    | where ActivityDisplayName has_any ("Add eligible member to role", "Add member to role")
+    | mv-apply TargetResource = TargetResources on
+        (
+        where TargetResource.type in~ ("User")
+        | extend Target = iff(TargetResource.type =~ "ServicePrincipal", tostring(TargetResource.displayName), tostring(TargetResource.userPrincipalName))
+        | extend props = TargetResource.modifiedProperties
+        )
+    | mv-apply Property = props on
+        (
+        where Property.displayName =~ "Role.DisplayName"
+        | extend RoleName = trim('"', tostring(Property.newValue))
+        )
+    | where RoleName contains "Admin" and Result == "success"
+    | extend InitiatingAppName = tostring(InitiatedBy.app.displayName)
+    | extend InitiatingUserPrincipalName = tostring(InitiatedBy.user.userPrincipalName)
+    | extend Initiator = iif(isnotempty(InitiatingAppName), InitiatingAppName, InitiatingUserPrincipalName)
+    | where Target !startswith "wc-"
+    | where Initiator != "MS-PIM"
+    | extend Details = strcat(
+                       "\nTarget: ",
+                       Target,
+                       "\nRoleName: ",
+                       RoleName,
+                       "\nInitiator: ",
+                       Initiator,
+                       "\nOperation: ",
+                       OperationName
+                   )
+    | extend Case = "Privileged Role Assignment"
+    | project TimeGenerated, Case, Details;
+// 11. Revoke Sessions
+let AlertSessionsRevoke = 
+    AuditLogs
+    | where TimeGenerated > ago(lookback)
+    | where OperationName has 'StsRefreshTokenValidFrom'
+    | mv-expand TargetResources
+    | extend TargetResourcesModProps = TargetResources.modifiedProperties
+    | mv-expand TargetResourcesModProps
+    | where tostring(TargetResourcesModProps.displayName) =~ 'StsRefreshTokensValidFrom'
+    | extend InitiatingUserOrApp = iff(isnotempty(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.app.displayName))
+    | extend targetUserOrApp = TargetResources.userPrincipalName
+    | extend InitiatingIpAddress = iff(isnotempty(InitiatedBy.user.ipAddress), tostring(InitiatedBy.user.ipAddress), tostring(InitiatedBy.app.ipAddress))
+    | where InitiatingUserOrApp !contains "wizard"
+    | extend Details = strcat(
+                       "\nUserUPN: ",
+                       InitiatingUserOrApp,
+                       "\nTargetUser: ",
+                       targetUserOrApp,
+                       "\nIPAddress: ",
+                       InitiatingIpAddress
+                   )
+    | extend Case = "Revoke Sessions"
+    | project TimeGenerated, Case, Details;
+// 12. MailItem Access of another mailbox
+let AlertMailItemAccess = 
+    CloudAppEvents
+    | where TimeGenerated > ago(lookback)
+    | where ActionType contains "MailItemsAccessed"
+    | extend
+        MailboxOwner = tostring(RawEventData.MailboxOwnerUPN),
+        Actor = tostring(RawEventData.UserId)
+    | where MailboxOwner != Actor
+    | extend InternetMessageId = tostring(parse_json(tostring(parse_json(tostring(RawEventData.Folders))[0].FolderItems))[0].InternetMessageId)
+    | where isnotempty(InternetMessageId)
+    | join kind=inner (
+        EmailEvents
+        | project InternetMessageId, Subject, SenderFromAddress, To, Cc, DistributionList
+        )
+        on InternetMessageId
+    | where Actor != "svc-athena-365@pageantmedia.com"
+    | where MailboxOwner !in (excluded_senders)
+    | where MailboxOwner !endswith "@pm-research.com"
+    | where MailboxOwner !endswith "@egr.global"
+    | extend Details = strcat(
+                       "\nActor: ",
+                       Actor,
+                       "\nMailboxOwner: ",
+                       MailboxOwner,
+                       "\nSubject: ",
+                       Subject,
+                       "\nSenderFromAddress: ",
+                       SenderFromAddress,
+                       "\nTo: ",
+                       tostring(To),
+                       "\nCc: ",
+                       tostring(Cc),
+                       "\nDistributionList: ",
+                       tostring(DistributionList)
+                   )
+    | extend Case = "MailItemAccess of another mailbox"
+    | project TimeGenerated, Case, Details;
+// 13. Azure Activity
+let AlertAzureActivity = 
+    AzureActivity
+    | where TimeGenerated > ago(lookback)
+    | where Caller contains "@"
+    | where OperationName contains "delete"
+    | where Caller !contains "wizard"
+    | where Caller !in ("brayden.evans@withintelligence.com", "Robert.Northam@withintelligence.com")
+    | extend Details = strcat(
+                       "\nCaller: ",
+                       Caller,
+                       "\nOperationName: ",
+                       OperationNameValue,
+                       "\nActivityStatusValue: ",
+                       ActivityStatusValue,
+                       "\nSubscriptionId: ",
+                       SubscriptionId,
+                       "\nResourceGroup: ",
+                       ResourceGroup,
+                       "\nCallerIpAddress: ",
+                       CallerIpAddress,
+                       "\nProperties: ",
+                       tostring(Properties_d)
+                   )
+    | extend Case = "Azure Activity"
+    | project TimeGenerated, Case, Details;
+// 14. Personal Email Similarity
+let internal_domains = dynamic(["withintelligence.com", "pageantgamingmedia.com", "journal.pageantmedia.com"]);
+let personal_domains = dynamic(["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "aol.com", "proton.me"]);
+let similarity_threshold = 0.5;
+let AlertPersonalEmails = 
+    EmailEvents
+    | where TimeGenerated > ago(lookback)
+    | where SenderFromDomain has_any (internal_domains)
+    | where RecipientEmailAddress has_any (personal_domains)
+    | extend
+        SenderUser = tostring(split(SenderFromAddress, "@")[0]),
+        RecipientUser = tostring(split(RecipientEmailAddress, "@")[0])
+    | extend
+        SenderSet = unicode_codepoints_from_string(SenderUser),
+        RecipientSet = unicode_codepoints_from_string(RecipientUser)
+    | extend SimilarityScore = jaccard_index(SenderSet, RecipientSet)
+    | where SimilarityScore >= similarity_threshold
+    | summarize
+        SimilarRecipients = make_set(RecipientEmailAddress),
+        CountEmails = count(),
+        MaxSimilarity = max(SimilarityScore),
+        Subjects = make_set(Subject),
+        NID = make_set(NetworkMessageId)
+        by SenderFromAddress
+    | extend Details = strcat(
+                       "\nSender: ",
+                       SenderFromAddress,
+                       "\nSimilarRecipients: ",
+                       tostring(SimilarRecipients),
+                       "\nSimiliartyScore: ",
+                       tostring(MaxSimilarity),
+                       "\nEmailCount: ",
+                       tostring(CountEmails),
+                       "\nEmailSubjects: ",
+                       tostring(Subjects),
+                       "\nNID: ",
+                       tostring(NID)
+                   )
+    | extend TimeGenerated = now(), Case = "Personal Email Similarity"
+    | project TimeGenerated, Case, Details;
+union 
+    AlertMailboxDelegations,
+    AlertDeviceIsolation,
+    AlertPrivilegedRoleAssignment,
+    AlertSessionsRevoke,
+    AlertAzureActivity,
+    AlertPersonalEmails
+| project-reorder Case, TimeGenerated

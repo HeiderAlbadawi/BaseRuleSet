@@ -1,0 +1,75 @@
+// --- Base email dataset (delivered only)
+let EmailBase = EmailEvents
+    | where DeliveryAction has "Delivered"
+    | where DeliveryLocation has "Inbox"
+    | extend SenderLength = strlen(SenderFromAddress)
+    | where SenderLength > 100
+    | project
+        TimeGenerated,
+        NetworkMessageId,
+        SenderFromAddress,
+        SenderLength, 
+        DeliveryAction,
+        DeliveryLocation,
+        RecipientEmailAddress,
+        Subject;
+// --- Attachment summary
+let AttachmentSummary = EmailAttachmentInfo
+    | summarize 
+        AttachmentCount = count(),
+        FileNames = make_list(FileName),
+        SHAs = make_list(SHA256)
+        by NetworkMessageId;
+// --- URL summary
+let UrlSummary = EmailUrlInfo
+    | summarize 
+        UrlCount = count(),
+        Urls = make_list(Url)
+        by NetworkMessageId;
+// --- URL clicks
+let UrlClickedSummary = UrlClickEvents
+    | summarize 
+        ClickedUrls = make_list(Url)
+        by NetworkMessageId;
+// --- Post delivery actions
+let PostDelivery = EmailPostDeliveryEvents
+    | summarize PostDeliverySummary = make_list(
+                                          pack(
+    "Action",
+    Action,
+    "ActionResult",
+    ActionResult,
+    "ActionTrigger",
+    ActionTrigger,
+    "ActionType",
+    ActionType,
+    "DeliveryLocation",
+    DeliveryLocation,
+    "ThreatTypes",
+    ThreatTypes
+)
+                                      )
+        by NetworkMessageId;
+// --- Final join
+EmailBase
+| join kind=leftouter AttachmentSummary on NetworkMessageId
+| join kind=leftouter UrlSummary on NetworkMessageId
+| join kind=leftouter UrlClickedSummary on NetworkMessageId
+| join kind=leftouter PostDelivery on NetworkMessageId
+| where isempty(PostDeliverySummary)
+| project
+    TimeGenerated,
+    Sender = SenderFromAddress,
+    SenderLength,
+    DeliveryAction,
+    DeliveryLocation,
+    Recipient = RecipientEmailAddress,
+    Subject,
+    NetworkMessageId,
+    UrlCount,
+    AttachmentCount,
+    FileNames,
+    Urls,
+    ClickedUrls,
+    PostDeliverySummary
+| order by TimeGenerated desc
