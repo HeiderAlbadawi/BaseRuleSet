@@ -903,7 +903,12 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         # Check if this file is NEW or MODIFIED
         $isNewFile = $false
         $isModifiedFile = $false
-        $isBaseRuleSetFile = $path -like "*\BaseRuleSet\*" -or $path -like "*/BaseRuleSet/*"
+        
+        # Check if file is in BaseRuleSet directory (use relative path to avoid matching repo name)
+        $normalizedRoot = $rootDirectory.Replace("\", "/")
+        $normalizedPath = $path.Replace("\", "/")
+        $relativePathCheck = $normalizedPath.Replace($normalizedRoot + "/", "").Replace($normalizedRoot, "").TrimStart("/")
+        $isBaseRuleSetFile = $relativePathCheck -like "BaseRuleSet/*"
         
         Write-Host "[Debug] Checking file status for: $path"
         Write-Host "[Debug] NewFiles env var: '$NewFiles'"
