@@ -18,7 +18,45 @@ on:
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      base_changed: ${{ steps.check.outputs.base_changed }}
+      customer_changed: ${{ steps.check.outputs.customer_changed }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      
+      - name: Detect changed files
+        id: check
+        shell: bash
+        run: |
+          base_files=$(git diff --name-only HEAD~1 HEAD -- 'BaseRuleSet/*.json' | wc -l)
+          
+          if [ "$base_files" -gt 0 ]; then
+            echo "base_changed=true" >> $GITHUB_OUTPUT
+            echo "BaseRuleSet changed: $base_files files"
+          else
+            echo "base_changed=false" >> $GITHUB_OUTPUT
+            echo "BaseRuleSet: no changes"
+          fi
+          
+          customer_files=$(git diff --name-only HEAD~1 HEAD -- 'Tenants/TempLaw/*.json' | wc -l)
+          
+          if [ "$customer_files" -gt 0 ]; then
+            echo "customer_changed=true" >> $GITHUB_OUTPUT
+            echo "Tenants/TempLaw changed: $customer_files files"
+          else
+            echo "customer_changed=false" >> $GITHUB_OUTPUT
+            echo "Tenants/TempLaw: no changes"
+          fi
+
   BaseRulesDeployment:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.base_changed == 'true'
     runs-on: windows-latest
     env:
       resourceGroupName: 'temptest'
@@ -100,7 +138,7 @@ jobs:
         echo "New files: $newFilesString"
         
         # Get list of MODIFIED JSON files in BaseRuleSet/ directory (already existed, now changed)
-        $modifiedFiles = git diff --name-only --diff-filter=M HEAD~1 HEAD -- 'BaseRuleSet/*.json'
+        $modifiedFiles = git diff --name-only --diff-filter=MR HEAD~1 HEAD -- 'BaseRuleSet/*.json'
         $modifiedFilesString = $modifiedFiles -join ','
         echo "modified_files=$modifiedFilesString" >> $env:GITHUB_OUTPUT
         echo "Modified files: $modifiedFilesString"
@@ -118,6 +156,13 @@ jobs:
         $changedFilesString = $allChangedFiles -join ','
         echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         
+        # Check if BaseRuleSet files changed
+        if (![string]::IsNullOrWhiteSpace($changedFilesString) -or ![string]::IsNullOrWhiteSpace($deletedFilesString)) {
+          echo "baseruleset_changed=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "baseruleset_changed=false" >> $env:GITHUB_OUTPUT
+        }
+        
         # If no specific rule files changed or deleted, we don't need to deploy anything
         if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
           echo "No JSON rule files changed or deleted, skipping deployment"
@@ -127,11 +172,9 @@ jobs:
         }
 
     - name: Deploy Content to Microsoft Sentinel
-      if: steps.changed-files.outputs.skip_deployment == 'false'
-      uses: azure/powershell@v2
-      with:
-        azPSVersion: 'latest'
-        inlineScript: |
+      if: steps.changed-files.outputs.skip_deployment == 'false' && steps.changed-files.outputs.baseruleset_changed == 'true'
+      shell: pwsh
+      run: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
           $env:NEW_FILES = "${{ steps.changed-files.outputs.new_files }}"
@@ -140,6 +183,8 @@ jobs:
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
 
   CustomerRulesDeployment:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.customer_changed == 'true'
     runs-on: windows-latest
     env:
       resourceGroupName: 'temptest'
@@ -213,17 +258,30 @@ jobs:
       id: changed-files
       shell: pwsh
       run: |
-        # Get list of changed JSON files in Tenants/TempLaw/ directory
-        $changedFiles = git diff --name-only HEAD~1 HEAD -- 'Tenants/TempLaw/*.json'
-        $changedFilesString = $changedFiles -join ','
-        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
-        echo "Changed files: $changedFilesString"
+        # Get list of NEW JSON files in Tenants/TempLaw/ directory (added for first time)
+        $newFiles = git diff --name-only --diff-filter=A HEAD~1 HEAD -- 'Tenants/TempLaw/*.json'
+        $newFilesString = $newFiles -join ','
+        echo "new_files=$newFilesString" >> $env:GITHUB_OUTPUT
+        echo "New files: $newFilesString"
         
-        # Get list of deleted JSON files in Tenants/TempLaw/ directory
+        # Get list of MODIFIED JSON files in Tenants/TempLaw/ directory (already existed, now changed)
+        $modifiedFiles = git diff --name-only --diff-filter=MR HEAD~1 HEAD -- 'Tenants/TempLaw/*.json'
+        $modifiedFilesString = $modifiedFiles -join ','
+        echo "modified_files=$modifiedFilesString" >> $env:GITHUB_OUTPUT
+        echo "Modified files: $modifiedFilesString"
+        
+        # Get list of DELETED JSON files in Tenants/TempLaw/ directory
         $deletedFiles = git diff --name-only --diff-filter=D HEAD~1 HEAD -- 'Tenants/TempLaw/*.json'
         $deletedFilesString = $deletedFiles -join ','
         echo "deleted_files=$deletedFilesString" >> $env:GITHUB_OUTPUT
         echo "Deleted files: $deletedFilesString"
+        
+        # Combine new and modified for total changed files
+        $allChangedFiles = @()
+        if (![string]::IsNullOrWhiteSpace($newFilesString)) { $allChangedFiles += $newFiles }
+        if (![string]::IsNullOrWhiteSpace($modifiedFilesString)) { $allChangedFiles += $modifiedFiles }
+        $changedFilesString = $allChangedFiles -join ','
+        echo "changed_files=$changedFilesString" >> $env:GITHUB_OUTPUT
         
         # If no specific rule files changed or deleted, we don't need to deploy anything
         if ([string]::IsNullOrWhiteSpace($changedFilesString) -and [string]::IsNullOrWhiteSpace($deletedFilesString)) {
@@ -235,14 +293,15 @@ jobs:
 
     - name: Deploy Content to Microsoft Sentinel
       if: steps.changed-files.outputs.skip_deployment == 'false'
-      uses: azure/powershell@v2
-      with:
-        azPSVersion: 'latest'
-        inlineScript: |
+      shell: pwsh
+      run: |
           # Set changed files as environment variable for the PowerShell script
           $env:CHANGED_FILES = "${{ steps.changed-files.outputs.changed_files }}"
+          $env:NEW_FILES = "${{ steps.changed-files.outputs.new_files }}"
+          $env:MODIFIED_FILES = "${{ steps.changed-files.outputs.modified_files }}"
           $env:DELETED_FILES = "${{ steps.changed-files.outputs.deleted_files }}"
           ${{ github.workspace }}//.github/workflows/TempLaw-SentinelDeployment.ps1
+
 
 
 

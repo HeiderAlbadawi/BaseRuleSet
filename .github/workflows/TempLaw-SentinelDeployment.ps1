@@ -774,6 +774,8 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
     {
         $totalFiles = 0;
         $totalFailed = 0;
+        $failedRules = @()
+        $successfulRules = @()
         $iterationList = @()
         
         # Check if we only have deletions and no changed files (deletion-only mode)
@@ -814,46 +816,72 @@ function Deployment($fullDeploymentFlag, $remoteShaTable, $tree) {
         Write-Host "[Info] Total files to deploy: $($iterationList.Count)"
         $iterationList | ForEach-Object {
             $path = $_
-            Write-Host "[Info] Try to deploy $path"
-            if (-not (Test-Path $path)) {
-                Write-Host "[Warning] Skipping deployment for $path. The file doesn't exist."
-                return
-            }
+            try {
+                Write-Host "[Info] Try to deploy $path"
+                if (-not (Test-Path $path)) {
+                    Write-Host "[Warning] Skipping deployment for $path. The file doesn't exist."
+                    return
+                }
 
-            if ($path -like "*.bicep") {
-                $templateType = "Bicep"
-                $templateObject = bicep build $path --stdout | Out-String | ConvertFrom-Json
-            } else {
-                $templateType = "ARM"
-                $templateObject = Get-Content $path | Out-String | ConvertFrom-Json
-            }
+                if ($path -like "*.bicep") {
+                    $templateType = "Bicep"
+                    $templateObject = bicep build $path --stdout | Out-String | ConvertFrom-Json
+                } else {
+                    $templateType = "ARM"
+                    $templateObject = Get-Content $path | Out-String | ConvertFrom-Json
+                }
 
-            if (-not (IsValidResourceType $templateObject))
-            {
-                Write-Host "[Warning] Skipping deployment for $path. The file contains resources for content that was not selected for deployment. Please add content type to connection if you want this file to be deployed."
-                return
-            }
-            $parameterFile = GetParameterFile $path
-            $result = SmartDeployment $fullDeploymentFlag $remoteShaTable $path $parameterFile $templateObject $templateType
-            
-            # Log the deployment result and reason
-            if ($result.reason) {
-                Write-Host "[Info] Deployment result for $path`: $($result.reason)"
-            }
-            
-            if ($result.isSuccess -eq $false) {
-                $totalFailed++
-            }
-            if (-not $result.skip) {
-                $totalFiles++
-            }
-            if ($result.isSuccess -or $result.skip) {
-                $global:updatedCsvTable[$path] = $remoteShaTable[$path]
-                if ($parameterFile) {
-                    $global:updatedCsvTable[$parameterFile] = $remoteShaTable[$parameterFile]
+                if (-not (IsValidResourceType $templateObject))
+                {
+                    Write-Host "[Warning] Skipping deployment for $path. The file contains resources for content that was not selected for deployment. Please add content type to connection if you want this file to be deployed."
+                    return
+                }
+                $parameterFile = GetParameterFile $path
+                $result = SmartDeployment $fullDeploymentFlag $remoteShaTable $path $parameterFile $templateObject $templateType
+                
+                # Log the deployment result and reason
+                if ($result.reason) {
+                    Write-Host "[Info] Deployment result for $($path): $($result.reason)"
+                }
+                
+                if ($result.isSuccess -eq $false) {
+                    $totalFailed++
+                    $failedRules += $path
+                    Write-Host "[Error] ✗ Failed to deploy: $path" -ForegroundColor Red
+                } elseif ($result.isSuccess -eq $true) {
+                    $successfulRules += $path
+                    Write-Host "[Success] ✓ Successfully deployed: $path" -ForegroundColor Green
+                }
+                
+                if (-not $result.skip) {
+                    $totalFiles++
+                }
+                if ($result.isSuccess -or $result.skip) {
+                    $global:updatedCsvTable[$path] = $remoteShaTable[$path]
+                    if ($parameterFile) {
+                        $global:updatedCsvTable[$parameterFile] = $remoteShaTable[$parameterFile]
+                    }
                 }
             }
+            catch {
+                $totalFailed++
+                $failedRules += $path
+                Write-Host "[Error] ✗ Exception during deployment of $path : $_" -ForegroundColor Red
+                Write-Host "[Info] Continuing with next file..." -ForegroundColor Yellow
+            }
         }
+        
+        # Deployment Summary
+        Write-Host "`n=== Deployment Summary ===" -ForegroundColor Cyan
+        Write-Host "Total files processed: $totalFiles" -ForegroundColor Cyan
+        Write-Host "Successful: $($successfulRules.Count)" -ForegroundColor Green
+        Write-Host "Failed: $($failedRules.Count)" -ForegroundColor Red
+        
+        if ($failedRules.Count -gt 0) {
+            Write-Host "`nFailed files:" -ForegroundColor Red
+            $failedRules | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+        }
+        
         PushCsvToRepo
         if ($totalFiles -gt 0 -and $totalFailed -gt 0)
         {
@@ -875,15 +903,22 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         # Check if this file is NEW or MODIFIED
         $isNewFile = $false
         $isModifiedFile = $false
+        $isBaseRuleSetFile = $path -like "*\BaseRuleSet\*" -or $path -like "*/BaseRuleSet/*"
         
         Write-Host "[Debug] Checking file status for: $path"
         Write-Host "[Debug] NewFiles env var: '$NewFiles'"
         Write-Host "[Debug] ModifiedFiles env var: '$ModifiedFiles'"
+        Write-Host "[Debug] isBaseRuleSetFile: $isBaseRuleSetFile"
         
         if (![string]::IsNullOrWhiteSpace($NewFiles)) {
             $newFilesList = $NewFiles -split ','
             Write-Host "[Debug] New files list: $($newFilesList -join ', ')"
-            $matchingNew = $newFilesList | Where-Object { $path -like "*$_*" }
+            # Normalize the path for comparison - convert to relative path with forward slashes
+            $relativePath = $path.Replace("$rootDirectory\", "").Replace("\", "/")
+            Write-Host "[Debug] Normalized path for comparison: $relativePath"
+            $matchingNew = $newFilesList | Where-Object { 
+                $_.Trim() -eq $relativePath
+            }
             if ($matchingNew) {
                 $isNewFile = $true
                 Write-Host "[Debug] File matched as NEW: $matchingNew"
@@ -892,7 +927,12 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         if (![string]::IsNullOrWhiteSpace($ModifiedFiles)) {
             $modifiedFilesList = $ModifiedFiles -split ','
             Write-Host "[Debug] Modified files list: $($modifiedFilesList -join ', ')"
-            $matchingModified = $modifiedFilesList | Where-Object { $path -like "*$_*" }
+            # Normalize the path for comparison - convert to relative path with forward slashes
+            $relativePath = $path.Replace("$rootDirectory\", "").Replace("\", "/")
+            Write-Host "[Debug] Normalized path for comparison: $relativePath"
+            $matchingModified = $modifiedFilesList | Where-Object { 
+                $_.Trim() -eq $relativePath
+            }
             if ($matchingModified) {
                 $isModifiedFile = $true
                 Write-Host "[Debug] File matched as MODIFIED: $matchingModified"
@@ -905,8 +945,21 @@ function SmartDeployment($fullDeploymentFlag, $remoteShaTable, $path, $parameter
         $ruleExists = CheckRuleExistsInSentinel $templateObject
         Write-Host "[Debug] ruleExists=$ruleExists"
         
+        # BASERULESET MODIFIED FILE LOGIC: Always skip creation for BaseRuleSet modifications
+        if ($isBaseRuleSetFile -and $isModifiedFile) {
+            if (!$ruleExists) {
+                Write-Host "[Info] BASERULESET MODIFIED: Rule does not exist in Sentinel - SKIPPING (BaseRuleSet files only update existing rules)"
+                return @{
+                    skip = $true
+                    isSuccess = $null
+                    reason = "Rule does not exist - skipped (BaseRuleSet modified file, update-only)"
+                }
+            } else {
+                Write-Host "[Info] BASERULESET MODIFIED: Rule exists in Sentinel - will UPDATE with changes from $path"
+            }
+        }
         # NEW FILE LOGIC: Create in all tenants (allow creation)
-        if ($isNewFile) {
+        elseif ($isNewFile) {
             if ($ruleExists) {
                 Write-Host "[Warning] NEW FILE: Rule already exists in Sentinel - SKIPPING to prevent duplicate!"
                 Write-Host "[Warning] File: $path"
