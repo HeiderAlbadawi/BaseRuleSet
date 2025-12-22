@@ -130,6 +130,15 @@ jobs:
       with:
         fetch-depth: 2
 
+    - name: Install Azure PowerShell modules
+      shell: pwsh
+      run: |
+        Write-Host "Installing Az.SecurityInsights module..."
+        Install-Module -Name Az.SecurityInsights -Force -AllowClobber -Scope CurrentUser
+        Write-Host "Installing Az.Resources module..."
+        Install-Module -Name Az.Resources -Force -AllowClobber -Scope CurrentUser
+        Write-Host "Azure PowerShell modules installed successfully"
+
     - name: Get changed files
       id: changed-files
       shell: pwsh
@@ -257,6 +266,15 @@ jobs:
       with:
         fetch-depth: 2
 
+    - name: Install Azure PowerShell modules
+      shell: pwsh
+      run: |
+        Write-Host "Installing Az.SecurityInsights module..."
+        Install-Module -Name Az.SecurityInsights -Force -AllowClobber -Scope CurrentUser
+        Write-Host "Installing Az.Resources module..."
+        Install-Module -Name Az.Resources -Force -AllowClobber -Scope CurrentUser
+        Write-Host "Azure PowerShell modules installed successfully"
+
     - name: Get changed files
       id: changed-files
       shell: pwsh
@@ -377,6 +395,15 @@ jobs:
       uses: actions/checkout@v3
       with:
         fetch-depth: 2
+
+    - name: Install Azure PowerShell modules
+      shell: pwsh
+      run: |
+        Write-Host "Installing Az.SecurityInsights module..."
+        Install-Module -Name Az.SecurityInsights -Force -AllowClobber -Scope CurrentUser
+        Write-Host "Installing Az.Resources module..."
+        Install-Module -Name Az.Resources -Force -AllowClobber -Scope CurrentUser
+        Write-Host "Azure PowerShell modules installed successfully"
 
     - name: Get changed files
       id: changed-files
